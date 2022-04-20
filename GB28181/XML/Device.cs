@@ -32,6 +32,12 @@ namespace GB28181.XML
         public string DeviceID { get; set; }
 
         /// <summary>
+        /// 球机/云台控制命令(可选, 控制码应符合附录A中的A.3中的规定)
+        /// </summary>
+        [XmlElement(nameof(PTZCmd))]
+        public string PTZCmd { get; set; }
+
+        /// <summary>
         /// 远程控制命令(可选)
         /// </summary>
         [XmlElement(nameof(TeleBoot))]
@@ -167,5 +173,305 @@ namespace GB28181.XML
             [XmlElement(nameof(AlarmType))]
             public string AlarmType { get; set; }
         }
+    }
+
+    /// <summary>
+    /// 设备状态查询
+    /// </summary>
+    [XmlRoot("Query")]
+    public class DeviceStatus : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+    }
+
+    /// <summary>
+    /// 设备信息查询
+    /// </summary>
+    [XmlRoot("Query")]
+    public class DeviceInfo : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+    }
+
+    /// <summary>
+    /// 设备配置查询
+    /// </summary>
+    [XmlRoot("Query")]
+    public class ConfigDownload : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 查询配置参数类型(必选)
+        /// <para>
+        /// 可查询的配置类型包括基本参数配置: BasicParam,视频参数范围:VideoParamOpt,SVAC编码配置:SVACEncodeConfig,SVAC
+        /// 解码配置:SVACDecodeConfig. 可同时查询多个配置类型,各类型以“/”分隔,可返回与查询SN值相同的多个响应,每个响应对应一个配置类型.
+        /// </para>
+        /// </summary>
+        [XmlElement(nameof(ConfigType))]
+        public string ConfigType { get; set; }
+    }
+
+    /// <summary>
+    /// 设备预置位查询
+    /// </summary>
+    [XmlRoot("Query")]
+    public class PresetQuery : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+    }
+
+    /// <summary>
+    /// 移动设备位置数据查询
+    /// </summary>
+    [XmlRoot("Query")]
+    public class MobilePosition : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 移动设备位置信息上报时间间隔, 单位: 秒(s), 默认值5(可选)
+        /// </summary>
+        [XmlElement(nameof(Interval))]
+        public int Interval { get; set; }
+    }
+
+    /// <summary>
+    /// 设备控制应答
+    /// </summary>
+    [XmlRoot("Response")]
+    public class DeviceControlResponse : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 执行结果标志(必选)
+        /// </summary>
+        [XmlElement(nameof(Result))]
+        public string Result { get; set; }
+    }
+
+    /// <summary>
+    /// 设备信息查询应答
+    /// </summary>
+    [XmlRoot("Response")]
+    public class DeviceInfoResponse : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的名称(可选)
+        /// </summary>
+        [XmlElement(nameof(DeviceName))]
+        public string DeviceName { get; set; }
+
+        /// <summary>
+        /// 查询结果(必选)
+        /// </summary>
+        public string Result { get; set; }
+
+        /// <summary>
+        /// 设备生产商(可选)
+        /// </summary>
+        // TODO: XML类型为 normalizedString
+        [XmlElement(nameof(Manufacturer))]
+        public string Manufacturer { get; set; }
+
+        /// <summary>
+        /// 设备固件版本(可选)
+        /// </summary>
+        [XmlElement(nameof(Firmware))]
+        public string Firmware { get; set; }
+
+        /// <summary>
+        /// 视频输入通道数(可选)
+        /// </summary>
+        [XmlElement(nameof(Channel))]
+        public int Channel { get; set; }
+
+        /// <summary>
+        /// 扩展信息, 可多项
+        /// </summary>
+        [XmlElement(nameof(Info))]
+        public Catalog.Info Info { get; set; }
+    }
+
+    /// <summary>
+    /// 设备状态信息查询应答
+    /// </summary>
+    [XmlRoot("Response")]
+    public class DeviceStatusResponse : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 查询结果标志(必选)
+        /// </summary>
+        [XmlElement(nameof(Result))]
+        public string Result { get; set; }
+
+        /// <summary>
+        /// 是否在线(必选)
+        /// </summary>
+        [XmlElement(nameof(Online))]
+        public string Online { get; set; }
+
+        /// <summary>
+        /// 是否正常工作(必选)
+        /// </summary>
+        [XmlElement(nameof(Status))]
+        public string Status { get; set; }
+
+        /// <summary>
+        /// 不正常工作原因(可选)
+        /// </summary>
+        [XmlElement(nameof(Reason))]
+        public string Reason { get; set; }
+
+        /// <summary>
+        /// 是否编码(可选)
+        /// </summary>
+        [XmlElement(nameof(Encode))]
+        public string Encode { get; set; }
+
+        /// <summary>
+        /// 是否录像(可选)
+        /// </summary>
+        [XmlElement(nameof(Record))]
+        public string Record { get; set; }
+
+        /// <summary>
+        /// 设备时间和日期(可选)
+        /// </summary>
+        [XmlElement(nameof(DeviceTime))]
+        public DateTime DeviceTime { get; set; }
     }
 }
