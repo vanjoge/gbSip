@@ -473,5 +473,7 @@ namespace GB28181.XML
         /// </summary>
         [XmlElement(nameof(DeviceTime))]
         public DateTime DeviceTime { get; set; }
+
+        // TODO: 写到这里了
     }
 }
