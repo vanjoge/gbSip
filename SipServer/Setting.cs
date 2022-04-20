@@ -36,6 +36,9 @@ namespace SipServer
         {
             ServerIP = "127.0.0.1";
             SipPort = 5060;
+#if DEBUG
+            EnableSipLog = true;
+#endif
         }
 
     }
