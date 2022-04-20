@@ -313,7 +313,7 @@ namespace SipServer
             var mth = regCmdType.Match(sipRequest.Body);
             if (mth.Success)
             {
-                string cmdType = mth.Groups[1].Value.Trim();
+                string cmdType = mth.Groups[1].Value.Trim().ToUpper();
 
                 if (!string.IsNullOrEmpty(cmdType))
                 {
