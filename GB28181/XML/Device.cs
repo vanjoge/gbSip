@@ -541,5 +541,104 @@ namespace GB28181.XML
     [XmlRoot("Response")]
     public class ConfigDownloadResponse : XmlBase
     {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 查询结果标志(必选)
+        /// </summary>
+        [XmlElement(nameof(Result))]
+        public string Result { get; set; }
+
+        /// <summary>
+        /// 基本参数(可选)
+        /// </summary>
+        [XmlElement(nameof(BasicParam))]
+        public BasicParamBody BasicParam { get; set; }
+
+        /// <summary>
+        /// 视频参数范围(可选), 各可选参数以“/”分隔
+        /// </summary>
+        public VideoParamOptBody VideoParamOpt { get; set; }
+
+        public class BasicParamBody
+        {
+            /// <summary>
+            /// 设备名称(必选)
+            /// </summary>
+            [XmlElement(nameof(Name))]
+            public string Name { get; set; }
+
+            /// <summary>
+            /// 注册过期时间(必选)
+            /// </summary>
+            [XmlElement(nameof(Expiration))]
+            public string Expiration { get; set; }
+
+            /// <summary>
+            /// 心跳间隔时间(必选)
+            /// </summary>
+            [XmlElement(nameof(HeartBeatInterval))]
+            public int HeartBeatInterval { get; set; }
+
+            /// <summary>
+            /// 心跳超时次数(必选)
+            /// </summary>
+            [XmlElement(nameof(HeartBeatCount))]
+            public int HeartBeatCount { get; set; }
+
+            /// <summary>
+            /// 定位功能支持情况
+            /// <para> 取值:0-不支持;1-支持 GPS定位;2-支持北斗定位(可选, 默认取值为0) </para>
+            /// </summary>
+            [XmlElement(nameof(PositionCapability))]
+            public int PositionCapability { get; set; }
+
+            /// <summary>
+            /// 经度(可选)
+            /// </summary>
+            [XmlElement(nameof(Longitude))]
+            public double Longitude { get; set; }
+
+            /// <summary>
+            /// 维度(可选)
+            /// </summary>
+            [XmlElement(nameof(Latitude))]
+            public double Latitude { get; set; }
+        }
+
+        public class VideoParamOptBody
+        {
+            /// <summary>
+            /// 下载倍速范围(可选)
+            /// <para> 各可选参数以“/”分隔,如设备支持1,2,4倍速下载则应写为“1/2/4” </para>
+            /// </summary>
+            [XmlElement(nameof(DownloadSpeed))]
+            public string DownloadSpeed { get; set; }
+
+            /// <summary>
+            /// 摄像机支持的分辨率(可选)
+            /// <para> 可有多个分辨率值,各个取值间以“/”分隔. 分辨率取值参见附录 F中SDPf字段规定 </para>
+            /// </summary>
+            [XmlElement(nameof(Resolution))]
+            public string Resolution { get; set; }
+        }
+
+        //TODO:写到这里了
     }
 }
