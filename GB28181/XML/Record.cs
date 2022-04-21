@@ -81,4 +81,111 @@ namespace GB28181.XML
         [XmlElement(nameof(IndistinctQuery))]
         public string IndistinctQuery { get; set; }
     }
+
+    /// <summary>
+    /// 文件目录检索应答
+    /// </summary>
+    [XmlRoot("Response")]
+    public class RecordInfoResponse : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 设备/区域名称(必选)
+        /// </summary>
+        [XmlElement(nameof(Name))]
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 查询结果总数(必选)
+        /// </summary>
+        [XmlElement(nameof(SumNum))]
+        public int SumNum { get; set; }
+
+        // TODO: 这个地方大概率有问题, 甚至不知道怎么写
+        public class RecordListBody
+        {
+            public NList<Item> Item { get; set; }
+        }
+
+        public class Item
+        {
+            /// <summary>
+            /// 设备/区域编码(必选)
+            /// </summary>
+            [XmlElement(nameof(DeviceID))]
+            public string DeviceID { get; set; }
+
+            /// <summary>
+            /// 设备/区域名称(必选)
+            /// </summary>
+            [XmlElement(nameof(Name))]
+            public string Name { get; set; }
+
+            /// <summary>
+            /// 文件路径名(可选)
+            /// </summary>
+            [XmlElement(nameof(FilePath))]
+            public string FilePath { get; set; }
+
+            /// <summary>
+            /// 录像地址(可选)
+            /// </summary>
+            [XmlElement(nameof(Address))]
+            public string Address { get; set; }
+
+            /// <summary>
+            /// 录像开始时间(可选)
+            /// </summary>
+            [XmlElement(nameof(StartTime))]
+            public DateTime StartTime { get; set; }
+
+            /// <summary>
+            /// 录像结束时间(可选)
+            /// </summary>
+            [XmlElement(nameof(EndTime))]
+            public DateTime EndTime { get; set; }
+
+            /// <summary>
+            /// 保密属性(必选)
+            /// <para> 省缺值0; 0: 不涉密, 1: 涉密 </para>
+            /// </summary>
+            [XmlElement(nameof(Secrecy))]
+            public string Secrecy { get; set; }
+
+            /// <summary>
+            /// 录像产生类型(可选) time 或 alarm 或 manual
+            /// </summary>
+            [XmlElement(nameof(Type))]
+            public string Type { get; set; }
+
+            /// <summary>
+            /// 录像触发者ID(可选)
+            /// </summary>
+            [XmlElement(nameof(RecorderID))]
+            public string RecorderID { get; set; }
+
+            /// <summary>
+            /// 录像文件大小, 单位: Byte(可选)
+            /// </summary>
+            [XmlElement(nameof(FileSize))]
+            public string FileSize { get; set; }
+        }
+    }
 }

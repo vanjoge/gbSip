@@ -1,5 +1,6 @@
 ﻿using GB28181.Enums;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
@@ -474,6 +475,71 @@ namespace GB28181.XML
         [XmlElement(nameof(DeviceTime))]
         public DateTime DeviceTime { get; set; }
 
-        // TODO: 写到这里了
+        /// <summary>
+        /// 报警设备状态列表, num表示列表项个数(可选)
+        /// </summary>
+        // TODO: 这个地方大概率有问题
+        [XmlElement(nameof(Alarmstatus))]
+        public NList<Item> Alarmstatus { get; set; }
+
+        /// <summary>
+        /// 扩展信息, 可多项
+        /// </summary>
+        [XmlElement(nameof(Info))]
+        public string Info { get; set; }
+
+        public class Item
+        {
+            /// <summary>
+            /// 报警设备编码(必选)
+            /// </summary>
+            [XmlElement(nameof(DeviceID))]
+            public string DeviceID { get; set; }
+
+            /// <summary>
+            /// 报警设备状态(必选)
+            /// </summary>
+            [XmlElement(nameof(DutyStatus))]
+            public string DutyStatus { get; set; }
+        }
+    }
+
+    /// <summary>
+    /// 设备配置应答
+    /// </summary>
+    [XmlRoot("Response")]
+    public class DeviceConfigResponse : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 查询结果标志(必选)
+        /// </summary>
+        [XmlElement(nameof(Result))]
+        public string Result { get; set; }
+    }
+
+    /// <summary>
+    /// 设备配置查询应答
+    /// </summary>
+    [XmlRoot("Response")]
+    public class ConfigDownloadResponse : XmlBase
+    {
     }
 }
