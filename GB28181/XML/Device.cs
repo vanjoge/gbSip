@@ -639,6 +639,125 @@ namespace GB28181.XML
             public string Resolution { get; set; }
         }
 
-        //TODO:写到这里了
+        //TODO:写到这里了, 但是下面不会
+
+        #region SVAC
+
+        public class SVACEncodeConfigBody
+        {
+            [XmlElement(nameof(ROIParam))]
+            public NList<ROIParam> ROIParam { get; set; }
+        }
+
+        public class ROIParam
+        {
+            [XmlElement(nameof(ROIFlag))]
+            public int ROIFlag { get; set; }
+
+            [XmlElement(nameof(ROINumber))]
+            public int ROINumber { get; set; }
+
+            [XmlElement(nameof(Item))]
+            public NList<Item> Item { get; set; }
+
+            [XmlElement(nameof(BackGroundQP))]
+            public int BackGroundQP { get; set; }
+
+            [XmlElement(nameof(BackGroundSkipFlag))]
+            public int BackGroundSkipFlag { get; set; }
+        }
+
+        public class Item
+        {
+            [XmlElement(nameof(ROISeq))]
+            public int ROISeq { get; set; }
+
+            [XmlElement(nameof(TopLeft))]
+            public int TopLeft { get; set; }
+
+            [XmlElement(nameof(BottomRight))]
+            public int BottomRight { get; set; }
+
+            [XmlElement(nameof(ROIQP))]
+            public int ROIQP { get; set; }
+        }
+
+        #endregion SVAC
+
+        #region SVC
+
+        public class SVCParamBody
+        {
+            [XmlElement(nameof(SVCSpaceDomainMode))]
+            public int SVCSpaceDomainMode { get; set; }
+
+            [XmlElement(nameof(SVCTimeDomainMode))]
+            public int SVCTimeDomainMode { get; set; }
+
+            [XmlElement(nameof(SVCSpaceSupportMode))]
+            public int SVCSpaceSupportMode { get; set; }
+        }
+
+        #endregion SVC
+    }
+
+    /// <summary>
+    /// </summary>
+    [XmlRoot("Response")]
+    public class PresetQueryResponse : XmlBase
+    {
+        /// <summary>
+        /// 命令类型: 设备控制(必选)
+        /// </summary>
+        [XmlElement(nameof(CmdType))]
+        public CommandType CmdType { get; set; }
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement(nameof(SN))]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement(nameof(DeviceID))]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 设备预置位列表,用于平台间或平台与设备间的预置位查询(必选)
+        /// </summary>
+        [XmlElement(nameof(PresetList))]
+        public PresetListBody PresetList { get; set; }
+
+        public class PresetListBody
+        {
+            /// <summary>
+            /// 当前配置的预置位记录,当未配置预置位时不填写
+            /// </summary>
+            [XmlElement(nameof(Item))]
+            public NList<Item> Item { get; set; }
+
+            /// <summary>
+            /// 列表项个数,当未配置预置位时取值为0(必选)
+            /// </summary>
+            [XmlElement(nameof(Num))]
+            public int Num { get; set; }
+        }
+
+        public class Item
+        {
+            /// <summary>
+            /// 预置位编码(必选)
+            /// </summary>
+            [XmlElement(nameof(PresetID))]
+            public string PresetID { get; set; }
+
+            /// <summary>
+            /// 预置位名称(必选)
+            /// </summary>
+            [XmlElement(nameof(PresetName))]
+            public string PresetName { get; set; }
+        }
     }
 }
