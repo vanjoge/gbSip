@@ -180,7 +180,7 @@ namespace GB28181.XML
     /// 设备状态查询
     /// </summary>
     [XmlRoot("Query")]
-    public class DeviceStatus : XmlBase
+    public class DeviceStatusQuery : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)
@@ -205,7 +205,7 @@ namespace GB28181.XML
     /// 设备信息查询
     /// </summary>
     [XmlRoot("Query")]
-    public class DeviceInfo : XmlBase
+    public class DeviceInfoQuery : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)
@@ -290,7 +290,7 @@ namespace GB28181.XML
     /// 移动设备位置数据查询
     /// </summary>
     [XmlRoot("Query")]
-    public class MobilePosition : XmlBase
+    public class MobilePositionQuery : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)
@@ -352,7 +352,7 @@ namespace GB28181.XML
     /// 设备信息查询应答
     /// </summary>
     [XmlRoot("Response")]
-    public class DeviceInfoResponse : XmlBase
+    public class DeviceInfo : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)
@@ -413,7 +413,7 @@ namespace GB28181.XML
     /// 设备状态信息查询应答
     /// </summary>
     [XmlRoot("Response")]
-    public class DeviceStatusResponse : XmlBase
+    public class DeviceStatus : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)
@@ -508,7 +508,7 @@ namespace GB28181.XML
     /// 设备配置应答
     /// </summary>
     [XmlRoot("Response")]
-    public class DeviceConfigResponse : XmlBase
+    public class DeviceConfig : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)
@@ -704,7 +704,7 @@ namespace GB28181.XML
     /// <summary>
     /// </summary>
     [XmlRoot("Response")]
-    public class PresetQueryResponse : XmlBase
+    public class Preset : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)

@@ -10,7 +10,7 @@ namespace GB28181.XML
     /// 文件目录检索请求
     /// </summary>
     [XmlRoot("Query")]
-    public class RecordInfo : XmlBase
+    public class RecordInfoQuery : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)
@@ -86,7 +86,7 @@ namespace GB28181.XML
     /// 文件目录检索应答
     /// </summary>
     [XmlRoot("Response")]
-    public class RecordInfoResponse : XmlBase
+    public class RecordInfo : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)

@@ -10,7 +10,7 @@ namespace GB28181.XML
     /// 报警查询
     /// </summary>
     [XmlRoot("Query")]
-    public class Alarm : XmlBase
+    public class AlarmQuery : XmlBase
     {
         /// <summary>
         /// 命令类型: 设备控制(必选)
