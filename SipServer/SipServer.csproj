@@ -6,10 +6,17 @@
 
   <ItemGroup>
     <PackageReference Include="SIPSorcery" Version="6.0.6" />
+    <PackageReference Include="StackExchange.Redis" Version="2.5.61" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GB28181\GB28181.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="RedisHelp">
+      <HintPath>..\DLL\RedisHelp.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

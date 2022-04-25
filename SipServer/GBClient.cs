@@ -1,7 +1,11 @@
-﻿using GB28181.XML;
+﻿using GB28181;
+using GB28181.Enums;
+using GB28181.XML;
+using SipServer.Models;
 using SIPSorcery.SIP;
 using SQ.Base;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
@@ -16,9 +20,10 @@ namespace SipServer
         /// CmdType判断正则
         /// </summary>
         System.Text.RegularExpressions.Regex regCmdType = new System.Text.RegularExpressions.Regex("<CmdType>(.+)</CmdType>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        public string UserAgent => Sip_Server.UserAgent;
+        public string UserAgent => sipServer.UserAgent;
         string m_callID;
         bool isDispose = false;
+
         SIPEndPoint _remoteEndPoint;
         /// <summary>
         /// 客户端远端连接信息
@@ -42,17 +47,49 @@ namespace SipServer
         }
 
         string LastServerId, LastDeviceId;
+        /// <summary>
+        /// 设备ID
+        /// </summary>
         public string DeviceId { get; set; }
+        /// <summary>
+        /// 上次正常通信时间
+        /// </summary>
         public DateTime KeepAliveTime { get; set; }
-        public SipServer Sip_Server;
+        public SipServer sipServer;
 
 
-        private int m_cseq, _sn;
+        int m_cseq, _sn;
 
-        SIPTransport SipTransport => Sip_Server.SipTransport;
+        SIPTransport SipTransport => sipServer.SipTransport;
         SIPToHeader toSIPToHeader;
         SIPFromHeader fromSIPFromHeader;
         SIPURI toSipUri, m_contactURI;
+
+
+        /// <summary>
+        /// 设备信息
+        /// </summary>
+        DeviceInfo deviceInfo;
+        /// <summary>
+        /// 设备目录
+        /// </summary>
+        ConcurrentDictionary<string, Catalog.Item> deviceList = new ConcurrentDictionary<string, Catalog.Item>();
+        /// <summary>
+        /// 设备状态
+        /// </summary>
+        DeviceStatus deviceStatus;
+
+        object lckCseq = new object();
+        object lckSn = new object();
+        /// <summary>
+        /// 状态
+        /// </summary>
+        public ConnStatus Status = new ConnStatus();
+
+        string redisDevKey
+        {
+            get { return "Dev_" + DeviceId; }
+        }
         #endregion
 
         #region 构造
@@ -65,7 +102,7 @@ namespace SipServer
             fromSIPFromHeader = new SIPFromHeader(null, new SIPURI(scheme, localSIPEndPoint) { User = ServerId }, CallProperties.CreateNewTag());
 
             LastServerId = ServerId;
-            Sip_Server = sipServer;
+            this.sipServer = sipServer;
             RemoteEndPoint = remoteEndPoint;
             this.DeviceId = DeviceId;
             KeepAliveTime = DateTime.Now;
@@ -77,19 +114,26 @@ namespace SipServer
         #endregion
 
         #region 方法 
+        #region 
+        /// <summary>
+        /// 检查当前是否已超时
+        /// </summary>
+        /// <returns></returns>
         public bool Check()
         {
-            if (KeepAliveTime.DiffNowSec() > 180)
+            if (KeepAliveTime.DiffNowSec() >= sipServer.Settings.KeepAliveTimeoutSec)
             {
                 return false;
             }
             if (RemoteEndPoint.Protocol == SIPProtocolsEnum.tcp)
             {
-                return Sip_Server.sipTCPChannel.HasConnection(RemoteEndPoint);
+                return sipServer.sipTCPChannel.HasConnection(RemoteEndPoint);
             }
             return true;
         }
-
+        /// <summary>
+        /// 释放
+        /// </summary>
         public void Dispose()
         {
             if (isDispose)
@@ -97,10 +141,13 @@ namespace SipServer
                 return;
             }
             isDispose = true;
-
+            Off_line();
         }
-        object lckCseq = new object();
-        private int GetCseq()
+        /// <summary>
+        /// 获取Cseq
+        /// </summary>
+        /// <returns></returns>
+        int GetCseq()
         {
             lock (lckCseq)
             {
@@ -115,8 +162,11 @@ namespace SipServer
                 return m_cseq;
             }
         }
-        object lckSn = new object();
-        private int GetSn()
+        /// <summary>
+        /// 获取SN
+        /// </summary>
+        /// <returns></returns>
+        int GetSN()
         {
             lock (lckSn)
             {
@@ -140,8 +190,6 @@ namespace SipServer
 
             return res;
         }
-
-
 
         public SIPRequest GetSIPRequest(SIPMethodsEnum methodsEnum = SIPMethodsEnum.MESSAGE, string ContentType = null, bool newHeader = false)
         {
@@ -173,11 +221,92 @@ namespace SipServer
             return req;
         }
 
+        #endregion
 
+        T TryParseJSON<T>(string strjson)
+        {
+            try
+            {
+                return strjson.ParseJSON<T>();
+            }
+            catch
+            {
+                return default(T);
+            }
+        }
+        /// <summary>
+        /// 上线处理
+        /// </summary>
+        /// <returns></returns>
+        async Task On_line()
+        {
+            //从redis获取数据
+            var gbdevs = await sipServer.RedisHelper.HashGetAllAsync(redisDevKey);
+
+            foreach (var item in gbdevs)
+            {
+                if (item.Name == "DeviceInfo" && item.Value.HasValue)
+                {
+                    deviceInfo = TryParseJSON<DeviceInfo>(item.Value);
+                }
+                else if (item.Name == "DeviceList" && item.Value.HasValue)
+                {
+                    var lst = TryParseJSON<List<Catalog.Item>>(item.Value);
+                    foreach (var ci in lst)
+                    {
+                        deviceList.TryAdd(ci.DeviceID, ci);
+                    }
+                }
+                else if (item.Name == "DeviceStatus" && item.Value.HasValue)
+                {
+                    deviceStatus = TryParseJSON<DeviceStatus>(item.Value);
+                }
+                else if (item.Name == "Status")
+                {
+                    var status = TryParseJSON<ConnStatus>(item.Value);
+                    if (status != null)
+                    {
+                        Status = status;
+                    }
+                }
+            }
+            Status.Online = true;
+            Status.OnlineTime = DateTime.Now;
+
+            if (deviceInfo == null)
+            {
+                await Send_GetDevCommand(CommandType.DeviceInfo);
+            }
+            if (deviceList.Count == 0)
+            {
+                await Send_GetDevCommand(CommandType.Catalog);
+            }
+
+            await Send_GetDevCommand(CommandType.DeviceStatus);
+
+            await sipServer.RedisHelper.HashSetAsync(redisDevKey, "Status", Status);
+
+        }
+        /// <summary>
+        /// 下线处理
+        /// </summary>
+        /// <returns></returns>
+        async Task Off_line()
+        {
+            Status.Online = false;
+            Status.OfflineTime = DateTime.Now;
+            await sipServer.RedisHelper.HashSetAsync(redisDevKey, "Status", Status);
+        }
         #endregion
 
         #region 接收处理
-
+        /// <summary>
+        /// Response处理
+        /// </summary>
+        /// <param name="localSIPEndPoint"></param>
+        /// <param name="remoteEndPoint"></param>
+        /// <param name="sipResponse"></param>
+        /// <returns></returns>
         public async Task OnResponse(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPResponse sipResponse)
         {
             switch (sipResponse.Header.CSeqMethod)
@@ -193,7 +322,7 @@ namespace SipServer
                     {
                         if (sipResponse.Header.To.ToTag != null && sipResponse.Header.From.FromTag != null)
                         {
-                            if (Sip_Server.TryGetTag(sipResponse.Header.From.FromTag, out var fromTag))
+                            if (sipServer.TryGetTag(sipResponse.Header.From.FromTag, out var fromTag))
                             {
                                 fromTag.To = sipResponse.Header.To;
                             }
@@ -205,7 +334,7 @@ namespace SipServer
                     }
                     break;
                 case SIPMethodsEnum.BYE:
-                    Sip_Server.RemoveTag(sipResponse.Header.From.FromTag);
+                    sipServer.RemoveTag(sipResponse.Header.From.FromTag);
                     break;
                 case SIPMethodsEnum.ACK:
                     break;
@@ -236,6 +365,13 @@ namespace SipServer
                     break;
             }
         }
+        /// <summary>
+        /// Request处理
+        /// </summary>
+        /// <param name="localSIPEndPoint"></param>
+        /// <param name="remoteEndPoint"></param>
+        /// <param name="sipRequest"></param>
+        /// <returns></returns>
         public async Task OnRequest(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
         {
             LastServerId = sipRequest.Header.To.ToURI.User;
@@ -247,24 +383,29 @@ namespace SipServer
                 RemoteEndPoint = remoteEndPoint;
             }
 
+            switch (sipRequest.Method)
             {
-                switch (sipRequest.Method)
-                {
-                    case SIPMethodsEnum.REGISTER:
-                        if (!await RegisterProcess(remoteEndPoint, sipRequest))
-                        {
-                            return;
-                        }
-                        break;
-                    case SIPMethodsEnum.MESSAGE:
-                        await MessageProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
-                        break;
-                    default:
-                        break;
-                }
+                case SIPMethodsEnum.REGISTER:
+                    if (!await RegisterProcess(remoteEndPoint, sipRequest))
+                    {
+                        return;
+                    }
+                    break;
+                case SIPMethodsEnum.MESSAGE:
+                    await MessageProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
+                    break;
+                default:
+                    break;
             }
 
             KeepAliveTime = DateTime.Now;
+            //此处不严格要求注册认证，有数据上来就认为在线；如果要求注册认证，此处应增加判断
+            if (!Status.Online)
+            {
+                Status.Online = true;
+                await On_line();
+            }
+
         }
 
         /// <summary>
@@ -273,7 +414,7 @@ namespace SipServer
         /// <param name="remoteEndPoint"></param>
         /// <param name="sipRequest"></param>
         /// <returns></returns>
-        private async Task<bool> RegisterProcess(SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
+        async Task<bool> RegisterProcess(SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
         {
             var res = GetSIPResponse(sipRequest);
             long expiry = sipRequest.Header.Contact[0].Expires > 0
@@ -284,7 +425,7 @@ namespace SipServer
                 //注销设备
                 res.Header.Expires = 0;
                 await SipTransport.SendResponseAsync(res);
-                Sip_Server.RemoveClient(DeviceId);
+                sipServer.RemoveClient(DeviceId);
                 return false;
             }
             else
@@ -306,9 +447,9 @@ namespace SipServer
         /// <param name="remoteEndPoint"></param>
         /// <param name="sipRequest"></param>
         /// <returns></returns>
-        private async Task MessageProcess(SIPEndPoint localSipEndPoint,
-            SIPEndPoint remoteEndPoint,
-            SIPRequest sipRequest)
+        async Task MessageProcess(SIPEndPoint localSipEndPoint,
+           SIPEndPoint remoteEndPoint,
+           SIPRequest sipRequest)
         {
             var mth = regCmdType.Match(sipRequest.Body);
             if (mth.Success)
@@ -327,18 +468,25 @@ namespace SipServer
                         case "CATALOG": //处理设备目录
                             await SendOkMessage(sipRequest);
                             var catalog = SerializableHelper.DeserializeByStr<Catalog>(sipRequest.Body);
-
-
+                            foreach (var item in catalog.DeviceList)
+                            {
+                                deviceList[item.DeviceID] = item;
+                            }
+                            if (deviceList.Count == catalog.SumNum)
+                            {
+                                //表示收全
+                                await sipServer.RedisHelper.HashSetAsync(redisDevKey, "DeviceList", deviceList.Values);
+                            }
                             break;
                         case "DEVICEINFO":
                             await SendOkMessage(sipRequest);
-                            //this.deviceInfo = SerializableHelper.DeserializeByStr<DeviceInfo>(sipRequest.Body);
-
+                            deviceInfo = SerializableHelper.DeserializeByStr<DeviceInfo>(sipRequest.Body);
+                            await sipServer.RedisHelper.HashSetAsync(redisDevKey, "DeviceInfo", deviceInfo);
                             break;
                         case "DEVICESTATUS":
                             await SendOkMessage(sipRequest);
-                            //this.deviceStatus = SerializableHelper.DeserializeByStr<DeviceStatus>(sipRequest.Body);
-
+                            deviceStatus = SerializableHelper.DeserializeByStr<DeviceStatus>(sipRequest.Body);
+                            await sipServer.RedisHelper.HashSetAsync(redisDevKey, "DeviceStatus", deviceStatus);
                             break;
                         case "RECORDINFO":
                             await SendOkMessage(sipRequest);
@@ -355,13 +503,40 @@ namespace SipServer
                 }
             }
         }
+        #endregion
 
-        private async Task SendOkMessage(SIPRequest sipRequest)
+
+        #region
+
+        /// <summary>
+        /// 发送获取设备信息请求
+        /// </summary>
+        /// <param name="sipDevice"></param>
+        /// <param name="evnt"></param>
+        /// <param name="rs"></param>
+        /// <param name="timeout"></param>
+        async Task Send_GetDevCommand(CommandType commandType)
+        {
+            var body = new CatalogQuery()
+            {
+                CmdType = commandType,
+                DeviceID = DeviceId,
+                SN = GetSN(),
+            };
+            var req = GetSIPRequest(ContentType: Constant.Application_XML);
+            req.Body = body.ToXmlStr();
+            await SipTransport.SendRequestAsync(req);
+        }
+        /// <summary>
+        /// 发送OK应答
+        /// </summary>
+        /// <param name="sipRequest"></param>
+        /// <returns></returns>
+        async Task SendOkMessage(SIPRequest sipRequest)
         {
             SIPResponse okResponse = GetSIPResponse(sipRequest);
             await SipTransport.SendResponseAsync(okResponse);
         }
         #endregion
-
     }
 }

@@ -32,10 +32,23 @@ namespace SipServer
         [DisplayName("SIP端口")]
         public int SipPort { get; set; }
 
+        /// <summary>
+        /// redis连接字符串
+        /// </summary>
+        [DisplayName("redis连接字符串")]
+        public string RedisExchangeHosts { get; set; }
+        /// <summary>
+        /// 离线超时时间
+        /// </summary>
+        [DisplayName("离线超时时间")]
+        public double KeepAliveTimeoutSec { get; set; }
+
         public Setting()
         {
             ServerIP = "127.0.0.1";
             SipPort = 5060;
+            RedisExchangeHosts = "127.0.0.1:6379,connectTimeout=20000,syncTimeout=20000,responseTimeout=20000,defaultDatabase=1,password=";
+            KeepAliveTimeoutSec = 180;
 #if DEBUG
             EnableSipLog = true;
 #endif

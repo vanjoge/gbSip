@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32106.194
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SipServer", "SipServer\SipServer.csproj", "{53CC48EF-A69A-4F87-8135-01A9EC5F4076}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SipServer", "SipServer\SipServer.csproj", "{53CC48EF-A69A-4F87-8135-01A9EC5F4076}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GB28181", "GB28181\GB28181.csproj", "{A605EB64-5745-486F-A6BC-CB212E7B865F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GB28181", "GB28181\GB28181.csproj", "{A605EB64-5745-486F-A6BC-CB212E7B865F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GBWeb", "GBWeb\GBWeb.csproj", "{58F9327D-FD55-429D-8F40-FAF71D366FEE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GBWeb", "GBWeb\GBWeb.csproj", "{58F9327D-FD55-429D-8F40-FAF71D366FEE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
