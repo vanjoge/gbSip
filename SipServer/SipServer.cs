@@ -76,6 +76,8 @@ namespace SipServer
         }
 
 
+        #region 方法
+
         #region 控制
         /// <summary>
         /// 开启SIP服务
@@ -159,7 +161,6 @@ namespace SipServer
             SipTransport.Dispose();
         }
         #endregion
-
 
         #region 逻辑  
         /// <summary>
@@ -259,6 +260,8 @@ namespace SipServer
         }
 
 
+
+        #endregion
 
         #endregion
     }

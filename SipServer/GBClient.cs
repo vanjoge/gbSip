@@ -114,131 +114,13 @@ namespace SipServer
         #endregion
 
         #region 方法 
-        #region 
-        /// <summary>
-        /// 检查当前是否已超时
-        /// </summary>
-        /// <returns></returns>
-        public bool Check()
-        {
-            if (KeepAliveTime.DiffNowSec() >= sipServer.Settings.KeepAliveTimeoutSec)
-            {
-                return false;
-            }
-            if (RemoteEndPoint.Protocol == SIPProtocolsEnum.tcp)
-            {
-                return sipServer.sipTCPChannel.HasConnection(RemoteEndPoint);
-            }
-            return true;
-        }
-        /// <summary>
-        /// 释放
-        /// </summary>
-        public void Dispose()
-        {
-            if (isDispose)
-            {
-                return;
-            }
-            isDispose = true;
-            Off_line();
-        }
-        /// <summary>
-        /// 获取Cseq
-        /// </summary>
-        /// <returns></returns>
-        int GetCseq()
-        {
-            lock (lckCseq)
-            {
-                if (m_cseq == int.MaxValue)
-                {
-                    m_cseq = 0;
-                }
-                else
-                {
-                    ++m_cseq;
-                }
-                return m_cseq;
-            }
-        }
-        /// <summary>
-        /// 获取SN
-        /// </summary>
-        /// <returns></returns>
-        int GetSN()
-        {
-            lock (lckSn)
-            {
-                if (_sn == int.MaxValue)
-                {
-                    _sn = 0;
-                }
-                else
-                {
-                    ++_sn;
-                }
-                return _sn;
-            }
-        }
 
-        public SIPResponse GetSIPResponse(SIPRequest sipRequest, SIPResponseStatusCodesEnum messaageResponse = SIPResponseStatusCodesEnum.Ok)
-        {
-            SIPResponse res = SIPResponse.GetResponse(sipRequest, messaageResponse, null);
-            res.Header.Allow = null;
-            res.Header.UserAgent = UserAgent;
-
-            return res;
-        }
-
-        public SIPRequest GetSIPRequest(SIPMethodsEnum methodsEnum = SIPMethodsEnum.MESSAGE, string ContentType = null, bool newHeader = false)
-        {
-
-            if (newHeader)
-            {
-                return GetSIPRequest(new SIPToHeader(toSIPToHeader.ToName, toSIPToHeader.ToURI.CopyOf(), null), new SIPFromHeader(fromSIPFromHeader.FromName, fromSIPFromHeader.FromURI.CopyOf(), null), methodsEnum, ContentType);
-            }
-            else
-            {
-                return GetSIPRequest(toSIPToHeader, fromSIPFromHeader, methodsEnum, ContentType);
-
-            }
-        }
-        public SIPRequest GetSIPRequest(SIPToHeader To, SIPFromHeader From, SIPMethodsEnum methodsEnum = SIPMethodsEnum.MESSAGE, string ContentType = null)
-        {
-            SIPRequest req;
-            req = SIPRequest.GetRequest(methodsEnum, toSipUri, To, From);
-
-            req.Header.Allow = null;
-            req.Header.ContentType = ContentType;
-
-            req.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(null, m_contactURI) };
-            req.Header.CSeq = GetCseq();
-            req.Header.CSeqMethod = methodsEnum;
-            req.Header.CallId = m_callID;
-            req.Header.UserAgent = UserAgent;
-
-            return req;
-        }
-
-        #endregion
-
-        T TryParseJSON<T>(string strjson)
-        {
-            try
-            {
-                return strjson.ParseJSON<T>();
-            }
-            catch
-            {
-                return default(T);
-            }
-        }
+        #region 业务处理
         /// <summary>
         /// 上线处理
         /// </summary>
         /// <returns></returns>
-        async Task On_line()
+        async Task Online()
         {
             //从redis获取数据
             var gbdevs = await sipServer.RedisHelper.HashGetAllAsync(redisDevKey);
@@ -291,7 +173,7 @@ namespace SipServer
         /// 下线处理
         /// </summary>
         /// <returns></returns>
-        async Task Off_line()
+        async Task Offline()
         {
             Status.Online = false;
             Status.OfflineTime = DateTime.Now;
@@ -403,7 +285,7 @@ namespace SipServer
             if (!Status.Online)
             {
                 Status.Online = true;
-                await On_line();
+                await Online();
             }
 
         }
@@ -505,8 +387,7 @@ namespace SipServer
         }
         #endregion
 
-
-        #region
+        #region 发送
 
         /// <summary>
         /// 发送获取设备信息请求
@@ -537,6 +418,127 @@ namespace SipServer
             SIPResponse okResponse = GetSIPResponse(sipRequest);
             await SipTransport.SendResponseAsync(okResponse);
         }
+        #endregion
+
+        #region 其他
+        /// <summary>
+        /// 检查当前是否已超时
+        /// </summary>
+        /// <returns></returns>
+        public bool Check()
+        {
+            if (KeepAliveTime.DiffNowSec() >= sipServer.Settings.KeepAliveTimeoutSec)
+            {
+                return false;
+            }
+            if (RemoteEndPoint.Protocol == SIPProtocolsEnum.tcp)
+            {
+                return sipServer.sipTCPChannel.HasConnection(RemoteEndPoint);
+            }
+            return true;
+        }
+        /// <summary>
+        /// 释放
+        /// </summary>
+        public void Dispose()
+        {
+            if (isDispose)
+            {
+                return;
+            }
+            isDispose = true;
+            Offline();
+        }
+        /// <summary>
+        /// 获取Cseq
+        /// </summary>
+        /// <returns></returns>
+        int GetCseq()
+        {
+            lock (lckCseq)
+            {
+                if (m_cseq == int.MaxValue)
+                {
+                    m_cseq = 0;
+                }
+                else
+                {
+                    ++m_cseq;
+                }
+                return m_cseq;
+            }
+        }
+        /// <summary>
+        /// 获取SN
+        /// </summary>
+        /// <returns></returns>
+        int GetSN()
+        {
+            lock (lckSn)
+            {
+                if (_sn == int.MaxValue)
+                {
+                    _sn = 0;
+                }
+                else
+                {
+                    ++_sn;
+                }
+                return _sn;
+            }
+        }
+        T TryParseJSON<T>(string strjson)
+        {
+            try
+            {
+                return strjson.ParseJSON<T>();
+            }
+            catch
+            {
+                return default(T);
+            }
+        }
+
+        public SIPResponse GetSIPResponse(SIPRequest sipRequest, SIPResponseStatusCodesEnum messaageResponse = SIPResponseStatusCodesEnum.Ok)
+        {
+            SIPResponse res = SIPResponse.GetResponse(sipRequest, messaageResponse, null);
+            res.Header.Allow = null;
+            res.Header.UserAgent = UserAgent;
+
+            return res;
+        }
+
+        public SIPRequest GetSIPRequest(SIPMethodsEnum methodsEnum = SIPMethodsEnum.MESSAGE, string ContentType = null, bool newHeader = false)
+        {
+
+            if (newHeader)
+            {
+                return GetSIPRequest(new SIPToHeader(toSIPToHeader.ToName, toSIPToHeader.ToURI.CopyOf(), null), new SIPFromHeader(fromSIPFromHeader.FromName, fromSIPFromHeader.FromURI.CopyOf(), null), methodsEnum, ContentType);
+            }
+            else
+            {
+                return GetSIPRequest(toSIPToHeader, fromSIPFromHeader, methodsEnum, ContentType);
+
+            }
+        }
+        public SIPRequest GetSIPRequest(SIPToHeader To, SIPFromHeader From, SIPMethodsEnum methodsEnum = SIPMethodsEnum.MESSAGE, string ContentType = null)
+        {
+            SIPRequest req;
+            req = SIPRequest.GetRequest(methodsEnum, toSipUri, To, From);
+
+            req.Header.Allow = null;
+            req.Header.ContentType = ContentType;
+
+            req.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(null, m_contactURI) };
+            req.Header.CSeq = GetCseq();
+            req.Header.CSeqMethod = methodsEnum;
+            req.Header.CallId = m_callID;
+            req.Header.UserAgent = UserAgent;
+
+            return req;
+        }
+
+        #endregion
         #endregion
     }
 }
