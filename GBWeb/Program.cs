@@ -11,7 +11,7 @@ namespace GBWeb
 {
     public class Program
     {
-        static SipServer.SipServer sipServer = new SipServer.SipServer();
+        public static SipServer.SipServer sipServer = new SipServer.SipServer();
         public static void Main(string[] args)
         {
             SIPSorceryLog.RegSIPSorceryLogFactory();

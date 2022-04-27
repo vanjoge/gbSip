@@ -1,6 +1,8 @@
 ﻿using GB28181;
 using GB28181.Enums;
+using GB28181.MANSRTSP;
 using GB28181.XML;
+using JX;
 using SipServer.Models;
 using SIPSorcery.SIP;
 using SQ.Base;
@@ -8,12 +10,13 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace SipServer
 {
-    public class GBClient : IDisposable
+    public partial class GBClient : IDisposable
     {
         #region 变量、字段
         /// <summary>
@@ -60,7 +63,6 @@ namespace SipServer
 
         int m_cseq, _sn;
 
-        SIPTransport SipTransport => sipServer.SipTransport;
         SIPToHeader toSIPToHeader;
         SIPFromHeader fromSIPFromHeader;
         SIPURI toSipUri, m_contactURI;
@@ -73,7 +75,7 @@ namespace SipServer
         /// <summary>
         /// 设备目录
         /// </summary>
-        ConcurrentDictionary<string, Catalog.Item> deviceList = new ConcurrentDictionary<string, Catalog.Item>();
+        DeviceList deviceList = new DeviceList();
         /// <summary>
         /// 设备状态
         /// </summary>
@@ -88,7 +90,7 @@ namespace SipServer
 
         string redisDevKey
         {
-            get { return "Dev_" + DeviceId; }
+            get { return "GBDevInfo:" + DeviceId; }
         }
         #endregion
 
@@ -125,27 +127,27 @@ namespace SipServer
             //从redis获取数据
             var gbdevs = await sipServer.RedisHelper.HashGetAllAsync(redisDevKey);
 
-            foreach (var item in gbdevs)
+            foreach (var entry in gbdevs)
             {
-                if (item.Name == "DeviceInfo" && item.Value.HasValue)
+                if (entry.Name == "DeviceInfo" && entry.Value.HasValue)
                 {
-                    deviceInfo = TryParseJSON<DeviceInfo>(item.Value);
+                    deviceInfo = TryParseJSON<DeviceInfo>(entry.Value);
                 }
-                else if (item.Name == "DeviceList" && item.Value.HasValue)
+                else if (entry.Name == "DeviceList" && entry.Value.HasValue)
                 {
-                    var lst = TryParseJSON<List<Catalog.Item>>(item.Value);
-                    foreach (var ci in lst)
+                    var lst = TryParseJSON<List<CatalogItemExtend>>(entry.Value);
+                    foreach (var item in lst)
                     {
-                        deviceList.TryAdd(ci.DeviceID, ci);
+                        deviceList.AddOrUpdate(item);
                     }
                 }
-                else if (item.Name == "DeviceStatus" && item.Value.HasValue)
+                else if (entry.Name == "DeviceStatus" && entry.Value.HasValue)
                 {
-                    deviceStatus = TryParseJSON<DeviceStatus>(item.Value);
+                    deviceStatus = TryParseJSON<DeviceStatus>(entry.Value);
                 }
-                else if (item.Name == "Status")
+                else if (entry.Name == "Status")
                 {
-                    var status = TryParseJSON<ConnStatus>(item.Value);
+                    var status = TryParseJSON<ConnStatus>(entry.Value);
                     if (status != null)
                     {
                         Status = status;
@@ -212,7 +214,7 @@ namespace SipServer
                         var ack = GetSIPRequest(SIPMethodsEnum.ACK, newHeader: true);
                         ack.Header.From = sipResponse.Header.From;
                         ack.Header.To = sipResponse.Header.To;
-                        await SipTransport.SendRequestAsync(ack);
+                        await SendRequestAsync(ack);
                     }
                     break;
                 case SIPMethodsEnum.BYE:
@@ -290,6 +292,7 @@ namespace SipServer
 
         }
 
+
         /// <summary>
         /// 注册处理
         /// </summary>
@@ -306,7 +309,7 @@ namespace SipServer
             {
                 //注销设备
                 res.Header.Expires = 0;
-                await SipTransport.SendResponseAsync(res);
+                await SendResponseAsync(res);
                 sipServer.RemoveClient(DeviceId);
                 return false;
             }
@@ -314,7 +317,7 @@ namespace SipServer
             {
                 res.Header.Expires = 7200;
                 res.Header.Date = DateTime.Now.ToTStr();
-                await SipTransport.SendResponseAsync(res);
+                await SendResponseAsync(res);
                 return true;
             }
         }
@@ -352,12 +355,12 @@ namespace SipServer
                             var catalog = SerializableHelper.DeserializeByStr<Catalog>(sipRequest.Body);
                             foreach (var item in catalog.DeviceList)
                             {
-                                deviceList[item.DeviceID] = item;
+                                deviceList.AddOrUpdateDeviceList(item);
                             }
                             if (deviceList.Count == catalog.SumNum)
                             {
                                 //表示收全
-                                await sipServer.RedisHelper.HashSetAsync(redisDevKey, "DeviceList", deviceList.Values);
+                                await sipServer.RedisHelper.HashSetAsync(redisDevKey, "DeviceList", deviceList.ToList());
                             }
                             break;
                         case "DEVICEINFO":
@@ -371,6 +374,70 @@ namespace SipServer
                             await sipServer.RedisHelper.HashSetAsync(redisDevKey, "DeviceStatus", deviceStatus);
                             break;
                         case "RECORDINFO":
+                            var recordInfo = SerializableHelper.DeserializeByStr<RecordInfo>(sipRequest.Body);
+
+                            if (ditQueryRecordInfo.TryGetValue(recordInfo.SN, out var query))
+                            {
+                                if (recordInfo.SumNum == 0)
+                                {
+                                    ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
+                                }
+                                else
+                                {
+                                    List<RecordInfo.Item> lst = null;
+                                    if (recordInfo.SumNum > recordInfo.RecordList.Count)
+                                    {
+                                        query.lst.AddRange(recordInfo.RecordList);
+                                        if (recordInfo.SumNum <= query.lst.Count)
+                                        {
+                                            lst = query.lst;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        lst = recordInfo.RecordList;
+                                    }
+
+                                    if (lst != null)
+                                    {
+
+                                        var lstFile = new List<JTVideoFileListItem>();
+                                        foreach (var item in lst)
+                                        {
+                                            if (deviceList.TryGetChannel(item.DeviceID, out var channel))
+                                            {
+                                                uint size = 0;
+                                                uint.TryParse(item.FileSize, out size);
+                                                lstFile.Add(new JTVideoFileListItem
+                                                {
+                                                    Channel = channel,
+                                                    StartTime = Convert.ToDateTime(item.StartTime),
+                                                    EndTime = Convert.ToDateTime(item.EndTime),
+                                                    Alarm = 0,
+                                                    MediaType = 0,
+                                                    StreamType = 1,
+                                                    StorageType = MemoryType.MainMemory,
+                                                    FileSize = size
+                                                });
+                                            }
+                                        }
+
+                                        var ack = new VideoOrderAck()
+                                        {
+                                            Status = 1,
+                                            VideoList = new JTVideoListInfo
+                                            {
+                                                FileCount = (uint)lstFile.Count,
+                                                FileList = lstFile,
+                                                SerialNumber = query.SN808
+
+                                            }
+                                        };
+                                        await sipServer.RedisHelper.StringSetAsync("OCX_ORDERINFO_" + query.OrderId, ack, new TimeSpan(1, 0, 0));
+                                        ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
+                                    }
+                                }
+                            }
                             await SendOkMessage(sipRequest);
                             break;
                         case "BROADCAST":
@@ -389,6 +456,14 @@ namespace SipServer
 
         #region 发送
 
+        async Task<SocketError> SendResponseAsync(SIPResponse sipResponse, bool waitForDns = false)
+        {
+            return await sipServer.SipTransport.SendResponseAsync(sipResponse, waitForDns);
+        }
+        async Task<SocketError> SendRequestAsync(SIPRequest sipRequest, bool waitForDns = false)
+        {
+            return await sipServer.SipTransport.SendRequestAsync(sipRequest, waitForDns);
+        }
         /// <summary>
         /// 发送获取设备信息请求
         /// </summary>
@@ -406,7 +481,7 @@ namespace SipServer
             };
             var req = GetSIPRequest(ContentType: Constant.Application_XML);
             req.Body = body.ToXmlStr();
-            await SipTransport.SendRequestAsync(req);
+            await SendRequestAsync(req);
         }
         /// <summary>
         /// 发送OK应答
@@ -416,11 +491,149 @@ namespace SipServer
         async Task SendOkMessage(SIPRequest sipRequest)
         {
             SIPResponse okResponse = GetSIPResponse(sipRequest);
-            await SipTransport.SendResponseAsync(okResponse);
+            await SendResponseAsync(okResponse);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="head"></param>
+        /// <param name="chid"></param>
+        /// <param name="qtype"></param>
+        /// <param name="dtStart"></param>
+        /// <param name="dtEnd"></param>
+        /// <returns></returns>
+        async Task<int> Send_GetRecordInfo(string chid, string qtype, DateTime dtStart, DateTime dtEnd)
+        {
+            var body = new RecordInfoQuery()
+            {
+                DeviceID = chid,
+                SN = GetSN(),
+                CmdType = CommandType.RecordInfo,
+                Secrecy = 0,
+                StartTime = dtStart,
+                EndTime = dtEnd,
+                Type = qtype,
+            };
+            var req = GetSIPRequest(ContentType: Constant.Application_XML);
+            req.Body = body.ToXmlStr();
+            await SendRequestAsync(req);
+            return body.SN;
+        }
+        /// <summary>
+        /// 发起实时视频
+        /// </summary>
+        /// <param name="chid"></param>
+        /// <param name="ssrc"></param>
+        /// <param name="fromTag"></param>
+        /// <returns></returns>
+        async Task Send_INVITE(string server, int rtpPort, string chid, string ssrc, string fromTag, SDP28181.RtpType rtpType = SDP28181.RtpType.TCP, SDP28181.SType sType = SDP28181.SType.Play, bool onlyAudio = false, SDP28181.MediaStreamStatus sendrecv = SDP28181.MediaStreamStatus.recvonly)
+        {
+            var req = GetSIPRequest(SIPMethodsEnum.INVITE, Constant.Application_SDP, true);
+            req.Header.From.FromTag = fromTag;
+            req.Header.To.ToURI.User = chid;
+            req.Header.To.ToTag = null;
+            req.Header.Subject = $"{chid}:{DateTime.Now.Ticks},{req.Header.From.FromURI.User}:0";
+
+            // var ip = Setting.ServerIP; SIPSorcery.Sys.NetServices.GetLocalAddressForRemote(RemoteEndPoint.Address).ToString();
+
+            req.Body = new SDP28181
+            {
+                owner = req.Header.From.FromURI.User,
+                //owner = chid,
+                ip = server,
+                onlyAudio = onlyAudio,
+                rtpPort = rtpPort,
+                rtpType = rtpType,
+                ssrc = ssrc,
+                sType = sType,
+                streamStatus = sendrecv,
+            }.GetSdp();
+
+
+            sipServer.SetTag(fromTag, new FromTagItem { Client = this, From = req.Header.From, To = req.Header.To });
+
+            await SendRequestAsync(req);
+        }
+
+        /// <summary>
+        /// 发起历史视频
+        /// </summary>
+        /// <param name="server"></param>
+        /// <param name="rtpPort"></param>
+        /// <param name="chid"></param>
+        /// <param name="ssrc"></param>
+        /// <param name="fromTag"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="rtpType"></param>
+        /// <param name="sType"></param>
+        /// <param name="onlyAudio"></param>
+        /// <returns></returns>
+        async Task Send_INVITE_BACK(string server, int rtpPort, string chid, string ssrc, string fromTag, long start, long end, SDP28181.RtpType rtpType = SDP28181.RtpType.TCP, SDP28181.SType sType = SDP28181.SType.Playback, bool onlyAudio = false)
+        {
+            var req = GetSIPRequest(SIPMethodsEnum.INVITE, Constant.Application_SDP, true);
+            req.Header.From.FromTag = fromTag;
+            req.Header.To.ToURI.User = chid;
+            req.Header.To.ToTag = null;
+            req.Header.Subject = $"{chid}:{DateTime.Now.Ticks},{req.Header.From.FromURI.User}:0";
+
+
+            req.Body = new SDP28181
+            {
+                owner = req.Header.From.FromURI.User,
+                ip = server,
+                onlyAudio = onlyAudio,
+                rtpPort = rtpPort,
+                rtpType = rtpType,
+                ssrc = ssrc,
+                sType = sType,
+                u = chid,
+                tStart = start,
+                tEnd = end,
+            }.GetSdp();
+            sipServer.SetTag(fromTag, new FromTagItem { Client = this, From = req.Header.From, To = req.Header.To });
+
+            await SendRequestAsync(req);
+        }
+
+        /// <summary>
+        /// 发送视频关闭
+        /// </summary>
+        /// <param name="fromTag"></param>
+        /// <returns></returns>
+        async Task Send_Bye(string fromTag)
+        {
+            SIPRequest req;
+            if (sipServer.TryGetTag(fromTag, out var tag))
+            {
+                req = GetSIPRequest(tag.To, tag.From, SIPMethodsEnum.BYE);
+            }
+            else
+            {
+                req = GetSIPRequest(SIPMethodsEnum.BYE, newHeader: true);
+                req.Header.From.FromTag = fromTag;
+            }
+            await SendRequestAsync(req);
+        }
+        /// <summary>
+        /// 发送MANSRTSP
+        /// </summary>
+        /// <param name="fromTag"></param>
+        /// <param name="mrtsp"></param>
+        /// <returns></returns>
+        async Task Send_MANSRTSP(string fromTag, MrtspRequest mrtsp)
+        {
+            if (sipServer.TryGetTag(fromTag, out var tag))
+            {
+                var req = GetSIPRequest(tag.To, tag.From, SIPMethodsEnum.INFO, Constant.Application_MANSRTSP);
+                req.Body = mrtsp.ToString();
+                await SendRequestAsync(req);
+            }
         }
         #endregion
 
         #region 其他
+
         /// <summary>
         /// 检查当前是否已超时
         /// </summary>

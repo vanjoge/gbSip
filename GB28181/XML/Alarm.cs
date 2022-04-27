@@ -58,16 +58,16 @@ namespace GB28181.XML
         public string AlarmType { get; set; }
 
         /// <summary>
-        /// 报警发生开始时间
+        /// 报警发生开始时间(可选)
         /// </summary>
         [XmlElement(nameof(StartAlarmTime))]
-        public DateTime StartAlarmTime { get; set; }
+        public string StartAlarmTime { get; set; }
 
         /// <summary>
-        /// 报警发生结束时间
+        /// 报警发生结束时间(可选)
         /// </summary>
         [XmlElement(nameof(EndAlarmTime))]
-        public DateTime EndAlarmTime { get; set; }
+        public string EndAlarmTime { get; set; }
     }
 
     /// <summary>

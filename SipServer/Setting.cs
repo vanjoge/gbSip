@@ -47,7 +47,7 @@ namespace SipServer
         {
             ServerIP = "127.0.0.1";
             SipPort = 5060;
-            RedisExchangeHosts = "127.0.0.1:6379,connectTimeout=20000,syncTimeout=20000,responseTimeout=20000,defaultDatabase=1,password=";
+            RedisExchangeHosts = "127.0.0.1:6379,connectTimeout=20000,syncTimeout=20000,responseTimeout=20000,defaultDatabase=0,password=";
             KeepAliveTimeoutSec = 180;
 #if DEBUG
             EnableSipLog = true;

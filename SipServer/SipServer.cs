@@ -1,4 +1,5 @@
-﻿using SIPSorcery.SIP;
+﻿using JX;
+using SIPSorcery.SIP;
 using SQ.Base;
 using System;
 using System.Collections.Concurrent;
@@ -23,10 +24,14 @@ namespace SipServer
         /// 客户端列表
         /// </summary>
         ConcurrentDictionary<string, GBClient> ditClient = new ConcurrentDictionary<string, GBClient>();
+
+
         /// <summary>
         /// SIP监听(包含TCP、UDPV4、UDPV6)
         /// </summary>
         public SIPTransport SipTransport { get; protected set; }
+
+
         /// <summary>
         /// SIP TCP监听
         /// </summary>
@@ -52,6 +57,11 @@ namespace SipServer
         /// Redis操作类
         /// </summary>
         public RedisHelp.RedisHelper RedisHelper;
+        /// <summary>
+        /// 当前SSRC值
+        /// </summary>
+        int nowSSRC = 0;
+        object lckSSRC = new object();
         #endregion
 
 
@@ -89,7 +99,7 @@ namespace SipServer
             Console.WriteLine($"EnableSipLog:{Settings.EnableSipLog}");
 
             RedisHelper = new RedisHelp.RedisHelper(-1, Settings.RedisExchangeHosts);
-            RedisHelper.SetSysCustomKey("GB_");
+            RedisHelper.SetSysCustomKey("");
 
             thCheck = new SQ.Base.ThreadWhile<object>();
             thCheck.SleepMs = 1000;
@@ -162,7 +172,15 @@ namespace SipServer
         }
         #endregion
 
-        #region 逻辑  
+        #region 逻辑 
+        public string GetNewSSRC(string chid, bool back)
+        {
+            lock (lckSSRC)
+            {
+                return (back ? "1" : "0") + chid.Substring(4, 5) + (++nowSSRC).ToString().StrFixLen(4);
+            }
+
+        }
         /// <summary>
         /// 设置需响应的FromTag
         /// </summary>
@@ -261,6 +279,33 @@ namespace SipServer
 
 
 
+        #endregion
+
+        #region RTVS1078接口处理
+
+        public async Task<string> HandleJT1078(string Hex, bool isSuperiorPlatformSend)
+        {
+            try
+            {
+
+                var bts = ByteHelper.HexStringToBytes(Hex);
+                var head = JTHeader.NewEntity(bts);
+                if (ditClient.TryGetValue(head.Sim, out var client))
+                {
+                    return await client.HandleJT1078(isSuperiorPlatformSend, head, bts);
+                }
+                return GBClient.VideoControlOffline;
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog4Ex("Send1078ToDev", ex);
+                return GBClient.VideoControlFail;
+            }
+        }
+        public async Task<string> HandleJT1078_0x9105(string content)
+        {
+            return GBClient.VideoControlSuccess;
+        }
         #endregion
 
         #endregion

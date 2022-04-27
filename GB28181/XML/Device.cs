@@ -473,7 +473,7 @@ namespace GB28181.XML
         /// 设备时间和日期(可选)
         /// </summary>
         [XmlElement(nameof(DeviceTime))]
-        public DateTime DeviceTime { get; set; }
+        public string DeviceTime { get; set; }
 
         /// <summary>
         /// 报警设备状态列表, num表示列表项个数(可选)

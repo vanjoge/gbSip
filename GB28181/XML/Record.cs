@@ -1,6 +1,6 @@
-﻿using System;
+﻿using GB28181.Enums;
+using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Text;
 using System.Xml.Serialization;
 
@@ -117,12 +117,11 @@ namespace GB28181.XML
         /// </summary>
         [XmlElement(nameof(SumNum))]
         public int SumNum { get; set; }
-
-        // TODO: 这个地方大概率有问题, 甚至不知道怎么写
-        public class RecordListBody
-        {
-            public NList<Item> Item { get; set; }
-        }
+        /// <summary>
+        /// 文件目录项列表,Num 表示目录项个数
+        /// </summary>
+        [XmlElement(nameof(RecordList))]
+        public NList<Item> RecordList { get; set; }
 
         public class Item
         {
@@ -154,13 +153,13 @@ namespace GB28181.XML
             /// 录像开始时间(可选)
             /// </summary>
             [XmlElement(nameof(StartTime))]
-            public DateTime StartTime { get; set; }
+            public string StartTime { get; set; }
 
             /// <summary>
             /// 录像结束时间(可选)
             /// </summary>
             [XmlElement(nameof(EndTime))]
-            public DateTime EndTime { get; set; }
+            public string EndTime { get; set; }
 
             /// <summary>
             /// 保密属性(必选)
