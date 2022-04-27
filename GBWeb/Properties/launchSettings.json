@@ -18,12 +18,11 @@
     },
     "GBWeb": {
       "commandName": "Project",
-      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation"
       },
-      "applicationUrl": "http://192.168.110.237:5005"
+      "applicationUrl": "http://0.0.0.0:5005"
     }
   }
 }
