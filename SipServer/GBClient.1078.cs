@@ -45,24 +45,24 @@ namespace SipServer
         /// 处理入口
         /// </summary>
         /// <param name="isSuperiorPlatformSend"></param>
-        /// <param name="head"></param>
+        /// <param name="head">808头</param>
         /// <param name="bts"></param>
+        /// <param name="direct2IPC">表示是否直接是下级设备 为true时直接用SIM下发 无需根据Channel查找</param>
         /// <returns></returns>
-        internal async Task<string> HandleJT1078(bool isSuperiorPlatformSend, JTHeader head, byte[] bts)
+        internal async Task<string> HandleJT1078(bool isSuperiorPlatformSend, JTHeader head, byte[] bts, bool direct2IPC)
         {
             switch (head.MsgId)
             {
                 case 0x9101:
-                    return await JX9101(head, bts);
+                    return await JX9101(head, bts, direct2IPC);
                 case 0x9102://音视频实时传输控制
                     return await JX9102(head, bts);
                 case 0x9201://平台下发远程录像回放请求
-                    return await JX9201(head, bts);
-
+                    return await JX9201(head, bts, direct2IPC);
                 case 0x9202://平台下发远程录像回放控制
                     return await JX9202(head, bts);
                 case 0x9205://查询回放文件
-                    return await JX9205(head, bts);
+                    return await JX9205(head, bts, direct2IPC);
                 default:
                     break;
             }
@@ -110,7 +110,7 @@ namespace SipServer
         /// <param name="head"></param>
         /// <param name="bts"></param>
         /// <returns></returns>
-        async Task<string> JX9101(JTHeader head, byte[] bts)
+        async Task<string> JX9101(JTHeader head, byte[] bts, bool direct2IPC)
         {
             var req = JTRealVideoTransferRequest.NewEntity(bts, head.HeadLen);
 
@@ -126,7 +126,16 @@ namespace SipServer
                 key += "_RA";
                 isRA = true;
             }
-            if (req.Channel <= deviceList.Count && deviceList.TryGetCHID(req.Channel, out var chid) && GetRtpTypeAndPort(req.TcpPort, req.UdpPort, out var port, out var rtpType))
+            string chid = null;
+            if (direct2IPC)
+            {
+                chid = head.Sim;
+            }
+            else if (req.Channel <= deviceList.Count)
+            {
+                deviceList.TryGetCHID(req.Channel, out chid);
+            }
+            if (chid != null && GetRtpTypeAndPort(req.TcpPort, req.UdpPort, out var port, out var rtpType))
             {
                 if (ditInvTag.TryGetValue(key, out var item))
                 {
@@ -236,43 +245,51 @@ namespace SipServer
         /// <param name="head"></param>
         /// <param name="bts"></param>
         /// <returns></returns>
-        async Task<string> JX9201(JTHeader head, byte[] bts)
+        async Task<string> JX9201(JTHeader head, byte[] bts, bool direct2IPC)
         {
             var req = JTVideoPlaybackRequest.NewEntity(bts, head.HeadLen);
-            if (req.Channel <= deviceList.Count)
+
+            string chid = null;
+            if (direct2IPC)
+            {
+                chid = head.Sim;
+            }
+            else if (req.Channel <= deviceList.Count)
             {
                 if (req.Channel == 0)
                 {
                     req.Channel = 1;
                 }
-                if (deviceList.TryGetCHID(req.Channel, out var chid) && GetRtpTypeAndPort(req.TcpPort, req.UdpPort, out var port, out var rtpType))
+                deviceList.TryGetCHID(req.Channel, out chid);
+            }
+
+            if (chid != null && GetRtpTypeAndPort(req.TcpPort, req.UdpPort, out var port, out var rtpType))
+            {
+                if (req.MediaType == AudioVideoFlag.VideoOrAudioVideo)
                 {
-                    if (req.MediaType == AudioVideoFlag.VideoOrAudioVideo)
-                    {
-                        req.MediaType = AudioVideoFlag.AudioVideo;
-                    }
-                    if (req.StorageType == MemoryType.AllMemory)
-                    {
-                        req.StorageType = MemoryType.MainMemory;
-                    }
-                    var key = head.Sim + "_" + req.Channel + "_H" + req.StartTime.Ticks + "_" + req.EndTime;
-
-                    var dtEnd = req.EndTime.UNIXtoDateTime();
-                    var orderid = await Send_GetRecordInfo2(head, chid, "all", req.StartTime, dtEnd);
-
-                    if (ditInvTag.TryGetValue(key, out var item))
-                    {
-                        await Send_Bye(item.fromTag);
-                    }
-                    var ssrc = sipServer.GetNewSSRC(chid, true);
-                    var fromTag = "INVITEBack_" + CallProperties.CreateNewTag();
-
-                    ditInvTag[key] = new InvCache { fromTag = fromTag, dtStart = req.StartTime, dtEnd = dtEnd };
-
-
-                    await Send_INVITE_BACK(req.IPAddress, port, chid, ssrc, fromTag, req.StartTime.DateTimeToUNIX_long(), req.EndTime, rtpType);
-                    return orderid;
+                    req.MediaType = AudioVideoFlag.AudioVideo;
                 }
+                if (req.StorageType == MemoryType.AllMemory)
+                {
+                    req.StorageType = MemoryType.MainMemory;
+                }
+                var key = head.Sim + "_" + req.Channel + "_H" + req.StartTime.Ticks + "_" + req.EndTime;
+
+                var dtEnd = req.EndTime.UNIXtoDateTime();
+                var orderid = await Send_GetRecordInfo2(head, chid, "all", req.StartTime, dtEnd);
+
+                if (ditInvTag.TryGetValue(key, out var item))
+                {
+                    await Send_Bye(item.fromTag);
+                }
+                var ssrc = sipServer.GetNewSSRC(chid, true);
+                var fromTag = "INVITEBack_" + CallProperties.CreateNewTag();
+
+                ditInvTag[key] = new InvCache { fromTag = fromTag, dtStart = req.StartTime, dtEnd = dtEnd };
+
+
+                await Send_INVITE_BACK(req.IPAddress, port, chid, ssrc, fromTag, req.StartTime.DateTimeToUNIX_long(), req.EndTime, rtpType);
+                return orderid;
             }
             return VideoControlFail;
         }
@@ -380,13 +397,17 @@ namespace SipServer
         /// <param name="head"></param>
         /// <param name="bts"></param>
         /// <returns></returns>
-        async Task<string> JX9205(JTHeader head, byte[] bts)
+        async Task<string> JX9205(JTHeader head, byte[] bts, bool direct2IPC)
         {
             JTQueryVideoFileList qvf = JTQueryVideoFileList.NewEntity(bts, head.HeadLen);
 
             string chid;
             string qtype = "all";
-            if (qvf.Channel == 0)
+            if (direct2IPC)
+            {
+                chid = head.Sim;
+            }
+            else if (qvf.Channel == 0)
             {
                 chid = this.DeviceId;
             }

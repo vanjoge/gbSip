@@ -24,7 +24,12 @@ namespace SipServer
         /// 客户端列表
         /// </summary>
         ConcurrentDictionary<string, GBClient> ditClient = new ConcurrentDictionary<string, GBClient>();
-
+        /// <summary>
+        /// 根据子级获取父级ID
+        /// Key:设备目录项ID
+        /// Value:设备ID
+        /// </summary>
+        ConcurrentDictionary<string, string> ditReverseTree = new ConcurrentDictionary<string, string>();
 
         /// <summary>
         /// SIP监听(包含TCP、UDPV4、UDPV6)
@@ -179,7 +184,19 @@ namespace SipServer
             {
                 return (back ? "1" : "0") + chid.Substring(4, 5) + (++nowSSRC).ToString().StrFixLen(4);
             }
-
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="childID"></param>
+        /// <param name="deviceID"></param>
+        public void SetTree(string childID, string deviceID)
+        {
+            ditReverseTree[childID] = deviceID;
+        }
+        public void RemoveTree(string childID)
+        {
+            ditReverseTree.TryRemove(childID, out var item);
         }
         /// <summary>
         /// 设置需响应的FromTag
@@ -290,9 +307,15 @@ namespace SipServer
 
                 var bts = ByteHelper.HexStringToBytes(Hex);
                 var head = JTHeader.NewEntity(bts);
-                if (ditClient.TryGetValue(head.Sim, out var client))
+
+                //优先匹配直接按子级发送
+                if (ditReverseTree.TryGetValue(head.Sim, out var deviceid) && ditClient.TryGetValue(deviceid, out var client))
                 {
-                    return await client.HandleJT1078(isSuperiorPlatformSend, head, bts);
+                    return await client.HandleJT1078(isSuperiorPlatformSend, head, bts, true);
+                }
+                if (ditClient.TryGetValue(head.Sim, out client))
+                {
+                    return await client.HandleJT1078(isSuperiorPlatformSend, head, bts, false);
                 }
                 return GBClient.VideoControlOffline;
             }

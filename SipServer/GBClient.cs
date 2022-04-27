@@ -138,6 +138,7 @@ namespace SipServer
                     var lst = TryParseJSON<List<CatalogItemExtend>>(entry.Value);
                     foreach (var item in lst)
                     {
+                        sipServer.SetTree(item.Item.DeviceID, DeviceId);
                         deviceList.AddOrUpdate(item);
                     }
                 }
@@ -180,6 +181,10 @@ namespace SipServer
             Status.Online = false;
             Status.OfflineTime = DateTime.Now;
             await sipServer.RedisHelper.HashSetAsync(redisDevKey, "Status", Status);
+            foreach (var item in deviceList.ToList())
+            {
+                sipServer.RemoveTree(item.Item.DeviceID);
+            }
         }
         #endregion
 
@@ -355,6 +360,7 @@ namespace SipServer
                             var catalog = SerializableHelper.DeserializeByStr<Catalog>(sipRequest.Body);
                             foreach (var item in catalog.DeviceList)
                             {
+                                sipServer.SetTree(item.DeviceID, DeviceId);
                                 deviceList.AddOrUpdateDeviceList(item);
                             }
                             if (deviceList.Count == catalog.SumNum)
@@ -381,6 +387,16 @@ namespace SipServer
                                 if (recordInfo.SumNum == 0)
                                 {
                                     ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
+                                    await sipServer.RedisHelper.StringSetAsync("OCX_ORDERINFO_" + query.OrderId, new VideoOrderAck
+                                    {
+                                        Status = 1,
+                                        VideoList = new JTVideoListInfo
+                                        {
+                                            SerialNumber = query.SN808,
+                                            FileCount = 0,
+                                            FileList = new List<JTVideoFileListItem>()
+                                        }
+                                    }, new TimeSpan(1, 0, 0));
                                 }
                                 else
                                 {
