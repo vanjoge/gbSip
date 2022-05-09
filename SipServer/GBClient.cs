@@ -90,7 +90,7 @@ namespace SipServer
 
         string redisDevKey
         {
-            get { return "GBDevInfo:" + DeviceId; }
+            get { return RedisConstant.DevInfoHead + DeviceId; }
         }
         #endregion
 
@@ -129,11 +129,11 @@ namespace SipServer
 
             foreach (var entry in gbdevs)
             {
-                if (entry.Name == "DeviceInfo" && entry.Value.HasValue)
+                if (entry.Name == RedisConstant.DeviceInfoKey && entry.Value.HasValue)
                 {
                     deviceInfo = TryParseJSON<DeviceInfo>(entry.Value);
                 }
-                else if (entry.Name == "DeviceList" && entry.Value.HasValue)
+                else if (entry.Name == RedisConstant.DeviceListKey && entry.Value.HasValue)
                 {
                     var lst = TryParseJSON<List<CatalogItemExtend>>(entry.Value);
                     foreach (var item in lst)
@@ -142,11 +142,11 @@ namespace SipServer
                         deviceList.AddOrUpdate(item);
                     }
                 }
-                else if (entry.Name == "DeviceStatus" && entry.Value.HasValue)
+                else if (entry.Name == RedisConstant.DeviceStatusKey && entry.Value.HasValue)
                 {
                     deviceStatus = TryParseJSON<DeviceStatus>(entry.Value);
                 }
-                else if (entry.Name == "Status")
+                else if (entry.Name == RedisConstant.StatusKey)
                 {
                     var status = TryParseJSON<ConnStatus>(entry.Value);
                     if (status != null)
@@ -169,7 +169,7 @@ namespace SipServer
 
             await Send_GetDevCommand(CommandType.DeviceStatus);
 
-            await sipServer.RedisHelper.HashSetAsync(redisDevKey, "Status", Status);
+            await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.StatusKey, Status);
 
         }
         /// <summary>
@@ -180,7 +180,7 @@ namespace SipServer
         {
             Status.Online = false;
             Status.OfflineTime = DateTime.Now;
-            await sipServer.RedisHelper.HashSetAsync(redisDevKey, "Status", Status);
+            await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.StatusKey, Status);
             foreach (var item in deviceList.ToList())
             {
                 sipServer.RemoveTree(item.Item.DeviceID);
@@ -366,18 +366,19 @@ namespace SipServer
                             if (deviceList.Count == catalog.SumNum)
                             {
                                 //表示收全
-                                await sipServer.RedisHelper.HashSetAsync(redisDevKey, "DeviceList", deviceList.ToList());
+                                await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.DeviceListKey, deviceList.ToList());
                             }
                             break;
                         case "DEVICEINFO":
                             await SendOkMessage(sipRequest);
                             deviceInfo = SerializableHelper.DeserializeByStr<DeviceInfo>(sipRequest.Body);
-                            await sipServer.RedisHelper.HashSetAsync(redisDevKey, "DeviceInfo", deviceInfo);
+                            await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.DeviceInfoKey, deviceInfo);
+                            await sipServer.RedisHelper.SortedSetAddAsync(RedisConstant.DeviceIdsKey, DeviceId, Convert.ToDouble(DeviceId));
                             break;
                         case "DEVICESTATUS":
                             await SendOkMessage(sipRequest);
                             deviceStatus = SerializableHelper.DeserializeByStr<DeviceStatus>(sipRequest.Body);
-                            await sipServer.RedisHelper.HashSetAsync(redisDevKey, "DeviceStatus", deviceStatus);
+                            await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.DeviceStatusKey, deviceStatus);
                             break;
                         case "RECORDINFO":
                             var recordInfo = SerializableHelper.DeserializeByStr<RecordInfo>(sipRequest.Body);
@@ -387,7 +388,7 @@ namespace SipServer
                                 if (recordInfo.SumNum == 0)
                                 {
                                     ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
-                                    await sipServer.RedisHelper.StringSetAsync("OCX_ORDERINFO_" + query.OrderId, new VideoOrderAck
+                                    await sipServer.RedisHelper.StringSetAsync(RedisConstant.RTVSQueryRecordKey + query.OrderId, new VideoOrderAck
                                     {
                                         Status = 1,
                                         VideoList = new JTVideoListInfo
@@ -449,7 +450,7 @@ namespace SipServer
 
                                             }
                                         };
-                                        await sipServer.RedisHelper.StringSetAsync("OCX_ORDERINFO_" + query.OrderId, ack, new TimeSpan(1, 0, 0));
+                                        await sipServer.RedisHelper.StringSetAsync(RedisConstant.RTVSQueryRecordKey + query.OrderId, ack, new TimeSpan(1, 0, 0));
                                         ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
                                     }
                                 }
