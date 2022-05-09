@@ -160,7 +160,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? Parental { get; set; }
 
-            [XmlElement("Parental")]
+            [XmlElement("Parental"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string ParentalValue
             {
                 get => Parental.HasValue ? Parental.Value.ToString() : null;
@@ -185,7 +185,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? SafetyWay { get; set; }
 
-            [XmlElement("SafetyWay")]
+            [XmlElement("SafetyWay"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SafetyWayValue
             {
                 get => SafetyWay.HasValue ? SafetyWay.Value.ToString() : null;
@@ -198,7 +198,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? RegisterWay { get; set; }
 
-            [XmlElement("RegisterWay")]
+            [XmlElement("RegisterWay"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string RegisterWayValue
             {
                 get => RegisterWay.HasValue ? RegisterWay.Value.ToString() : null;
@@ -217,7 +217,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? Certifiable { get; set; }
 
-            [XmlElement("Certifiable")]
+            [XmlElement("Certifiable"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string CertifiableValue
             {
                 get
@@ -236,7 +236,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? ErrCode { get; set; }
 
-            [XmlElement("ErrCode")]
+            [XmlElement("ErrCode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string ErrCodeValue
             {
                 get
@@ -261,7 +261,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? Secrecy { get; set; }
 
-            [XmlElement("Secrecy")]
+            [XmlElement("Secrecy"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SecrecyValue
             {
                 get
@@ -286,7 +286,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public ushort? Port { get; set; }
 
-            [XmlElement("Port")]
+            [XmlElement("Port"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string PortValue
             {
                 get
@@ -317,7 +317,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public double? Longitude { get; set; }
 
-            [XmlElement("Longitude")]
+            [XmlElement("Longitude"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string LongitudeValue
             {
                 get
@@ -336,7 +336,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public double? Latitude { get; set; }
 
-            [XmlElement("Latitude")]
+            [XmlElement("Latitude"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string LatitudeValue
             {
                 get
@@ -367,7 +367,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? PTZType { get; set; }
 
-            [XmlElement("PTZType")]
+            [XmlElement("PTZType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string PTZTypeValue
             {
                 get
@@ -386,7 +386,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? PositionType { get; set; }
 
-            [XmlElement("PositionType")]
+            [XmlElement("PositionType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string PositionTypeValue
             {
                 get
@@ -405,7 +405,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? RoomType { get; set; }
 
-            [XmlElement("RoomType")]
+            [XmlElement("RoomType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string RoomTypeValue
             {
                 get
@@ -424,7 +424,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? UseType { get; set; }
 
-            [XmlElement("UseType")]
+            [XmlElement("UseType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string UseTypeValue
             {
                 get
@@ -443,7 +443,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? SupplyLightType { get; set; }
 
-            [XmlElement("SupplyLightType")]
+            [XmlElement("SupplyLightType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SupplyLightTypeValue
             {
                 get
@@ -462,7 +462,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? DirectionType { get; set; }
 
-            [XmlElement("DirectionType")]
+            [XmlElement("DirectionType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string DirectionTypeValue
             {
                 get
@@ -499,7 +499,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? SVCSpaceSupportMode { get; set; }
 
-            [XmlElement("SVCSpaceSupportMode")]
+            [XmlElement("SVCSpaceSupportMode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SVCSpaceSupportModeValue
             {
                 get
@@ -518,7 +518,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? SVCTimeSupportMode { get; set; }
 
-            [XmlElement("SVCTimeSupportMode")]
+            [XmlElement("SVCTimeSupportMode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SVCTimeSupportModeValue
             {
                 get
@@ -634,7 +634,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? Parental { get; set; }
 
-            [XmlElement("Parental")]
+            [XmlElement("Parental"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string ParentalValue
             {
                 get
@@ -665,7 +665,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? SafetyWay { get; set; }
 
-            [XmlElement("SafetyWay")]
+            [XmlElement("SafetyWay"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SafetyWayValue
             {
                 get
@@ -684,7 +684,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? RegisterWay { get; set; }
 
-            [XmlElement("RegisterWay")]
+            [XmlElement("RegisterWay"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string RegisterWayValue
             {
                 get
@@ -709,7 +709,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? Certifiable { get; set; }
 
-            [XmlElement("Certifiable")]
+            [XmlElement("Certifiable"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string CertifiableValue
             {
                 get
@@ -728,7 +728,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? ErrCode { get; set; }
 
-            [XmlElement("ErrCode")]
+            [XmlElement("ErrCode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string ErrCodeValue
             {
                 get
@@ -753,7 +753,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? Secrecy { get; set; }
 
-            [XmlElement("Secrecy")]
+            [XmlElement("Secrecy"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SecrecyValue
             {
                 get
@@ -778,7 +778,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public ushort? Port { get; set; }
 
-            [XmlElement("Port")]
+            [XmlElement("Port"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string PortValue
             {
                 get
@@ -809,7 +809,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public double? Longitude { get; set; }
 
-            [XmlElement("Longitude")]
+            [XmlElement("Longitude"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string LongitudeValue
             {
                 get => Longitude.HasValue ? Longitude.Value.ToString() : null;
@@ -822,7 +822,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public double? Latitude { get; set; }
 
-            [XmlElement("Latitude")]
+            [XmlElement("Latitude"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string LatitudeValue
             {
                 get
@@ -858,7 +858,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? PTZType { get; set; }
 
-            [XmlElement("PTZType")]
+            [XmlElement("PTZType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string PTZTypeValue
             {
                 get
@@ -877,7 +877,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? PositionType { get; set; }
 
-            [XmlElement("PositionType")]
+            [XmlElement("PositionType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string PositionTypeValue
             {
                 get => PositionType.HasValue ? PositionType.Value.ToString() : null;
@@ -890,7 +890,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? RoomType { get; set; }
 
-            [XmlElement("RoomType")]
+            [XmlElement("RoomType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string RoomTypeValue
             {
                 get
@@ -909,7 +909,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? UseType { get; set; }
 
-            [XmlElement("UseType")]
+            [XmlElement("UseType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string UseTypeValue
             {
                 get
@@ -928,7 +928,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? SupplyLightType { get; set; }
 
-            [XmlElement("SupplyLightType")]
+            [XmlElement("SupplyLightType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SupplyLightTypeValue
             {
                 get => SupplyLightType.HasValue ? SupplyLightType.Value.ToString() : null;
@@ -941,7 +941,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? DirectionType { get; set; }
 
-            [XmlElement("DirectionType")]
+            [XmlElement("DirectionType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string DirectionTypeValue
             {
                 get => DirectionType.HasValue ? DirectionType.Value.ToString() : null;
@@ -972,7 +972,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? SVCSpaceSupportMode { get; set; }
 
-            [XmlElement("SVCSpaceSupportMode")]
+            [XmlElement("SVCSpaceSupportMode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SVCSpaceSupportModeValue
             {
                 get => SVCSpaceSupportMode.HasValue ? SVCSpaceSupportMode.Value.ToString() : null;
@@ -985,7 +985,7 @@ namespace GB28181.XML
             [XmlIgnore]
             public int? SVCTimeSupportMode { get; set; }
 
-            [XmlElement("SVCTimeSupportMode")]
+            [XmlElement("SVCTimeSupportMode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
             public string SVCTimeSupportModeValue
             {
                 get => SVCTimeSupportMode.HasValue ? SVCTimeSupportMode.Value.ToString() : null;

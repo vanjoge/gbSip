@@ -4,8 +4,13 @@
     <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DocumentationFile>$(OutDir)\GB28181.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="SIPSorcery" Version="6.0.6" />
     <PackageReference Include="SQ.Base" Version="2.4.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.3" />
   </ItemGroup>
 </Project>
