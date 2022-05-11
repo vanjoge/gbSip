@@ -10,6 +10,18 @@ namespace GB28181.XML
 {
     public class NList<T> : List<T>, IXmlSerializable
     {
+        public NList()
+        {
+
+        }
+        public NList(int capacity) : base(capacity)
+        {
+
+        }
+        public NList(IEnumerable<T> collection) : base(collection)
+        {
+
+        }
         public XmlSchema GetSchema()
         {
             return null;

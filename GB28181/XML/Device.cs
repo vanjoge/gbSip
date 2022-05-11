@@ -389,7 +389,11 @@ namespace GB28181.XML
         // TODO: XML类型为 normalizedString
         [XmlElement(nameof(Manufacturer))]
         public string Manufacturer { get; set; }
-
+        /// <summary>
+        /// 设备型号(可选)
+        /// </summary>
+        [XmlElement(nameof(Model))]
+        public string Model { get; set; }
         /// <summary>
         /// 设备固件版本(可选)
         /// </summary>
@@ -402,11 +406,11 @@ namespace GB28181.XML
         [XmlElement(nameof(Channel))]
         public int Channel { get; set; }
 
-        /// <summary>
-        /// 扩展信息, 可多项
-        /// </summary>
-        [XmlElement(nameof(Info))]
-        public Catalog.Info Info { get; set; }
+        ///// <summary>
+        ///// 扩展信息, 可多项
+        ///// </summary>
+        //[XmlElement(nameof(Info))]
+        //public Catalog.Info Info { get; set; }
     }
 
     /// <summary>

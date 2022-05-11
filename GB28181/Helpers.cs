@@ -21,5 +21,22 @@ namespace GB28181
 
             return str;
         }
+        /// <summary>
+        /// 忽略大小写匹配
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="cp"></param>
+        /// <returns></returns>
+        public static bool IgnoreEquals(this string str, string cp)
+        {
+            if (str == null)
+            {
+                return cp == null;
+            }
+            else
+            {
+                return str.Equals(cp, StringComparison.CurrentCultureIgnoreCase);
+            }
+        }
     }
 }

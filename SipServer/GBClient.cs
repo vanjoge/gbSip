@@ -543,7 +543,7 @@ namespace SipServer
         /// <param name="ssrc"></param>
         /// <param name="fromTag"></param>
         /// <returns></returns>
-        async Task Send_INVITE(string server, int rtpPort, string chid, string ssrc, string fromTag, SDP28181.RtpType rtpType = SDP28181.RtpType.TCP, SDP28181.SType sType = SDP28181.SType.Play, bool onlyAudio = false, SDP28181.MediaStreamStatus sendrecv = SDP28181.MediaStreamStatus.recvonly)
+        async Task Send_INVITE(string server, int rtpPort, string chid, string ssrc, string fromTag, SDP28181.RTPNetType rtpType = SDP28181.RTPNetType.TCP, SDP28181.PlayType sType = SDP28181.PlayType.Play, bool onlyAudio = false, SDP28181.MediaStreamStatus sendrecv = SDP28181.MediaStreamStatus.recvonly)
         {
             var req = GetSIPRequest(SIPMethodsEnum.INVITE, Constant.Application_SDP, true);
             req.Header.From.FromTag = fromTag;
@@ -552,19 +552,25 @@ namespace SipServer
             req.Header.Subject = $"{chid}:{DateTime.Now.Ticks},{req.Header.From.FromURI.User}:0";
 
             // var ip = Setting.ServerIP; SIPSorcery.Sys.NetServices.GetLocalAddressForRemote(RemoteEndPoint.Address).ToString();
-
-            req.Body = new SDP28181
+            SDP28181 sdp;
+            if (onlyAudio)
             {
-                owner = req.Header.From.FromURI.User,
-                //owner = chid,
-                ip = server,
-                onlyAudio = onlyAudio,
-                rtpPort = rtpPort,
-                rtpType = rtpType,
-                ssrc = ssrc,
-                sType = sType,
-                streamStatus = sendrecv,
-            }.GetSdp();
+                sdp = new SDP28181PCMA();
+            }
+            else
+            {
+                sdp = new SDP28181PS();
+            }
+            sdp.Owner = req.Header.From.FromURI.User;
+            //owner = chid,
+            sdp.RtpIp = server;
+            sdp.RtpPort = rtpPort;
+            sdp.NetType = rtpType;
+            sdp.SSRC = ssrc;
+            sdp.SType = sType;
+            sdp.streamStatus = sendrecv;
+            sdp.LocalIp = server;
+            req.Body = sdp.GetSdpStr();
 
 
             sipServer.SetTag(fromTag, new FromTagItem { Client = this, From = req.Header.From, To = req.Header.To });
@@ -586,7 +592,7 @@ namespace SipServer
         /// <param name="sType"></param>
         /// <param name="onlyAudio"></param>
         /// <returns></returns>
-        async Task Send_INVITE_BACK(string server, int rtpPort, string chid, string ssrc, string fromTag, long start, long end, SDP28181.RtpType rtpType = SDP28181.RtpType.TCP, SDP28181.SType sType = SDP28181.SType.Playback, bool onlyAudio = false)
+        async Task Send_INVITE_BACK(string server, int rtpPort, string chid, string ssrc, string fromTag, long start, long end, SDP28181.RTPNetType rtpType = SDP28181.RTPNetType.TCP, SDP28181.PlayType sType = SDP28181.PlayType.Playback, bool onlyAudio = false)
         {
             var req = GetSIPRequest(SIPMethodsEnum.INVITE, Constant.Application_SDP, true);
             req.Header.From.FromTag = fromTag;
@@ -594,20 +600,27 @@ namespace SipServer
             req.Header.To.ToTag = null;
             req.Header.Subject = $"{chid}:{DateTime.Now.Ticks},{req.Header.From.FromURI.User}:0";
 
-
-            req.Body = new SDP28181
+            SDP28181 sdp;
+            if (onlyAudio)
             {
-                owner = req.Header.From.FromURI.User,
-                ip = server,
-                onlyAudio = onlyAudio,
-                rtpPort = rtpPort,
-                rtpType = rtpType,
-                ssrc = ssrc,
-                sType = sType,
-                u = chid,
-                tStart = start,
-                tEnd = end,
-            }.GetSdp();
+                sdp = new SDP28181PCMA();
+            }
+            else
+            {
+                sdp = new SDP28181PS();
+            }
+            sdp.Owner = req.Header.From.FromURI.User;
+            sdp.RtpIp = server;
+            sdp.LocalIp = server;
+            sdp.RtpPort = rtpPort;
+            sdp.NetType = rtpType;
+            sdp.SSRC = ssrc;
+            sdp.SType = sType;
+            sdp.u = chid + ":0";
+            sdp.TStart = start;
+            sdp.TEnd = end;
+
+            req.Body = sdp.GetSdpStr();
             sipServer.SetTag(fromTag, new FromTagItem { Client = this, From = req.Header.From, To = req.Header.To });
 
             await SendRequestAsync(req);

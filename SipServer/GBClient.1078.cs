@@ -71,22 +71,22 @@ namespace SipServer
         }
 
 
-        bool GetRtpTypeAndPort(int TcpPort, int UdpPort, out int port, out SDP28181.RtpType rtpType)
+        bool GetRtpTypeAndPort(int TcpPort, int UdpPort, out int port, out SDP28181.RTPNetType rtpType)
         {
             if (TcpPort > 0)
             {
                 port = TcpPort;
-                rtpType = SDP28181.RtpType.TCP;
+                rtpType = SDP28181.RTPNetType.TCP;
                 return true;
             }
             else if (UdpPort > 0)
             {
                 port = UdpPort;
-                rtpType = SDP28181.RtpType.UDP;
+                rtpType = SDP28181.RTPNetType.UDP;
                 return true;
             }
             port = 0;
-            rtpType = SDP28181.RtpType.TCP;
+            rtpType = SDP28181.RTPNetType.TCP;
             return false;
         }
 
@@ -148,7 +148,7 @@ namespace SipServer
 
                 if (req.DataType < 2)
                 {
-                    await Send_INVITE(req.IPAddress, port, chid, ssrc, fromTag, rtpType, GB28181.SDP28181.SType.Play);
+                    await Send_INVITE(req.IPAddress, port, chid, ssrc, fromTag, rtpType, GB28181.SDP28181.PlayType.Play);
                     return VideoControlSuccess;
                 }
                 else if (req.DataType < 5)
@@ -159,7 +159,7 @@ namespace SipServer
                     //    //await Send_Broadcast(DeviceId, chid);
                     //}
                     //else
-                    await Send_INVITE(req.IPAddress, port, chid, ssrc, fromTag, rtpType, GB28181.SDP28181.SType.Talk, true, GB28181.SDP28181.MediaStreamStatus.sendrecv);
+                    await Send_INVITE(req.IPAddress, port, chid, ssrc, fromTag, rtpType, GB28181.SDP28181.PlayType.Talk, true, GB28181.SDP28181.MediaStreamStatus.sendrecv);
                     return VideoControlSuccess;
                 }
             }
