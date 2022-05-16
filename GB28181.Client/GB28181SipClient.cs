@@ -293,7 +293,7 @@ namespace GB28181.Client
             }
             else
             {
-                await SendMessage(sipRequest, SIPResponseStatusCodesEnum.BadEvent);
+                await SendMessage(sipRequest, SIPResponseStatusCodesEnum.BusyHere);
             }
         }
 

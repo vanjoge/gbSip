@@ -13,9 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="JX">
-      <HintPath>..\DLL\JX.dll</HintPath>
-    </Reference>
     <Reference Include="RedisHelp">
       <HintPath>..\DLL\RedisHelp.dll</HintPath>
     </Reference>

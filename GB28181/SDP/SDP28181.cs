@@ -166,7 +166,7 @@ namespace GB28181
             foreach (var keyValue in RtpMaps)
             {
                 m += " " + keyValue.Key;
-                a += $"\r\nrtpmap:{keyValue.Key} {keyValue.Value.Name}/{keyValue.Value.ClockRate}";
+                a += $"\r\na=rtpmap:{keyValue.Key} {keyValue.Value.Name}/{keyValue.Value.ClockRate}";
             }
             if (NetType == RTPNetType.TCP)
             {
@@ -398,6 +398,7 @@ y={SSRC}{GetF()}
         {
             this.Media = MediaType.audio;
             this.RtpMaps.Add(8, new RTPMap { ClockRate = 8000, ID = 8, Name = "PCMA" });
+            this.f = "v/////a/1/8/1";
         }
     }
 }

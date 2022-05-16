@@ -17,8 +17,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.DeviceControl;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -185,8 +185,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.DeviceStatus;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -210,8 +210,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.DeviceInfo;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -235,8 +235,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.ConfigDownload;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -270,8 +270,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.PresetQuery;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -295,8 +295,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.MobilePosition;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -326,8 +326,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.DeviceControl;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -357,8 +357,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.DeviceInfo;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -422,8 +422,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.DeviceStatus;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -517,8 +517,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.DeviceConfig;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -548,8 +548,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.ConfigDownload;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -713,8 +713,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型: 设备控制(必选)
         /// </summary>
-        [XmlElement(nameof(CmdType))]
-        public CommandType CmdType { get; set; }
+        [XmlElement(nameof(CmdType)), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.PresetQuery;
 
         /// <summary>
         /// 命令序列号(必选)

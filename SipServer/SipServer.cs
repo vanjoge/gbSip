@@ -1,5 +1,4 @@
-﻿using JX;
-using SIPSorcery.SIP;
+﻿using SIPSorcery.SIP;
 using SQ.Base;
 using System;
 using System.Collections.Concurrent;
@@ -235,11 +234,7 @@ namespace SipServer
         {
             return sipRequest.Header.From.FromURI.User;
         }
-        GBClient GetSipClient(SIPRequest sipRequest)
-        {
-            ditClient.TryGetValue(GetSipDeviceId(sipRequest), out var client);
-            return client;
-        }
+        public bool TryGetClient(string key, out GBClient value) => ditClient.TryGetValue(key, out value);
         /// <summary>
         /// 移除Client
         /// </summary>
@@ -298,38 +293,6 @@ namespace SipServer
 
         #endregion
 
-        #region RTVS1078接口处理
-
-        public async Task<string> HandleJT1078(string Hex, bool isSuperiorPlatformSend)
-        {
-            try
-            {
-
-                var bts = ByteHelper.HexStringToBytes(Hex);
-                var head = JTHeader.NewEntity(bts);
-
-                //优先匹配直接按子级发送
-                if (ditReverseTree.TryGetValue(head.Sim, out var deviceid) && ditClient.TryGetValue(deviceid, out var client))
-                {
-                    return await client.HandleJT1078(isSuperiorPlatformSend, head, bts, true);
-                }
-                if (ditClient.TryGetValue(head.Sim, out client))
-                {
-                    return await client.HandleJT1078(isSuperiorPlatformSend, head, bts, false);
-                }
-                return GBClient.VideoControlOffline;
-            }
-            catch (Exception ex)
-            {
-                Log.WriteLog4Ex("Send1078ToDev", ex);
-                return GBClient.VideoControlFail;
-            }
-        }
-        public async Task<string> HandleJT1078_0x9105(string content)
-        {
-            return GBClient.VideoControlSuccess;
-        }
-        #endregion
 
         #endregion
     }

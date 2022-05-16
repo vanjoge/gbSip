@@ -42,7 +42,11 @@ namespace SipServer
         /// </summary>
         [DisplayName("离线超时时间")]
         public double KeepAliveTimeoutSec { get; set; }
-
+        /// <summary>
+        /// RTVS接口地址
+        /// </summary>
+        [DisplayName("RTVS接口地址")]
+        public string RTVSAPI { get; set; }
         public Setting()
         {
             ServerIP = "127.0.0.1";

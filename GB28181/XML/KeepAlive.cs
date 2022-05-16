@@ -13,8 +13,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型:设备状态信息报送(必选)
         /// </summary>
-        [XmlElement("CmdType")]
-        public CommandType CmdType { get; set; }
+        [XmlElement("CmdType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.Keepalive;
 
         /// <summary>
         /// 命令序列号(必选)

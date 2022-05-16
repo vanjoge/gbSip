@@ -14,8 +14,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型
         /// </summary>
-        [XmlElement("CmdType")]
-        public CommandType CmdType { get; set; }
+        [XmlElement("CmdType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.Catalog;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -542,8 +542,8 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型:目录订阅(必选)
         /// </summary>
-        [XmlElement("CmdType")]
-        public CommandType CmdType { get; set; }
+        [XmlElement("CmdType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.Catalog;
 
         /// <summary>
         /// 命令序列号(必选)
@@ -1003,7 +1003,7 @@ namespace GB28181.XML
         /// <summary>
         /// 命令类型
         /// </summary>
-        [XmlElement("CmdType")]
+        [XmlElement("CmdType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
         public CommandType CmdType { get; set; } = CommandType.Catalog;
 
         /// <summary>

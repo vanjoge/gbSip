@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GB28181.MANSRTSP;
+using GB28181.XML;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SQ.Base;
@@ -16,34 +18,129 @@ namespace GBWeb.Controllers
     [ApiController]
     public class RTVSController : ControllerBase
     {
-        /// <summary>
-        /// 808指令接口
-        /// </summary>
-        /// <param name="Content">808协议16进制字符串(包头+包体) 包头不含7E、未转义、流水号需要808平台替换</param>
-        /// <param name="IsSuperiorPlatformSend">是否是上级平台发送，网关可用此字段确定是否由上级平台发起。一般为true才会包含此字段，为false时此字段不传</param>
-        [HttpGet]
-        public async Task<string> VideoControl(string Content, bool IsSuperiorPlatformSend = false)
+        private string Base64ToStr(string base64)
         {
-            SQ.Base.Log.WriteLog4("VideoControl接口收到数据 Content=" + Content + (IsSuperiorPlatformSend ? "&IsSuperiorPlatformSend=true" : ""));
-            if (string.IsNullOrWhiteSpace(Content))
-            {
-                return "-1";
-            }
-            return await Program.sipServer.HandleJT1078(Content, IsSuperiorPlatformSend);
+            var buff = Convert.FromBase64String(base64);
+            return System.Text.Encoding.UTF8.GetString(buff);
         }
         /// <summary>
-        /// 0x9105实时音视频传输状态通知
+        /// 28181发起音视频请求
         /// </summary>
-        /// <param name="Content">JT0x9105SimItem 数组的JSON</param>
-        [HttpPost]
-        public async Task<string> WCF0x9105(string Content)
+        /// <param name="DeviceId">设备ID</param>
+        /// <param name="Channel">通道ID，一般是IPC的ID</param>
+        /// <param name="InviteID">请求ID，用以区分多次请求，可用做SIP的FromTag</param>
+        /// <param name="SDP">SDP信息，BASE64编码</param>
+        /// <param name="CTags">RTVS CTags</param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<string> INVITE(string DeviceId, string Channel, string InviteID, string SDP, string CTags)
         {
-            SQ.Base.Log.WriteLog4("WCF0x9105接口收到数据 Content=" + Content);
-            if (string.IsNullOrWhiteSpace(Content))
+            try
+            {
+                SQ.Base.Log.WriteLog4(this.HttpContext.Request.Path + this.HttpContext.Request.QueryString);
+                if (Program.sipServer.TryGetClient(DeviceId, out var client))
+                {
+                    await client.Send_INVITE(Channel, InviteID, Base64ToStr(SDP));
+                    return "1";
+                }
+                else
+                {
+                    return "0";
+                }
+            }
+            catch
             {
                 return "-1";
             }
-            return await Program.sipServer.HandleJT1078_0x9105(Content);
+        }
+        /// <summary>
+        /// 28181关闭音视频请求
+        /// </summary>
+        /// <param name="DeviceId">设备ID</param>
+        /// <param name="Channel">通道ID，一般是IPC的ID</param>
+        /// <param name="InviteID">请求ID，用以区分多次请求，可用做SIP的FromTag</param>
+        /// <param name="CTags">RTVS CTags</param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<string> BYE(string DeviceId, string Channel, string InviteID, string CTags)
+        {
+            try
+            {
+                SQ.Base.Log.WriteLog4(this.HttpContext.Request.Path + this.HttpContext.Request.QueryString);
+                if (Program.sipServer.TryGetClient(DeviceId, out var client))
+                {
+                    await client.Send_Bye(InviteID);
+                    return "1";
+                }
+                else
+                {
+                    return "0";
+                }
+            }
+            catch
+            {
+                return "-1";
+            }
+        }
+        /// <summary>
+        /// 发送MANSRTSP
+        /// </summary>
+        /// <param name="DeviceId">设备ID</param>
+        /// <param name="Channel">通道ID，一般是IPC的ID</param>
+        /// <param name="InviteID">请求ID，用以区分多次请求，可用做SIP的FromTag</param>
+        /// <param name="CTags">RTVS CTags</param>
+        /// <param name="MANSRTSP">MANSRTSP，BASE64编码</param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<string> MANSRTSP(string DeviceId, string Channel, string InviteID, string CTags, string MANSRTSP)
+        {
+            try
+            {
+                SQ.Base.Log.WriteLog4(this.HttpContext.Request.Path + this.HttpContext.Request.QueryString);
+                if (Program.sipServer.TryGetClient(DeviceId, out var client))
+                {
+                    await client.Send_MANSRTSP(InviteID, Base64ToStr(MANSRTSP));
+                    return "1";
+                }
+                else
+                {
+                    return "0";
+                }
+            }
+            catch
+            {
+                return "-1";
+            }
+        }
+
+        /// <summary>
+        /// 获取设备录像
+        /// </summary>
+        /// <param name="DeviceId"></param>
+        /// <param name="OrderId"></param>
+        /// <param name="CTags"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public async Task<string> GetRecordInfo(string DeviceId, string OrderId, string CTags, RecordInfoQuery query)
+        {
+            try
+            {
+                SQ.Base.Log.WriteLog4(this.HttpContext.Request.Path + this.HttpContext.Request.QueryString);
+                if (Program.sipServer.TryGetClient(DeviceId, out var client))
+                {
+                    await client.Send_GetRecordInfo(OrderId, query);
+                    return "1";
+                }
+                else
+                {
+                    return "0";
+                }
+            }
+            catch
+            {
+                return "-1";
+            }
         }
     }
 }
