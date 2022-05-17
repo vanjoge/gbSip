@@ -149,7 +149,10 @@ namespace GB28181
         /// f=
         /// </summary>
         public string f;
-
+        /// <summary>
+        /// 
+        /// </summary>
+        public int Downloadspeed = 4;
         public bool ASSRC = true;
         string GetRTP_AVP()
         {
@@ -170,9 +173,11 @@ namespace GB28181
             }
             if (NetType == RTPNetType.TCP)
             {
-                a += @"
-a=setup:passive
-a=connection:new";
+                a += "\r\na=setup:passive\r\na=connection:new";
+            }
+            if (SType == PlayType.Download && Downloadspeed > 0)
+            {
+                a += $"\r\na=downloadspeed:{Downloadspeed}";
             }
             if (ASSRC)
                 a += $"\r\na=ssrc:{SSRC.TrimStart('0')}";
@@ -207,11 +212,12 @@ y={SSRC}{GetF()}
         {
             foreach (Match mth in reg.Matches(sdp))
             {
+                var tstr = mth.Groups[2].Value.Trim();
                 switch (mth.Groups[1].Value.Trim())
                 {
                     case "o":
                         {
-                            var arr = mth.Groups[2].Value.Trim().Split(" ");
+                            var arr = tstr.Split(" ");
                             if (arr.Length >= 6)
                             {
                                 Owner = arr[0];
@@ -221,7 +227,7 @@ y={SSRC}{GetF()}
                         break;
                     case "s":
                         {
-                            if (Enum.TryParse<PlayType>(mth.Groups[2].Value.Trim(), true, out var res))
+                            if (Enum.TryParse<PlayType>(tstr, true, out var res))
                             {
                                 SType = res;
                             }
@@ -233,17 +239,17 @@ y={SSRC}{GetF()}
                         break;
                     case "u":
                         {
-                            u = mth.Groups[2].Value.Trim();
+                            u = tstr;
                         }
                         break;
                     case "f":
                         {
-                            f = mth.Groups[2].Value.Trim();
+                            f = tstr;
                         }
                         break;
                     case "c":
                         {
-                            var arr = mth.Groups[2].Value.Trim().Split(" ");
+                            var arr = tstr.Split(" ");
                             if (arr.Length >= 3)
                             {
                                 RtpIp = arr[2];
@@ -252,7 +258,7 @@ y={SSRC}{GetF()}
                         break;
                     case "t":
                         {
-                            var arr = mth.Groups[2].Value.Trim().Split(" ");
+                            var arr = tstr.Split(" ");
                             if (arr.Length >= 2)
                             {
                                 if (long.TryParse(arr[0], out var s) && long.TryParse(arr[1], out var e))
@@ -265,7 +271,7 @@ y={SSRC}{GetF()}
                         break;
                     case "m":
                         {
-                            var arr = mth.Groups[2].Value.Trim().Split(" ");
+                            var arr = tstr.Split(" ");
                             if (arr.Length >= 4)
                             {
                                 if ("audio".IgnoreEquals(arr[0]))
@@ -305,12 +311,12 @@ y={SSRC}{GetF()}
                         break;
                     case "y":
                         {
-                            SSRC = mth.Groups[2].Value.Trim();
+                            SSRC = tstr;
                         }
                         break;
                     case "a":
                         {
-                            var mth2 = regMap.Match(mth.Groups[2].Value.Trim());
+                            var mth2 = regMap.Match(tstr);
 
                             if (mth2.Success)
                             {
@@ -325,9 +331,16 @@ y={SSRC}{GetF()}
                                     };
                                 }
                             }
-                            else if (Enum.TryParse<MediaStreamStatus>(mth.Groups[2].Value.Trim(), true, out var mss))
+                            else if (Enum.TryParse<MediaStreamStatus>(tstr, true, out var mss))
                             {
                                 streamStatus = mss;
+                            }
+                            else
+                            {
+                                var idx = tstr.IndexOf("downloadspeed:");
+                                if (idx >= 0 && int.TryParse(tstr.Substring(idx + 14), out Downloadspeed))
+                                {
+                                }
                             }
                         }
                         break;
