@@ -59,10 +59,6 @@ namespace SipServer
         /// </summary>
         public Setting Settings { get; protected set; }
         /// <summary>
-        /// Redis操作类
-        /// </summary>
-        public RedisHelp.RedisHelper RedisHelper;
-        /// <summary>
         /// 当前SSRC值
         /// </summary>
         int nowSSRC = 0;
@@ -105,8 +101,6 @@ namespace SipServer
             Console.WriteLine($"SipPort:{Settings.SipPort}");
             Console.WriteLine($"EnableSipLog:{Settings.EnableSipLog}");
 
-            RedisHelper = new RedisHelp.RedisHelper(-1, Settings.RedisExchangeHosts);
-            RedisHelper.SetSysCustomKey("");
             DB = new DBInfo(this);
             thCheck = new SQ.Base.ThreadWhile<object>();
             thCheck.SleepMs = 1000;
@@ -154,7 +148,7 @@ namespace SipServer
                 {
                     using (cl)
                     {
-                        RemoveClient(cl.DeviceId);
+                        RemoveClient(cl.DeviceID);
                     }
                 }
             });
@@ -242,11 +236,11 @@ namespace SipServer
         /// 移除Client
         /// </summary>
         /// <param name="key"></param>
-        public void RemoveClient(string key)
+        public void RemoveClient(string key, bool updateDB = true)
         {
             if (ditClient.TryRemove(key, out var client))
             {
-                client.Dispose();
+                client.Dispose(updateDB);
             }
         }
         #endregion

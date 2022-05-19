@@ -21,19 +21,19 @@ namespace GBWeb.Controllers
         /// <summary>
         /// 获取设备信息
         /// </summary>
-        /// <param name="DeviceId">设备ID</param>
+        /// <param name="DeviceID">设备ID</param>
         /// <returns></returns>
         [HttpGet, HttpPost]
-        public async Task<DeviceInfo> GetDeviceInfo([FromCustom] string DeviceId)
+        public async Task<DeviceInfo> GetDeviceInfo([FromCustom] string DeviceID)
         {
-            return await Program.sipServer.DB.GetDeviceInfo(DeviceId);
+            return await Program.sipServer.DB.GetDeviceInfo(DeviceID);
         }
         /// <summary>
         /// 获取所有设备ID
         /// </summary>
         /// <returns></returns>
         [HttpGet, HttpPost]
-        public async Task<List<string>> GetAllDeviceId()
+        public async Task<List<string>> GetAllDeviceID()
         {
             return await Program.sipServer.DB.GetDeviceIds();
         }

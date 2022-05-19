@@ -18,7 +18,7 @@ namespace SipServer
     {
         class QueryRecordInfo
         {
-            public string OrderId;
+            public string OrderID;
             public RecordInfo Info;
             public int SNOld;
         }
@@ -27,11 +27,11 @@ namespace SipServer
         /// </summary>
         ConcurrentDictionary<int, QueryRecordInfo> ditQueryRecordInfo = new ConcurrentDictionary<int, QueryRecordInfo>();
 
-        private Task<string> ReportRecordInfo(string OrderId, RecordInfo recordInfo)
+        private Task<string> ReportRecordInfo(string OrderID, RecordInfo recordInfo)
         {
             var headers = new DictionaryEx<string, string>();
             headers.Add("Content-Type", "application/json");
-            return HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/RecordInfo?OrderId={OrderId}", true, System.Threading.CancellationToken.None, headers: headers, data: recordInfo.ToJson());
+            return HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/RecordInfo?OrderID={OrderID}", true, System.Threading.CancellationToken.None, headers: headers, data: recordInfo.ToJson());
         }
 
         private Task<string> AnsRTVSGetRecordInfo(RecordInfo recordInfo)
@@ -41,7 +41,7 @@ namespace SipServer
                 if (recordInfo.SumNum == 0)
                 {
                     ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
-                    return ReportRecordInfo(query.OrderId, recordInfo);
+                    return ReportRecordInfo(query.OrderID, recordInfo);
                 }
                 else
                 {
@@ -57,7 +57,7 @@ namespace SipServer
                     if (recordInfo.SumNum <= query.Info.RecordList.Count)
                     {
                         ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
-                        return ReportRecordInfo(query.OrderId, query.Info);
+                        return ReportRecordInfo(query.OrderID, query.Info);
                     }
                 }
             }

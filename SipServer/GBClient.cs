@@ -48,11 +48,11 @@ namespace SipServer
             }
         }
 
-        string LastServerId, LastDeviceId;
+        string LastServerID, LastDeviceID;
         /// <summary>
         /// 设备ID
         /// </summary>
-        public string DeviceId { get; set; }
+        public string DeviceID { get; set; }
         public SipServer sipServer;
 
 
@@ -85,23 +85,23 @@ namespace SipServer
 
         string redisDevKey
         {
-            get { return RedisConstant.DevInfoHead + DeviceId; }
+            get { return RedisConstant.DevInfoHead + DeviceID; }
         }
         #endregion
 
         #region 构造
-        public GBClient(SipServer sipServer, SIPSchemesEnum scheme, SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, string DeviceId, string ServerId, string ServerHost)
+        public GBClient(SipServer sipServer, SIPSchemesEnum scheme, SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, string DeviceID, string ServerID, string ServerHost)
         {
             m_contactURI = new SIPURI(scheme, IPAddress.Any, 0);
-            toSipUri = new SIPURI(scheme, remoteEndPoint) { User = DeviceId };
+            toSipUri = new SIPURI(scheme, remoteEndPoint) { User = DeviceID };
             toSIPToHeader = new SIPToHeader(null, toSipUri, null);
 
-            fromSIPFromHeader = new SIPFromHeader(null, new SIPURI(scheme, localSIPEndPoint) { User = ServerId }, CallProperties.CreateNewTag());
+            fromSIPFromHeader = new SIPFromHeader(null, new SIPURI(scheme, localSIPEndPoint) { User = ServerID }, CallProperties.CreateNewTag());
 
-            LastServerId = ServerId;
+            LastServerID = ServerID;
             this.sipServer = sipServer;
             RemoteEndPoint = remoteEndPoint;
-            this.DeviceId = DeviceId;
+            this.DeviceID = DeviceID;
             Status.KeepAliveTime = DateTime.Now;
             m_callID = CallProperties.CreateNewCallId();
             //this.ServerHost = System.Net.IPAddress.TryParse( ServerHost,out var ;
@@ -119,43 +119,25 @@ namespace SipServer
         /// <returns></returns>
         async Task Online()
         {
-            //从redis获取数据
-            var gbdevs = await sipServer.RedisHelper.HashGetAllAsync(redisDevKey);
-
-            foreach (var entry in gbdevs)
+            var tuple = await sipServer.DB.GetDevAll(DeviceID);
+            deviceInfo = tuple.Item1;
+            deviceStatus = tuple.Item3;
+            foreach (var item in tuple.Item2)
             {
-                if (entry.Name == RedisConstant.DeviceInfoKey && entry.Value.HasValue)
+                if (item != null && item.DeviceID != null)
                 {
-                    deviceInfo = TryParseJSON<DeviceInfo>(entry.Value);
-                }
-                else if (entry.Name == RedisConstant.ChannelsKey && entry.Value.HasValue)
-                {
-                    var lst = TryParseJSON<List<Catalog.Item>>(entry.Value);
-                    foreach (var item in lst)
-                    {
-                        if (item != null && item.DeviceID != null)
-                        {
-                            sipServer.SetTree(item.DeviceID, DeviceId);
-                            channels.AddOrUpdate(item);
-                        }
-                    }
-                }
-                else if (entry.Name == RedisConstant.DeviceStatusKey && entry.Value.HasValue)
-                {
-                    deviceStatus = TryParseJSON<DeviceStatus>(entry.Value);
-                }
-                else if (entry.Name == RedisConstant.StatusKey)
-                {
-                    var status = TryParseJSON<ConnStatus>(entry.Value);
-                    if (status != null)
-                    {
-                        Status.Online = status.Online;
-                        Status.CreateTime = status.CreateTime;
-                        Status.OnlineTime = status.OnlineTime;
-                        Status.OfflineTime = status.OfflineTime;
-                    }
+                    sipServer.SetTree(item.DeviceID, DeviceID);
+                    channels.AddOrUpdate(item);
                 }
             }
+            if (tuple.Item4 != null)
+            {
+                //Status.Online = tuple.Item4.Online;
+                Status.CreateTime = tuple.Item4.CreateTime;
+                //Status.OnlineTime = tuple.Item4.OnlineTime;
+                Status.OfflineTime = tuple.Item4.OfflineTime;
+            }
+
             Status.Online = true;
             Status.OnlineTime = DateTime.Now;
 
@@ -170,18 +152,21 @@ namespace SipServer
 
             await Send_GetDevCommand(CommandType.DeviceStatus);
 
-            await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.StatusKey, Status);
+            await sipServer.DB.SaveConnStatus(DeviceID, Status);
 
         }
         /// <summary>
         /// 下线处理
         /// </summary>
         /// <returns></returns>
-        async Task Offline()
+        async Task Offline(bool updateDB = true)
         {
             Status.Online = false;
             Status.OfflineTime = DateTime.Now;
-            await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.StatusKey, Status);
+            if (updateDB)
+            {
+                await sipServer.DB.SaveConnStatus(DeviceID, Status);
+            }
             foreach (var item in channels.ToList())
             {
                 sipServer.RemoveTree(item.DeviceID);
@@ -264,7 +249,7 @@ namespace SipServer
         /// <returns></returns>
         public async Task OnRequest(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
         {
-            LastServerId = sipRequest.Header.To.ToURI.User;
+            LastServerID = sipRequest.Header.To.ToURI.User;
 
             if (RemoteEndPoint != null && RemoteEndPoint != remoteEndPoint &&
                 RemoteEndPoint.Protocol == SIPProtocolsEnum.udp
@@ -272,7 +257,6 @@ namespace SipServer
             {
                 RemoteEndPoint = remoteEndPoint;
             }
-
             switch (sipRequest.Method)
             {
                 case SIPMethodsEnum.REGISTER:
@@ -287,7 +271,6 @@ namespace SipServer
                 default:
                     break;
             }
-
             Status.KeepAliveTime = DateTime.Now;
             //此处不严格要求注册认证，有数据上来就认为在线；如果要求注册认证，此处应增加判断
             if (!Status.Online)
@@ -295,9 +278,7 @@ namespace SipServer
                 Status.Online = true;
                 await Online();
             }
-
         }
-
 
         /// <summary>
         /// 注册处理
@@ -316,7 +297,7 @@ namespace SipServer
                 //注销设备
                 res.Header.Expires = 0;
                 await SendResponseAsync(res);
-                sipServer.RemoveClient(DeviceId);
+                sipServer.RemoveClient(DeviceID);
                 return false;
             }
             else
@@ -361,25 +342,24 @@ namespace SipServer
                             var catalog = SerializableHelper.DeserializeByStr<Catalog>(sipRequest.Body);
                             foreach (var item in catalog.DeviceList)
                             {
-                                sipServer.SetTree(item.DeviceID, DeviceId);
+                                sipServer.SetTree(item.DeviceID, DeviceID);
                                 channels.AddOrUpdate(item);
                             }
                             if (channels.Count == catalog.SumNum)
                             {
                                 //表示收全
-                                await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.ChannelsKey, channels.ToList());
+                                await sipServer.DB.SaveChannels(DeviceID, channels.ToList());
                             }
                             break;
                         case "DEVICEINFO":
                             await SendOkMessage(sipRequest);
                             deviceInfo = SerializableHelper.DeserializeByStr<DeviceInfo>(sipRequest.Body);
-                            await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.DeviceInfoKey, deviceInfo);
-                            await sipServer.RedisHelper.SortedSetAddAsync(RedisConstant.DeviceIdsKey, DeviceId, Convert.ToDouble(DeviceId));
+                            await sipServer.DB.SaveDeviceInfo(deviceInfo);
                             break;
                         case "DEVICESTATUS":
                             await SendOkMessage(sipRequest);
                             deviceStatus = SerializableHelper.DeserializeByStr<DeviceStatus>(sipRequest.Body);
-                            await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.DeviceStatusKey, deviceStatus);
+                            await sipServer.DB.SaveDeviceStatus(DeviceID, deviceStatus);
                             break;
                         case "RECORDINFO":
                             var recordInfo = SerializableHelper.DeserializeByStr<RecordInfo>(sipRequest.Body);
@@ -423,7 +403,7 @@ namespace SipServer
             var body = new CatalogQuery()
             {
                 CmdType = commandType,
-                DeviceID = DeviceId,
+                DeviceID = DeviceID,
                 SN = GetSN(),
             };
             var req = GetSIPRequest(ContentType: Constant.Application_XML);
@@ -441,14 +421,14 @@ namespace SipServer
             await SendResponseAsync(okResponse);
         }
 
-        public async Task<int> Send_GetRecordInfo(string OrderId, RecordInfoQuery query)
+        public async Task<int> Send_GetRecordInfo(string OrderID, RecordInfoQuery query)
         {
             var req = GetSIPRequest(ContentType: Constant.Application_XML);
             var nowsn = GetSN();
             ditQueryRecordInfo[nowsn] = new QueryRecordInfo
             {
                 SNOld = query.SN,
-                OrderId = OrderId
+                OrderID = OrderID
             };
             query.SN = nowsn;
             req.Body = query.ToXmlStr();
@@ -557,17 +537,21 @@ namespace SipServer
             }
             return true;
         }
+        public void Dispose()
+        {
+            Dispose(true);
+        }
         /// <summary>
         /// 释放
         /// </summary>
-        public void Dispose()
+        public void Dispose(bool updateDB)
         {
             if (isDispose)
             {
                 return;
             }
             isDispose = true;
-            Offline();
+            Offline(updateDB);
         }
         /// <summary>
         /// 获取Cseq
