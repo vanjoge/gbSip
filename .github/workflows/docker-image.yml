@@ -1,0 +1,38 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get versions
+      id: version
+      run: |
+        echo "::set-output name=major::$(awk -F, '{print $2}' .tags)"
+        echo "::set-output name=full::$(awk -F, '{print $1}' .tags)"
+    - name: Docker Setup qemu-action
+      uses: docker/setup-qemu-action@v1
+    - name: Docker Setup Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: DockerHub Login
+      uses: docker/login-action@v1.6.0
+      with:
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build the Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./GBWeb/Dockerfile
+        platforms: linux/amd64,linux/arm/v7,linux/arm64
+        push: true
+        tags: |
+          vanjoge/gbSip:latest
