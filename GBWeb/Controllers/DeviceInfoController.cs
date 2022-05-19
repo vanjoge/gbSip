@@ -26,7 +26,16 @@ namespace GBWeb.Controllers
         [HttpGet, HttpPost]
         public async Task<DeviceInfo> GetDeviceInfo([FromCustom] string DeviceId)
         {
-            return await Program.sipServer.RedisHelper.HashGetAsync<DeviceInfo>(RedisConstant.DevInfoHead + DeviceId, RedisConstant.DeviceInfoKey);
+            return await Program.sipServer.DB.GetDeviceInfo(DeviceId);
+        }
+        /// <summary>
+        /// 获取所有设备ID
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet, HttpPost]
+        public async Task<List<string>> GetAllDeviceId()
+        {
+            return await Program.sipServer.DB.GetDeviceIds();
         }
     }
 }

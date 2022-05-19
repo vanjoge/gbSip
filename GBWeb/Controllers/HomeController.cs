@@ -1,11 +1,16 @@
-﻿using GBWeb.Models;
+﻿using GB28181.XML;
+using GBWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using SipServer;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using SQ.Base;
+using SipServer.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace GBWeb.Controllers
 {
@@ -18,11 +23,26 @@ namespace GBWeb.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index(long start = 0, long end = -1)
         {
-            return View();
+            return View(await Program.sipServer.DB.GetDeviceInfoList(start, end));
+        }
+        public async Task<IActionResult> Channels(string DeviceID)
+        {
+            var model = await Program.sipServer.DB.GetChannelList(DeviceID);
+            return View(model);
         }
 
+        public async Task<IActionResult> Delete(string DeviceID)
+        {
+            return View(await Program.sipServer.DB.GetDeviceInfo(DeviceID));
+        }
+        [HttpPost]
+        public async Task<IActionResult> Delete(string DeviceID, IFormCollection collection)
+        {
+            await Program.sipServer.DB.DeleteDeviceInfo(DeviceID);
+            return RedirectToAction("Index");
+        }
         public IActionResult Privacy()
         {
             return View();

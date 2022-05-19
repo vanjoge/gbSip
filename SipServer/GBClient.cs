@@ -53,10 +53,6 @@ namespace SipServer
         /// 设备ID
         /// </summary>
         public string DeviceId { get; set; }
-        /// <summary>
-        /// 上次正常通信时间
-        /// </summary>
-        public DateTime KeepAliveTime { get; set; }
         public SipServer sipServer;
 
 
@@ -74,7 +70,7 @@ namespace SipServer
         /// <summary>
         /// 设备目录
         /// </summary>
-        DeviceList deviceList = new DeviceList();
+        ChannelList channels = new ChannelList();
         /// <summary>
         /// 设备状态
         /// </summary>
@@ -106,7 +102,7 @@ namespace SipServer
             this.sipServer = sipServer;
             RemoteEndPoint = remoteEndPoint;
             this.DeviceId = DeviceId;
-            KeepAliveTime = DateTime.Now;
+            Status.KeepAliveTime = DateTime.Now;
             m_callID = CallProperties.CreateNewCallId();
             //this.ServerHost = System.Net.IPAddress.TryParse( ServerHost,out var ;
 
@@ -132,13 +128,16 @@ namespace SipServer
                 {
                     deviceInfo = TryParseJSON<DeviceInfo>(entry.Value);
                 }
-                else if (entry.Name == RedisConstant.DeviceListKey && entry.Value.HasValue)
+                else if (entry.Name == RedisConstant.ChannelsKey && entry.Value.HasValue)
                 {
-                    var lst = TryParseJSON<List<CatalogItemExtend>>(entry.Value);
+                    var lst = TryParseJSON<List<Catalog.Item>>(entry.Value);
                     foreach (var item in lst)
                     {
-                        sipServer.SetTree(item.Item.DeviceID, DeviceId);
-                        deviceList.AddOrUpdate(item);
+                        if (item != null && item.DeviceID != null)
+                        {
+                            sipServer.SetTree(item.DeviceID, DeviceId);
+                            channels.AddOrUpdate(item);
+                        }
                     }
                 }
                 else if (entry.Name == RedisConstant.DeviceStatusKey && entry.Value.HasValue)
@@ -150,7 +149,10 @@ namespace SipServer
                     var status = TryParseJSON<ConnStatus>(entry.Value);
                     if (status != null)
                     {
-                        Status = status;
+                        Status.Online = status.Online;
+                        Status.CreateTime = status.CreateTime;
+                        Status.OnlineTime = status.OnlineTime;
+                        Status.OfflineTime = status.OfflineTime;
                     }
                 }
             }
@@ -161,7 +163,7 @@ namespace SipServer
             {
                 await Send_GetDevCommand(CommandType.DeviceInfo);
             }
-            if (deviceList.Count == 0)
+            if (channels.Count == 0)
             {
                 await Send_GetDevCommand(CommandType.Catalog);
             }
@@ -180,9 +182,9 @@ namespace SipServer
             Status.Online = false;
             Status.OfflineTime = DateTime.Now;
             await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.StatusKey, Status);
-            foreach (var item in deviceList.ToList())
+            foreach (var item in channels.ToList())
             {
-                sipServer.RemoveTree(item.Item.DeviceID);
+                sipServer.RemoveTree(item.DeviceID);
             }
         }
         #endregion
@@ -286,7 +288,7 @@ namespace SipServer
                     break;
             }
 
-            KeepAliveTime = DateTime.Now;
+            Status.KeepAliveTime = DateTime.Now;
             //此处不严格要求注册认证，有数据上来就认为在线；如果要求注册认证，此处应增加判断
             if (!Status.Online)
             {
@@ -360,12 +362,12 @@ namespace SipServer
                             foreach (var item in catalog.DeviceList)
                             {
                                 sipServer.SetTree(item.DeviceID, DeviceId);
-                                deviceList.AddOrUpdateDeviceList(item);
+                                channels.AddOrUpdate(item);
                             }
-                            if (deviceList.Count == catalog.SumNum)
+                            if (channels.Count == catalog.SumNum)
                             {
                                 //表示收全
-                                await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.DeviceListKey, deviceList.ToList());
+                                await sipServer.RedisHelper.HashSetAsync(redisDevKey, RedisConstant.ChannelsKey, channels.ToList());
                             }
                             break;
                         case "DEVICEINFO":
@@ -545,7 +547,7 @@ namespace SipServer
         /// <returns></returns>
         public bool Check()
         {
-            if (KeepAliveTime.DiffNowSec() >= sipServer.Settings.KeepAliveTimeoutSec)
+            if (Status.KeepAliveTime.DiffNowSec() >= sipServer.Settings.KeepAliveTimeoutSec)
             {
                 return false;
             }

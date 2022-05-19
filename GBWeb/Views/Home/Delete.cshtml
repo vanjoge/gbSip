@@ -1,0 +1,39 @@
+﻿@model GB28181.XML.DeviceInfo
+
+@{
+    ViewData["Title"] = "删除";
+}
+
+<h1>删除确定</h1>
+
+<h3>删除设备仅从数据库中移除设备，如果设备再次注册会再次自动添加。</h3>
+<div>
+    <h4>设备信息</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            设备ID
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DeviceID)
+        </dd>
+        <dt class="col-sm-2">
+            目标设备/区域/系统的名称
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DeviceName)
+        </dd>
+        <dt class="col-sm-2">
+            视频输入通道数
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Channel)
+        </dd>
+    </dl>
+
+    <form asp-action="Delete">
+        @Html.HiddenFor(model => model.DeviceID)
+        <input type="submit" value="删除" class="btn btn-danger" /> |
+        <a asp-action="Index">返回</a>
+    </form>
+</div>

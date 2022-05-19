@@ -1,4 +1,5 @@
-﻿using SIPSorcery.SIP;
+﻿using SipServer.DB;
+using SIPSorcery.SIP;
 using SQ.Base;
 using System;
 using System.Collections.Concurrent;
@@ -66,6 +67,8 @@ namespace SipServer
         /// </summary>
         int nowSSRC = 0;
         object lckSSRC = new object();
+
+        public DBInfo DB;
         #endregion
 
 
@@ -104,7 +107,7 @@ namespace SipServer
 
             RedisHelper = new RedisHelp.RedisHelper(-1, Settings.RedisExchangeHosts);
             RedisHelper.SetSysCustomKey("");
-
+            DB = new DBInfo(this);
             thCheck = new SQ.Base.ThreadWhile<object>();
             thCheck.SleepMs = 1000;
             thCheck.Start(Check, null, "SipCheck");

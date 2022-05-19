@@ -47,12 +47,23 @@ namespace SipServer
         /// </summary>
         [DisplayName("RTVS接口地址")]
         public string RTVSAPI { get; set; }
+        /// <summary>
+        /// RTVS视频服务地址
+        /// </summary>
+        [DisplayName("RTVS视频服务地址")]
+        public string RTVSVideoServer { get; set; }
+        /// <summary>
+        /// RTVS视频服务端口
+        /// </summary>
+        [DisplayName("RTVS视频服务端口")]
+        public int RTVSVideoPort { get; set; }
         public Setting()
         {
             ServerIP = "127.0.0.1";
             SipPort = 5060;
             RedisExchangeHosts = "127.0.0.1:6379,connectTimeout=20000,syncTimeout=20000,responseTimeout=20000,defaultDatabase=0,password=";
             KeepAliveTimeoutSec = 180;
+            RTVSVideoPort = 17000;
 #if DEBUG
             EnableSipLog = true;
 #endif

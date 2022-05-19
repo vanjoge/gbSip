@@ -1,0 +1,135 @@
+﻿@model IEnumerable<GB28181.XML.Catalog.Item>
+
+@{
+    ViewData["Title"] = "通道";
+    var rtvsServer = Program.sipServer.Settings.RTVSVideoServer;
+    var rtvsPort = Program.sipServer.Settings.RTVSVideoPort;
+}
+
+<h1>通道</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                设备/区域/系统编码
+            </th>
+            <th>
+                设备/区域/系统名称
+            </th>
+            <th>
+                设备厂商
+            </th>
+            <th>
+                设备型号
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DeviceID)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Manufacturer)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Model)
+                </td>
+                <td>
+
+                    <button type="button" class="btn btn-primary  btn-sm" data-toggle="modal" data-target="#rtvsPlayer" data-rtvssim="@this.Context.Request.Query["DeviceID"]" data-rtvschannel="@item.DeviceID">
+                        实时视频
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="rtvsPlayer" tabindex="-1" role="dialog" aria-labelledby="rtvsPlayerTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rtvsPlayerTitle">播放器</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="m-auto" id="player" style="width: 854px; height: 480px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script type="text/javascript" src="https://lib.cvtsp.com/video/CVNetVideoJs/1.3.0/CvNetVideo.js"></script>
+    <script>
+        var uc1;
+        $(function () {
+            uc1 = CvNetVideo.Init(document.querySelector("#player"), 1,
+                {
+                    callback: function () {
+                        [].forEach.call(document.querySelectorAll("button"), function (btn) {
+                            btn.disabled = false;
+                        });
+                        //uc1.Resize(854, 480);
+                    },
+                    selectedEvent: function (e) {
+                        var selected = e;
+                    },
+                    clusterHost: "@rtvsServer",
+                    clusterPort:@rtvsPort,
+                    protocol: 2,
+                    ////事件通知
+                    //events: {
+                    //    //截图事件
+                    //    onCapture: onCapture,
+                    //    //超时前警告通知
+                    //    timeoutWarning: timeoutWarning,
+                    //    //超时警告取消
+                    //    timeoutCanceled: timeoutCanceled,
+                    //    //超时通知
+                    //    timeoutClose: timeoutClose,
+                    //    onStop: onVideoStop,
+                    //    onServerNotice: onServerNotice,
+                    //    onEndByServer: onEndByServer,
+                    //    onHlsPlay: onHlsPlay,
+                    //    onChangeH265Player: onChangeH265Player
+                    //}
+                });
+            var modal = $('#rtvsPlayer');
+
+            modal.on('hide.bs.modal',
+                function () {
+                    uc1.Stop(0);
+                }
+            );
+            modal.on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var sim = button.data('rtvssim');
+                var channel = button.data('rtvschannel');
+                uc1.StartRealTimeVideo(sim, channel);
+            })
+            modal.on('shown.bs.modal', function (event) {
+                uc1.Resize(854, 480);
+            })
+        });
+    </script>
+}
