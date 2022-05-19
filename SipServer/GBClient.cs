@@ -122,12 +122,15 @@ namespace SipServer
             var tuple = await sipServer.DB.GetDevAll(DeviceID);
             deviceInfo = tuple.Item1;
             deviceStatus = tuple.Item3;
-            foreach (var item in tuple.Item2)
+            if (tuple.Item2 != null)
             {
-                if (item != null && item.DeviceID != null)
+                foreach (var item in tuple.Item2)
                 {
-                    sipServer.SetTree(item.DeviceID, DeviceID);
-                    channels.AddOrUpdate(item);
+                    if (item != null && item.DeviceID != null)
+                    {
+                        sipServer.SetTree(item.DeviceID, DeviceID);
+                        channels.AddOrUpdate(item);
+                    }
                 }
             }
             if (tuple.Item4 != null)
