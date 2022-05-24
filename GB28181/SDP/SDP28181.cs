@@ -150,10 +150,17 @@ namespace GB28181
         /// </summary>
         public string f;
         /// <summary>
-        /// 
+        /// 下载倍速
         /// </summary>
         public int Downloadspeed = 4;
+        /// <summary>
+        /// 加上a=ssrc标准输出
+        /// </summary>
         public bool ASSRC = true;
+        /// <summary>
+        /// 原始SDP文本
+        /// </summary>
+        public string RawStr { get; protected set; }
         string GetRTP_AVP()
         {
             if (NetType == RTPNetType.UDP)
@@ -207,9 +214,13 @@ y={SSRC}{GetF()}
 ";
 
         }
-
+        /// <summary>
+        /// 解析SDP文本并填充
+        /// </summary>
+        /// <param name="sdp"></param>
         public void Fill(string sdp)
         {
+            this.RawStr = sdp;
             foreach (Match mth in reg.Matches(sdp))
             {
                 var tstr = mth.Groups[2].Value.Trim();
@@ -349,7 +360,14 @@ y={SSRC}{GetF()}
                 }
             }
         }
-
+        /// <summary>
+        /// 获取应答SDP
+        /// </summary>
+        /// <param name="owner"></param>
+        /// <param name="localIp"></param>
+        /// <param name="rtpIp"></param>
+        /// <param name="rtpPort"></param>
+        /// <returns></returns>
         public SDP28181 AnsSdp(string owner, string localIp, string rtpIp, int rtpPort)
         {
             var ret = new SDP28181
@@ -389,6 +407,11 @@ y={SSRC}{GetF()}
             }
             return ret;
         }
+        /// <summary>
+        /// 用SDP文本初始化
+        /// </summary>
+        /// <param name="sdp"></param>
+        /// <returns></returns>
         public static SDP28181 NewByStr(string sdp)
         {
             SDP28181 model = new SDP28181();
@@ -396,7 +419,9 @@ y={SSRC}{GetF()}
             return model;
         }
     }
-
+    /// <summary>
+    /// PS流的SDP
+    /// </summary>
     public class SDP28181PS : SDP28181
     {
         public SDP28181PS()
@@ -405,6 +430,9 @@ y={SSRC}{GetF()}
             this.RtpMaps.Add(96, new RTPMap { ClockRate = 90000, ID = 96, Name = "PS" });
         }
     }
+    /// <summary>
+    /// PCMA的SDP
+    /// </summary>
     public class SDP28181PCMA : SDP28181
     {
         public SDP28181PCMA()
