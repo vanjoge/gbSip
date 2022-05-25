@@ -354,6 +354,36 @@ namespace GB28181.XML
             /// </summary>
             [XmlElement("Info")]
             public Info InfList { get; set; }
+
+            public void CopyVal(Item Old)
+            {
+                Address = Old.Address;
+                Block = Old.Block;
+                BusinessGroupID = Old.BusinessGroupID;
+                Certifiable = Old.Certifiable;
+                CertNum = Old.CertNum;
+                CivilCode = Old.CivilCode;
+                DeviceID = Old.DeviceID;
+                EndTime = Old.EndTime;
+                ErrCode = Old.ErrCode;
+                InfList = Old.InfList;
+                IPAddress = Old.IPAddress;
+                Latitude = Old.Latitude;
+                Longitude = Old.Longitude;
+                Manufacturer = Old.Manufacturer;
+                Model = Old.Model;
+                Name = Old.Name;
+                Owner = Old.Owner;
+                Parental = Old.Parental;
+                ParentID = Old.ParentID;
+                Password = Old.Password;
+                Port = Old.Port;
+                RegisterWay = Old.RegisterWay;
+                SafetyWay = Old.SafetyWay;
+                Secrecy = Old.Secrecy;
+                Status = Old.Status;
+
+            }
         }
 
         /// <summary>
