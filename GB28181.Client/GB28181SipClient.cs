@@ -19,6 +19,10 @@ namespace GB28181.Client
         object lckSN = new object();
         DeviceInfo deviceInfo;
         Dictionary<string, Catalog.Item> ditDevice = new Dictionary<string, Catalog.Item>();
+
+        DateTime LastHeartTime = DateTime.MinValue, LastAnsOKTime;
+        SIPEndPoint remoteEndPoint;
+        double m_heartSec, m_timeOutSec;
         /// <summary>
         /// 
         /// </summary>
@@ -30,15 +34,20 @@ namespace GB28181.Client
         /// <param name="expiry"></param>
         /// <param name="UserAgent"></param>
         /// <param name="EnableTraceLogs"></param>
-        public GB28181SipClient(string server, string server_id, DeviceInfo deviceInfo, List<Catalog.Item> deviceList, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false) :
+        public GB28181SipClient(string server, string server_id, DeviceInfo deviceInfo, List<Catalog.Item> deviceList, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300) :
             this(new SIPTransport(), server_id, deviceInfo.DeviceID, password, server, expiry)
         {
             this.UserAgent = UserAgent;
             this.deviceInfo = deviceInfo;
+            this.m_heartSec = heartSec;
+            this.m_timeOutSec = timeOutSec;
             foreach (var item in deviceList)
                 ditDevice.Add(item.DeviceID, item);
             if (EnableTraceLogs)
                 m_sipTransport.EnableTraceLogs();
+
+            remoteEndPoint = new SIPEndPoint(m_sipAccountAOR);
+
         }
 
         protected SIPTransport SipTransport { get { return m_sipTransport; } }
@@ -62,11 +71,12 @@ namespace GB28181.Client
             Stop();
 
             th = new SQ.Base.ThreadWhile<object>();
-            th.SleepMs = 60000;
+            th.SleepMs = 1000;
 
 
             m_sipTransport.SIPTransportRequestReceived += SipTransport_SIPTransportRequestReceived;
             m_sipTransport.SIPTransportResponseReceived += SipTransport_SIPTransportResponseReceived;
+
 
             this.RegistrationFailed += (uri, err) =>
             {
@@ -82,7 +92,8 @@ namespace GB28181.Client
             };
             this.RegistrationSuccessful += (uri) =>
             {
-                th.StartIfNotRun(Run, null, "Heart");
+                LastAnsOKTime = DateTime.Now;
+                th?.StartIfNotRun(Run, null, "Check");
                 SQ.Base.Log.WriteLog4($"{uri} registration succeeded.", LOGTYPE.INFO);
             };
 
@@ -91,23 +102,36 @@ namespace GB28181.Client
 
         }
 
-
-        public void Stop()
+        public void Stop(bool waitStop = true)
         {
             if (th != null)
             {
                 StopReg();
-                th.Stop();
+                if (waitStop)
+                {
+                    th.Stop();
+                }
+                else
+                {
+                    th.Abort();
+                }
+                th = null;
                 m_sipTransport.Shutdown();
             }
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="localSIPEndPoint"></param>
+        /// <param name="remoteEndPoint"></param>
+        /// <param name="sipResponse"></param>
+        /// <returns></returns>
         private async Task SipTransport_SIPTransportResponseReceived(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPResponse sipResponse)
         {
-            //if (sipResponse.Status == SIPResponseStatusCodesEnum.Ok)
-            //{
-
-            //}
+            if (sipResponse.Status == SIPResponseStatusCodesEnum.Ok)
+            {
+                LastAnsOKTime = DateTime.Now;
+            }
             //switch (sipResponse.Header.CSeqMethod)
             //{
             //    case SIPMethodsEnum.NONE:
@@ -396,21 +420,45 @@ namespace GB28181.Client
         }
 
 
-
         private void Run(object tag, CancellationToken cancellationToken)
         {
-            if (IsRegistered)
+            if (m_isRegistered)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var req = GetSIPRequest();
-                var keepaliveBody = new KeepAlive();
-                keepaliveBody.Status = "OK";
-                keepaliveBody.CmdType = CommandType.Keepalive;
-                keepaliveBody.SN = GetSN();
-                keepaliveBody.DeviceID = deviceInfo.DeviceID;
-                req.Body = keepaliveBody.ToXmlStr();
-                m_sipTransport.SendRequestAsync(req);
+
+
+                var channels = m_sipTransport.GetSIPChannels();
+                if (channels.Count < 1
+                    ||
+                    (remoteEndPoint.Protocol == SIPProtocolsEnum.tcp && !channels[0].HasConnection(remoteEndPoint))
+                    || LastAnsOKTime.DiffNowSec() >= m_timeOutSec
+                    )
+                {
+                    ReStartReg();
+                }
+                else if (LastHeartTime.DiffNowSec() >= m_heartSec)
+                {
+                    LastHeartTime = DateTime.Now;
+                    var req = GetSIPRequest();
+                    var keepaliveBody = new KeepAlive();
+                    keepaliveBody.Status = "OK";
+                    keepaliveBody.CmdType = CommandType.Keepalive;
+                    keepaliveBody.SN = GetSN();
+                    keepaliveBody.DeviceID = deviceInfo.DeviceID;
+                    req.Body = keepaliveBody.ToXmlStr();
+                    var err = m_sipTransport.SendRequestAsync(req).GetAwaiter().GetResult();
+                    if (err != System.Net.Sockets.SocketError.Success)
+                    {
+                        ReStartReg();
+                    }
+                }
             }
+        }
+        private void ReStartReg()
+        {
+            StopReg(false);
+            m_isRegistered = false;
+            StartReg();
         }
 
 
