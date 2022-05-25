@@ -149,9 +149,14 @@ namespace SipServer.DB
                     {
                         var dev = item.Value.Result.ToString().ParseJSON<DeviceInfo>();
                         var status = ditStatus[item.Key].Result.ToString().ParseJSON<ConnStatus>();
-                        if (status.Online && sipServer.TryGetClient(dev.DeviceID, out var client))
+                        if (sipServer.TryGetClient(dev.DeviceID, out var client))
                         {
+                            status.Online = true;
                             status.KeepAliveTime = client.Status.KeepAliveTime;
+                        }
+                        else
+                        {
+                            status.Online = false;
                         }
                         lstDev.Add(new DeviceInfoEx
                         {
