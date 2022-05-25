@@ -206,6 +206,7 @@ namespace SipServer
                             }
                         }
                         var ack = GetSIPRequest(SIPMethodsEnum.ACK, newHeader: true);
+                        ack.Header.CSeq = sipResponse.Header.CSeq;
                         ack.Header.From = sipResponse.Header.From;
                         ack.Header.To = sipResponse.Header.To;
                         await SendRequestAsync(ack);
