@@ -1,0 +1,64 @@
+﻿@{
+}
+<table style="font-weight:bold;">
+    <tr>
+        <td>读取规则:</td>
+        <td>
+            <select id="readFromStart">
+                <option value="10">后10条</option>
+                <option selected value="100">后100条</option>
+                <option value="200">后200条</option>
+                <option value="500">后500条</option>
+                <option value="1000">后1000条</option>
+            </select>
+        </td>
+    </tr>
+    <tr><td colspan="6" align="center"><input class='btn btn-primary' type="button" value="重载" onclick="reload()"></td></tr>
+    <tr>
+        <th>日志文件记录</th>
+    </tr>
+    <tr>
+        <td colspan="6" align="center">
+            <xmp id="loaded-data" align="left"></xmp>
+        </td>
+    </tr>
+</table>
+@section Scripts{
+    <link rel="stylesheet" type="text/css" href="/lib/pagination/common/highlight.min.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/lib/pagination/common/common.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/lib/pagination/pagination.css" media="screen">
+
+
+    <script type="text/javascript">
+        $(function () {
+            query($("#readFromStart").val());
+        });
+
+        var url = "/Log/GetSipFileLogs";
+
+        var queryStr = {};
+
+        function getJson(url, data, func) {
+            $.get(url, data, func);
+        }
+
+        //进行查询
+        function query(line) {
+            //queryStr.page = page;
+            //queryStr.pageSize = pageSize;
+            //queryStr.readFromStart = readFromStart;
+            queryStr.line = line;
+            $.get(url + "?random=" + Math.random(), queryStr, showResult);
+        }
+
+        function showResult(str) {
+            $("#loaded-data").html(str);
+
+        }
+
+        function reload() {
+            query($("#readFromStart").val());
+        }
+
+    </script>
+}

@@ -4,7 +4,13 @@
     ViewData["Title"] = "已注册设备列表";
 }
 
-<h1>已注册设备</h1>
+<h1>
+    已注册设备
+</h1>
+<h3>
+    @Html.ActionLink("仅在线", "Index", new { onlyOnline = true }) |
+    @Html.ActionLink("所有", "Index", new { onlyOnline = false })
+</h3>
 
 <table class="table">
     <thead>

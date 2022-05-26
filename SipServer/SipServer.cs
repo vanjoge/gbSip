@@ -97,9 +97,7 @@ namespace SipServer
         /// </summary>
         public void Start()
         {
-            Console.WriteLine($"ServerIP:{Settings.ServerIP}");
-            Console.WriteLine($"SipPort:{Settings.SipPort}");
-            Console.WriteLine($"EnableSipLog:{Settings.EnableSipLog}");
+            Log.WriteLog4($"gbSip Starting SipPort:{Settings.SipPort} EnableSipLog:{ Settings.EnableSipLog}");
 
             DB = new DBInfo(this);
             thCheck = new SQ.Base.ThreadWhile<object>();
@@ -118,6 +116,7 @@ namespace SipServer
             SipTransport.SIPTransportRequestReceived += OnRequest;
             SipTransport.SIPTransportResponseReceived += OnResponse;
 
+            Log.WriteLog4($"gbSip Started");
         }
 
 
@@ -164,12 +163,13 @@ namespace SipServer
         /// </summary>
         public void Stop()
         {
+            Log.WriteLog4($"gbSip Stopping");
             thCheck.Abort();
             thCheck.Join();
             thCheck = null;
-
             SipTransport.Shutdown();
             SipTransport.Dispose();
+            Log.WriteLog4($"gbSip Stopped");
         }
         #endregion
 

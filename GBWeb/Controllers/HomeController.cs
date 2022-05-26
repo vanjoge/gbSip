@@ -23,9 +23,22 @@ namespace GBWeb.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index(long start = 0, long end = -1)
+        public async Task<IActionResult> Index(bool onlyOnline = true, long start = 0, long end = -1)
         {
-            return View(await Program.sipServer.DB.GetDeviceInfoList(start, end));
+            List<DeviceInfoEx> lstDev;
+            if (onlyOnline)
+            {
+                lstDev = new List<DeviceInfoEx>();
+                Program.sipServer.EachClient(cl =>
+                {
+                    lstDev.Add(cl.GetDeviceInfoEx());
+                });
+            }
+            else
+            {
+                lstDev = await Program.sipServer.DB.GetDeviceInfoList(start, end);
+            }
+            return View(lstDev);
         }
         public async Task<IActionResult> Channels(string DeviceID)
         {

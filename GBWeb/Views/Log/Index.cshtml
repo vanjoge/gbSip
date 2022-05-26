@@ -1,0 +1,95 @@
+﻿@{
+}
+<table style="font-weight:bold;">
+    <tr>
+        <td>读取规则:</td>
+        <td>
+            <select id="readFromStart">
+                <option value="10">后10条</option>
+                <option selected value="100">后100条</option>
+                <option value="200">后200条</option>
+                <option value="500">后500条</option>
+                <option value="1000">后1000条</option>
+            </select>
+        </td>
+    </tr>
+    <tr><td colspan="6" align="center"><input class='btn btn-primary' type="button" value="重载" onclick="reload()"></td></tr>
+</table>
+<!--这个地方展示数据-->
+<table id="data-table" class="table" style="width:100%;">
+    <tr>
+        <th>日志文件记录</th>
+    </tr>
+
+</table>
+<!--这个地方展示分页-->
+<div class="m-style M-box3"></div>
+@section Scripts{
+    <link rel="stylesheet" type="text/css" href="/lib/pagination/common/highlight.min.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/lib/pagination/common/common.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/lib/pagination/pagination.css" media="screen">
+
+    <script src="/lib/pagination/common/highlight.min.js"></script>
+    <script src="/lib/pagination/jquery.pagination.js"></script>
+
+    <script type="text/javascript">
+        $(function () {
+            query($("#readFromStart").val());
+        });
+
+        var url = "/Log/GetFileLogs";
+
+        var queryStr = {};
+
+        function getJson(url, data, func) {
+            $.getJSON(url, data, func);
+        }
+
+        //进行查询
+        function query(line) {
+            //queryStr.page = page;
+            //queryStr.pageSize = pageSize;
+            //queryStr.readFromStart = readFromStart;
+            queryStr.line = line;
+            getJson(url + "?random=" + Math.random(), queryStr, loadlist);
+        }
+
+        function showResult(json) {
+            $(".loaded-data").remove();
+
+            for (var i = 0; i < json.data.length; i++) {
+                $("#data-table").append("<tr class=\"loaded-data\"><td>" + json.data[i] + "</td></tr > ")
+            }
+        }
+        //返回结果处理:注意JSON字段的大小写问题
+        function loadlist(json) {
+            showResult(json);
+            //初始化分页控件
+            $(".M-box3").pagination({
+                pageCount: json.totalPage,
+                totalData: json.totalData,
+                current: json.currentPage,
+                showData: json.pageSize,
+                jump: true,
+                coping: true,
+                homePage: '首页',
+                endPage: '末页',
+                prevContent: '上页',
+                nextContent: '下页',
+                callback: function (api) {
+                    //// 当前第几页
+                    //queryStr.page = api.getCurrent();
+
+                    //$.getJSON(url + "?random=" + Math.random(), queryStr, function (json) {
+                    //    showResult(json);
+                    //});
+                }
+            });
+        }
+
+        function reload() {
+            query($("#readFromStart").val());
+        }
+
+    </script>
+}

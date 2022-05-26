@@ -646,6 +646,14 @@ namespace SipServer
             return req;
         }
 
+        public DeviceInfoEx GetDeviceInfoEx()
+        {
+            return new DeviceInfoEx
+            {
+                Device = deviceInfo,
+                Status = Status
+            };
+        }
         #endregion
         #endregion
     }
