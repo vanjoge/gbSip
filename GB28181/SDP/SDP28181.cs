@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.Text.RegularExpressions;
+using SQ.Base;
 
 namespace GB28181
 {
@@ -210,7 +211,7 @@ s={SType}{(u != null ? $"\r\nu={u}" : "")}
 c=IN IP4 {RtpIp}
 t={TStart} {TEnd}
 {GetMA()}
-y={SSRC}{GetF()}
+y={SSRC.StrFixLen(10)}{GetF()}
 ";
 
         }
