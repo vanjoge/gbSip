@@ -25,13 +25,17 @@ namespace GBWeb.Controllers
 
         public async Task<IActionResult> Index(bool onlyOnline = true, long start = 0, long end = -1)
         {
-            List<DeviceInfoEx> lstDev;
+            List<DeviceInfoExt> lstDev;
             if (onlyOnline)
             {
-                lstDev = new List<DeviceInfoEx>();
+                lstDev = new List<DeviceInfoExt>();
                 Program.sipServer.EachClient(cl =>
                 {
-                    lstDev.Add(cl.GetDeviceInfoEx());
+                    var deviceInfo = cl.GetDeviceInfoExt();
+                    if (deviceInfo.Device != null)
+                    {
+                        lstDev.Add(deviceInfo);
+                    }
                 });
             }
             else

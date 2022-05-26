@@ -646,9 +646,9 @@ namespace SipServer
             return req;
         }
 
-        public DeviceInfoEx GetDeviceInfoEx()
+        public DeviceInfoExt GetDeviceInfoExt()
         {
-            return new DeviceInfoEx
+            return new DeviceInfoExt
             {
                 Device = deviceInfo,
                 Status = Status

@@ -127,9 +127,9 @@ namespace SipServer.DB
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        public async Task<List<DeviceInfoEx>> GetDeviceInfoList(long start = 0, long end = -1)
+        public async Task<List<DeviceInfoExt>> GetDeviceInfoList(long start = 0, long end = -1)
         {
-            List<DeviceInfoEx> lstDev = new List<DeviceInfoEx>();
+            List<DeviceInfoExt> lstDev = new List<DeviceInfoExt>();
             var db = RedisHelper.GetDatabase();
             var lst = await db.SortedSetRangeByRankAsync(RedisConstant.DeviceIdsKey, start, end);
             if (lst.Length > 0)
@@ -158,7 +158,7 @@ namespace SipServer.DB
                         {
                             status.Online = false;
                         }
-                        lstDev.Add(new DeviceInfoEx
+                        lstDev.Add(new DeviceInfoExt
                         {
                             Device = dev,
                             Status = status

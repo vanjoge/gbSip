@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SipServer.Models
 {
-    public class DeviceInfoEx
+    public class DeviceInfoExt
     {
         public DeviceInfo Device { get; set; }
         public ConnStatus Status { get; set; }
