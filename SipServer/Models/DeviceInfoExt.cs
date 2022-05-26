@@ -1,5 +1,6 @@
 ﻿using GB28181.XML;
 using SipServer.Models;
+using SIPSorcery.SIP;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +12,7 @@ namespace SipServer.Models
     {
         public DeviceInfo Device { get; set; }
         public ConnStatus Status { get; set; }
+        public SIPEndPoint RemoteEndPoint { get; set; }
+         
     }
 }

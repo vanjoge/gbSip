@@ -161,7 +161,8 @@ namespace SipServer.DB
                         lstDev.Add(new DeviceInfoExt
                         {
                             Device = dev,
-                            Status = status
+                            Status = status,
+                            RemoteEndPoint = client?.RemoteEndPoint,
                         });
                     }
                 }

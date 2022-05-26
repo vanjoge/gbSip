@@ -651,7 +651,8 @@ namespace SipServer
             return new DeviceInfoExt
             {
                 Device = deviceInfo,
-                Status = Status
+                Status = Status,
+                RemoteEndPoint = RemoteEndPoint,
             };
         }
         #endregion
