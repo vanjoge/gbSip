@@ -196,20 +196,24 @@ namespace SipServer
                 case SIPMethodsEnum.REGISTER:
                     break;
                 case SIPMethodsEnum.INVITE:
+                    if (sipResponse.Header.To.ToTag != null && sipResponse.Header.From.FromTag != null)
+                    {
+                        if (sipServer.TryGetTag(sipResponse.Header.From.FromTag, out var fromTag))
+                        {
+                            fromTag.To = sipResponse.Header.To;
+                        }
+                    }
                     if (sipResponse.Status == SIPResponseStatusCodesEnum.Ok)
                     {
-                        if (sipResponse.Header.To.ToTag != null && sipResponse.Header.From.FromTag != null)
-                        {
-                            if (sipServer.TryGetTag(sipResponse.Header.From.FromTag, out var fromTag))
-                            {
-                                fromTag.To = sipResponse.Header.To;
-                            }
-                        }
                         var ack = GetSIPRequest(SIPMethodsEnum.ACK, newHeader: true);
                         ack.Header.CSeq = sipResponse.Header.CSeq;
                         ack.Header.From = sipResponse.Header.From;
                         ack.Header.To = sipResponse.Header.To;
                         await SendRequestAsync(ack);
+                    }
+                    else
+                    {
+                        await Send_Bye(sipResponse.Header.From.FromTag);
                     }
                     break;
                 case SIPMethodsEnum.BYE:
