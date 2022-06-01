@@ -259,6 +259,23 @@ namespace SipServer
             {
                 await fromTag.Client.OnResponse(localSIPEndPoint, remoteEndPoint, sipResponse);
             }
+            else
+            {
+                //非当前INVITE直接BYE
+                if (sipResponse.Header.CSeqMethod == SIPMethodsEnum.INVITE)
+                {
+                    SIPRequest req = SIPRequest.GetRequest(SIPMethodsEnum.BYE, sipResponse.Header.To.ToURI, sipResponse.Header.To, sipResponse.Header.From);
+
+                    req.Header.Allow = null;
+                    req.Header.ContentType = null;
+                    req.Header.Contact = sipResponse.Header.Contact;
+                    req.Header.CSeq = sipResponse.Header.CSeq;
+                    req.Header.CSeqMethod = SIPMethodsEnum.BYE;
+                    req.Header.CallId = sipResponse.Header.CallId;
+                    req.Header.UserAgent = UserAgent;
+                    await SipTransport.SendRequestAsync(req);
+                }
+            }
         }
         /// <summary>
         /// 接收数据
