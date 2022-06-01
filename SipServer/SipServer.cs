@@ -265,10 +265,9 @@ namespace SipServer
                 if (sipResponse.Header.CSeqMethod == SIPMethodsEnum.INVITE)
                 {
                     SIPRequest req = SIPRequest.GetRequest(SIPMethodsEnum.BYE, sipResponse.Header.To.ToURI, sipResponse.Header.To, sipResponse.Header.From);
-
                     req.Header.Allow = null;
                     req.Header.ContentType = null;
-                    req.Header.Contact = sipResponse.Header.Contact;
+                    req.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(sipResponse.Header.From.FromUserField) };
                     req.Header.CSeq = sipResponse.Header.CSeq;
                     req.Header.CSeqMethod = SIPMethodsEnum.BYE;
                     req.Header.CallId = sipResponse.Header.CallId;
