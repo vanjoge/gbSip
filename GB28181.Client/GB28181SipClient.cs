@@ -116,8 +116,33 @@ namespace GB28181.Client
                     th.Abort();
                 }
                 th = null;
-                m_sipTransport.Shutdown();
+                Shutdown();
             }
+        }
+        Task Shutdown()
+        {
+            return Task.Run(() =>
+            {
+                // Allow for unregister request to be sent(REGISTER with 0 expiry)
+                Task.Delay(1500).Wait();
+                foreach (var item in m_sipTransport.GetSIPChannels())
+                {
+                    if (item.IsProtocolSupported(SIPProtocolsEnum.tcp))
+                    {
+                        //TCP时直接关闭会造成死锁，在关闭后需要模拟一个TCP连接连到本地监听，防止死锁
+                        Task.Run(() =>
+                        {
+                            Task.Delay(100).Wait();
+                            using (var conn = new Network.TCPChannel("127.0.0.1", item.Port))
+                            {
+                                conn.Connect();
+                            }
+                        });
+                        item.Dispose();
+                    }
+                }
+                m_sipTransport.Shutdown();
+            });
         }
         /// <summary>
         /// 
