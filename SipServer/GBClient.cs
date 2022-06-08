@@ -257,34 +257,48 @@ namespace SipServer
         /// <returns></returns>
         public async Task OnRequest(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
         {
-            LastServerID = sipRequest.Header.To.ToURI.User;
+            try
+            {
+                LastServerID = sipRequest.Header.To.ToURI.User;
 
-            if (RemoteEndPoint != null && RemoteEndPoint != remoteEndPoint &&
-                RemoteEndPoint.Protocol == SIPProtocolsEnum.udp
-            ) //udp时来源可能变化
-            {
-                RemoteEndPoint = remoteEndPoint;
+                if (RemoteEndPoint != null && RemoteEndPoint != remoteEndPoint &&
+                    RemoteEndPoint.Protocol == SIPProtocolsEnum.udp
+                ) //udp时来源可能变化
+                {
+                    RemoteEndPoint = remoteEndPoint;
+                }
+                switch (sipRequest.Method)
+                {
+                    case SIPMethodsEnum.REGISTER:
+                        if (!await RegisterProcess(remoteEndPoint, sipRequest))
+                        {
+                            return;
+                        }
+                        break;
+                    case SIPMethodsEnum.MESSAGE:
+                        await MessageProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
+                        break;
+                    case SIPMethodsEnum.INVITE:
+                        await InviteProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
+                        break;
+                    case SIPMethodsEnum.ACK:
+                        await AckProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
+                        break;
+                    default:
+                        break;
+                }
+                Status.KeepAliveTime = DateTime.Now;
+                //此处不严格要求注册认证，有数据上来就认为在线；如果要求注册认证，此处应增加判断
+                if (!Status.Online)
+                {
+                    Status.Online = true;
+                    await Online();
+                }
             }
-            switch (sipRequest.Method)
+            catch (Exception ex)
             {
-                case SIPMethodsEnum.REGISTER:
-                    if (!await RegisterProcess(remoteEndPoint, sipRequest))
-                    {
-                        return;
-                    }
-                    break;
-                case SIPMethodsEnum.MESSAGE:
-                    await MessageProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
-                    break;
-                default:
-                    break;
-            }
-            Status.KeepAliveTime = DateTime.Now;
-            //此处不严格要求注册认证，有数据上来就认为在线；如果要求注册认证，此处应增加判断
-            if (!Status.Online)
-            {
-                Status.Online = true;
-                await Online();
+                Log.WriteLog4Ex("OnRequest", ex);
+                await SendResponseAsync(GetSIPResponse(sipRequest, SIPResponseStatusCodesEnum.InternalServerError));
             }
         }
 
@@ -327,9 +341,7 @@ namespace SipServer
         /// <param name="remoteEndPoint"></param>
         /// <param name="sipRequest"></param>
         /// <returns></returns>
-        async Task MessageProcess(SIPEndPoint localSipEndPoint,
-           SIPEndPoint remoteEndPoint,
-           SIPRequest sipRequest)
+        async Task MessageProcess(SIPEndPoint localSipEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
         {
             var mth = regCmdType.Match(sipRequest.Body);
             if (mth.Success)
@@ -470,14 +482,54 @@ namespace SipServer
             return body.SN;
         }
         /// <summary>
+        /// 发起广播
+        /// </summary>
+        /// <param name="SourceID">语音输入设备的设备编码</param>
+        /// <param name="Channel">语音输出设备的设备编码</param>
+        /// <returns></returns>
+        public async Task Send_Broadcast(string SourceID, string Channel, string InviteID)
+        {
+            if (string.IsNullOrWhiteSpace(SourceID))
+            {
+                SourceID = Channel;
+            }
+            var body = new VoiceBroadcastNotify()
+            {
+                CmdType = CommandType.Broadcast,
+                SN = GetSN(),
+                SourceID = SourceID,
+                TargetID = Channel,
+            };
+            ditBroadcast[SourceID] = new BroadcastInfo { InviteID = InviteID, Channel = Channel };
+            var req = GetSIPRequest(ContentType: Constant.Application_XML);
+            req.Body = body.ToXmlStr();
+            await SendRequestAsync(req);
+        }
+
+        /// <summary>
         /// 发起视频
         /// </summary>
         /// <param name="Channel">通道 一般是IPCID</param>
         /// <param name="fromTag"></param>
         /// <param name="SDP"></param>
-        /// <returns></returns>
-        public async Task Send_INVITE(string Channel, string fromTag, string SDP)
+        /// <returns>1 成功 2需要转换为广播 3已转换为广播并发送</returns>
+        public async Task<string> Send_INVITE(string Channel, string fromTag, string SDP, InviteTalk TalkCov)
         {
+            if (TalkCov != InviteTalk.Force)
+            {
+                var sdp28181 = SDP28181.NewByStr(SDP);
+                if (sdp28181.SType == SDP28181.PlayType.Talk && deviceInfo != null && deviceInfo.Manufacturer == "Hikvision")
+                {
+                    if (TalkCov == InviteTalk.Auto)
+                        return "2";
+                    if (TalkCov == InviteTalk.Transform)
+                    {
+                        await Send_Broadcast(null, Channel, fromTag);
+                        return "3";
+                    }
+                }
+            }
+
             var req = GetSIPRequest(SIPMethodsEnum.INVITE, Constant.Application_SDP, true);
             req.Header.From.FromTag = fromTag;
             req.Header.To.ToURI.User = Channel;
@@ -487,6 +539,8 @@ namespace SipServer
             sipServer.SetTag(fromTag, new FromTagItem { Client = this, From = req.Header.From, To = req.Header.To });
 
             await SendRequestAsync(req);
+
+            return "1";
         }
         /// <summary>
         /// 发送视频关闭

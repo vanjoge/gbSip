@@ -31,16 +31,48 @@ namespace GBWeb.Controllers
         /// <param name="InviteID">请求ID，用以区分多次请求，可用做SIP的FromTag</param>
         /// <param name="SDP">SDP信息，BASE64编码</param>
         /// <param name="CTags">RTVS CTags</param>
+        /// <param name="TalkCov">对讲转换策略 0 发现设备不支持时返回2 1 不检查原样发送 2 发现设备不支持时直接转换为广播发送</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<string> INVITE(string DeviceID, string Channel, string InviteID, string SDP, string CTags)
+        public async Task<string> Invite(string DeviceID, string Channel, string InviteID, string SDP, string CTags, SipServer.Models.InviteTalk TalkCov = SipServer.Models.InviteTalk.Auto)
         {
             try
             {
                 SQ.Base.Log.WriteLog4(this.HttpContext.Request.Path + this.HttpContext.Request.QueryString);
                 if (Program.sipServer.TryGetClient(DeviceID, out var client))
                 {
-                    await client.Send_INVITE(Channel, InviteID, Base64ToStr(SDP));
+                    return await client.Send_INVITE(Channel, InviteID, Base64ToStr(SDP), TalkCov);
+                }
+                else
+                {
+                    return "0";
+                }
+            }
+            catch
+            {
+                return "-1";
+            }
+        }
+
+
+        /// <summary>
+        /// 28181发起广播
+        /// </summary>
+        /// <param name="DeviceID">设备ID</param>
+        /// <param name="Channel">通道ID，一般是IPC的ID</param>
+        /// <param name="InviteID">请求ID，用以区分多次请求，可用做SIP的FromTag</param>
+        /// <param name="SourceID">语音输入设备的设备编码 为null取Channel</param>
+        /// <param name="CTags">RTVS CTags</param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<string> Broadcast(string DeviceID, string Channel, string SourceID, string InviteID, string CTags)
+        {
+            try
+            {
+                SQ.Base.Log.WriteLog4(this.HttpContext.Request.Path + this.HttpContext.Request.QueryString);
+                if (Program.sipServer.TryGetClient(DeviceID, out var client))
+                {
+                    await client.Send_Broadcast(SourceID, Channel, InviteID);
                     return "1";
                 }
                 else
@@ -62,7 +94,7 @@ namespace GBWeb.Controllers
         /// <param name="CTags">RTVS CTags</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<string> BYE(string DeviceID, string Channel, string InviteID, string CTags)
+        public async Task<string> Bye(string DeviceID, string Channel, string InviteID, string CTags)
         {
             try
             {
@@ -82,6 +114,7 @@ namespace GBWeb.Controllers
                 return "-1";
             }
         }
+
         /// <summary>
         /// 发送MANSRTSP
         /// </summary>

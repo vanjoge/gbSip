@@ -22,18 +22,68 @@ namespace SipServer
             public RecordInfo Info;
             public int SNOld;
         }
+        class BroadcastInfo
+        {
+            public string Channel;
+            public string InviteID;
+        }
         /// <summary>
         /// 发起录像查询缓存内容
         /// </summary>
         ConcurrentDictionary<int, QueryRecordInfo> ditQueryRecordInfo = new ConcurrentDictionary<int, QueryRecordInfo>();
 
+        ConcurrentDictionary<string, BroadcastInfo> ditBroadcast = new ConcurrentDictionary<string, BroadcastInfo>();
         private Task<string> ReportRecordInfo(string OrderID, RecordInfo recordInfo)
         {
             var headers = new DictionaryEx<string, string>();
             headers.Add("Content-Type", "application/json");
             return HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/RecordInfo?OrderID={OrderID}", true, System.Threading.CancellationToken.None, headers: headers, data: recordInfo.ToJson());
         }
+        private Task<string> AnsBroadcastSDP(string SourceID, BroadcastInfo info, string sdp)
+        {
+            return HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/AnsBroadcastSDP?DeviceID={DeviceID}&Channel={info.Channel}&SourceID={SourceID}&InviteID={info.InviteID}&SDP={sdp.EncryptToBase64()}", false, System.Threading.CancellationToken.None);
+        }
 
+        async Task AckProcess(SIPEndPoint localSipEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
+        {
+            var SourceID = sipRequest.Header.To.ToURI.User;
+            if (ditBroadcast.TryRemove(SourceID, out var info) && info.InviteID == sipRequest.Header.To.ToTag)
+            {
+                await HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/BroadcastAck?DeviceID={DeviceID}&Channel={info.Channel}&SourceID={SourceID}&InviteID={info.InviteID}", false, System.Threading.CancellationToken.None);
+            }
+        }
+        async Task InviteProcess(SIPEndPoint localSipEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
+        {
+            var SourceID = sipRequest.Header.To.ToURI.User;
+            if (ditBroadcast.TryGetValue(SourceID, out var info))
+            {
+                await SendResponseAsync(GetSIPResponse(sipRequest, SIPResponseStatusCodesEnum.Trying));
+                //调用接口返回SDP
+                var sdp = await AnsBroadcastSDP(SourceID, info, sipRequest.Body);
+                if (string.IsNullOrWhiteSpace(sdp))
+                {
+                    ditBroadcast.TryRemove(SourceID, out var info2);
+                    var res = GetSIPResponse(sipRequest, SIPResponseStatusCodesEnum.NotAcceptableHere);
+                    res.Header.To.ToTag = info.InviteID;
+                    await SendResponseAsync(res);
+                }
+                else
+                {
+                    var res = GetSIPResponse(sipRequest);
+                    res.Header.To.ToTag = info.InviteID;
+                    res.Header.ContentType = Constant.Application_SDP;
+                    res.Body = sdp;
+
+
+                    sipServer.SetTag(info.InviteID, new FromTagItem { Client = this, From = res.Header.From, To = res.Header.To });
+                    await SendResponseAsync(res);
+                }
+            }
+            else
+            {
+                await SendResponseAsync(GetSIPResponse(sipRequest, SIPResponseStatusCodesEnum.NotFound));
+            }
+        }
         private Task<string> AnsRTVSGetRecordInfo(RecordInfo recordInfo)
         {
             if (ditQueryRecordInfo.TryGetValue(recordInfo.SN, out var query))
