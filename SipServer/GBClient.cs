@@ -284,6 +284,9 @@ namespace SipServer
                     case SIPMethodsEnum.ACK:
                         await AckProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
                         break;
+                    case SIPMethodsEnum.BYE:
+                        await ByeProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
+                        break;
                     default:
                         break;
                 }

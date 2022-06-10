@@ -208,9 +208,9 @@ namespace SipServer
         /// 移除需响应的FromTag
         /// </summary>
         /// <param name="tag"></param>
-        public void RemoveTag(string tag)
+        public bool RemoveTag(string tag)
         {
-            ditFromTag.TryRemove(tag, out var item);
+            return ditFromTag.TryRemove(tag, out var item);
         }
         /// <summary>
         /// 获取需响应的FromTag

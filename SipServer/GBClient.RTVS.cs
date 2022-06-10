@@ -52,6 +52,15 @@ namespace SipServer
                 await HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/BroadcastAck?DeviceID={DeviceID}&Channel={info.Channel}&SourceID={SourceID}&InviteID={info.InviteID}", false, System.Threading.CancellationToken.None);
             }
         }
+        async Task ByeProcess(SIPEndPoint localSipEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
+        {
+            await SendOkMessage(sipRequest);
+            var InviteID = sipRequest.Header.To.ToTag;
+            if (sipServer.RemoveTag(InviteID))
+            {
+                await HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/BroadcastBye?DeviceID={DeviceID}&InviteID={InviteID}", false, System.Threading.CancellationToken.None);
+            }
+        }
         async Task InviteProcess(SIPEndPoint localSipEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
         {
             var SourceID = sipRequest.Header.To.ToURI.User;
@@ -69,7 +78,9 @@ namespace SipServer
                 }
                 else
                 {
+                    //sdp = sdp.Replace("o=34220000001320000002", "o=34220000001320000001");
                     var res = GetSIPResponse(sipRequest);
+                    res.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(sipRequest.Header.To.ToUserField) };
                     res.Header.To.ToTag = info.InviteID;
                     res.Header.ContentType = Constant.Application_SDP;
                     res.Body = sdp;
