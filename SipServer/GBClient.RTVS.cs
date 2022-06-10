@@ -78,7 +78,6 @@ namespace SipServer
                 }
                 else
                 {
-                    //sdp = sdp.Replace("o=34220000001320000002", "o=34220000001320000001");
                     var res = GetSIPResponse(sipRequest);
                     res.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(sipRequest.Header.To.ToUserField) };
                     res.Header.To.ToTag = info.InviteID;
