@@ -20,12 +20,11 @@ namespace SipServer
         /// </summary>
         public bool EnableSipLog { get; set; }
 
-        string sipServerID, sipDomain;
         /// <summary>
         /// SIP服务器ID
         /// </summary>
         [DisplayName("SIP服务器ID")]
-        public string SipServerID { get { return sipServerID; } set { sipServerID = value; sipDomain = null; } }
+        public string SipServerID { get; set; }
         /// <summary>
         /// SIP注册密码 为空表示不验证
         /// </summary>
@@ -71,7 +70,7 @@ namespace SipServer
 
         public Setting()
         {
-            SipServerID = "51010100492007000001";
+            //SipServerID = "51010100492007000001";
             SipPort = 5060;
             RedisExchangeHosts = "127.0.0.1:6379,connectTimeout=20000,syncTimeout=20000,responseTimeout=20000,defaultDatabase=0,password=";
             KeepAliveTimeoutSec = 180;
@@ -81,13 +80,5 @@ namespace SipServer
 #endif
         }
 
-        public string GetSIPDomain()
-        {
-            if (sipDomain == null)
-            {
-                sipDomain = SipServerID.Substring(0, 10);
-            }
-            return sipDomain;
-        }
     }
 }

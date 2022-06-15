@@ -190,6 +190,10 @@ namespace SipServer
         #endregion
 
         #region 逻辑 
+        public static string GetSIPDomain(string SipServerID)
+        {
+            return SipServerID.Substring(0, 10);
+        }
         public string GetNewSSRC(string chid, bool back)
         {
             lock (lckSSRC)
@@ -306,11 +310,17 @@ namespace SipServer
                 string DeviceID = GetSipDeviceId(sipRequest);
                 if (sipRequest.Method == SIPMethodsEnum.REGISTER)
                 {
-                    if (await RegisterProcess(localSIPEndPoint, remoteEndPoint, sipRequest, DeviceID))
+                    //服务器ID默认从配置取，如未配置则取设备上传值
+                    var SipServerID = Settings.SipServerID;
+                    if (string.IsNullOrEmpty(SipServerID))
+                    {
+                        SipServerID = sipRequest.URI.User;
+                    }
+                    if (await RegisterProcess(localSIPEndPoint, remoteEndPoint, sipRequest, DeviceID, SipServerID))
                     {
                         if (!ditClient.ContainsKey(DeviceID))
                         {
-                            ditClient[DeviceID] = new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, DeviceID, Settings.SipServerID, sipRequest.URI.HostAddress);
+                            ditClient[DeviceID] = new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, DeviceID, SipServerID, sipRequest.URI.HostAddress);
                         }
                     }
                 }
@@ -331,10 +341,13 @@ namespace SipServer
         /// <summary>
         /// 注册处理
         /// </summary>
+        /// <param name="localSIPEndPoint"></param>
         /// <param name="remoteEndPoint"></param>
         /// <param name="sipRequest"></param>
+        /// <param name="DeviceID">设备ID</param>
+        /// <param name="SipServerID">SIP服务器ID</param>
         /// <returns></returns>
-        async Task<bool> RegisterProcess(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest, string DeviceID)
+        async Task<bool> RegisterProcess(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest, string DeviceID, string SipServerID)
         {
             SIPResponse res = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
             res.Header.Allow = null;
@@ -359,7 +372,7 @@ namespace SipServer
                 {
                     var account = new SIPAccount
                     {
-                        SIPDomain = Settings.GetSIPDomain(),
+                        SIPDomain = GetSIPDomain(SipServerID),
                         SIPPassword = Settings.SipPassword,
                         SIPUsername = Settings.SipUsername,
                     };
