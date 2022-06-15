@@ -259,7 +259,7 @@ namespace SipServer
         {
             try
             {
-                LastServerID = sipRequest.Header.To.ToURI.User;
+                LastServerID = sipRequest.URI.User;
 
                 if (RemoteEndPoint != null && RemoteEndPoint != remoteEndPoint &&
                     RemoteEndPoint.Protocol == SIPProtocolsEnum.udp
@@ -269,12 +269,6 @@ namespace SipServer
                 }
                 switch (sipRequest.Method)
                 {
-                    case SIPMethodsEnum.REGISTER:
-                        if (!await RegisterProcess(remoteEndPoint, sipRequest))
-                        {
-                            return;
-                        }
-                        break;
                     case SIPMethodsEnum.MESSAGE:
                         await MessageProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
                         break;
@@ -304,37 +298,6 @@ namespace SipServer
                 await SendResponseAsync(GetSIPResponse(sipRequest, SIPResponseStatusCodesEnum.InternalServerError));
             }
         }
-
-        /// <summary>
-        /// 注册处理
-        /// </summary>
-        /// <param name="remoteEndPoint"></param>
-        /// <param name="sipRequest"></param>
-        /// <returns></returns>
-        async Task<bool> RegisterProcess(SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
-        {
-            var res = GetSIPResponse(sipRequest);
-            long expiry = sipRequest.Header.Contact[0].Expires > 0
-                ? sipRequest.Header.Contact[0].Expires
-                : sipRequest.Header.Expires;
-            if (expiry <= 0)
-            {
-                //注销设备
-                res.Header.Expires = 0;
-                await SendResponseAsync(res);
-                sipServer.RemoveClient(DeviceID);
-                return false;
-            }
-            else
-            {
-                res.Header.Expires = 7200;
-                res.Header.Date = DateTime.Now.ToTStr();
-                await SendResponseAsync(res);
-                return true;
-            }
-        }
-
-
 
         /// <summary>
         /// 消息处理

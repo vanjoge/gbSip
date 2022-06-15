@@ -1,5 +1,6 @@
 ﻿using SipServer.DB;
 using SIPSorcery.SIP;
+using SIPSorcery.SIP.App;
 using SQ.Base;
 using System;
 using System.Collections.Concurrent;
@@ -68,6 +69,21 @@ namespace SipServer
         #endregion
 
 
+        class SIPAccount : ISIPAccount
+        {
+
+            public string ID { get; set; }
+
+            public string SIPUsername { get; set; }
+
+            public string SIPPassword { get; set; }
+
+            public string HA1Digest { get; set; }
+
+            public string SIPDomain { get; set; }
+
+            public bool IsDisabled { get; set; }
+        }
         public SipServer()
         {
             this.Settings = new Setting { };
@@ -287,14 +303,24 @@ namespace SipServer
         {
             try
             {
-
-                var client = ditClient.GetOrAdd(GetSipDeviceId(sipRequest), K =>
+                string DeviceID = GetSipDeviceId(sipRequest);
+                if (sipRequest.Method == SIPMethodsEnum.REGISTER)
                 {
-                    return new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, K, sipRequest.Header.To.ToURI.User, sipRequest.URI.HostAddress);
-                });
-                await client.OnRequest(localSIPEndPoint, remoteEndPoint, sipRequest);
-
-
+                    if (await RegisterProcess(localSIPEndPoint, remoteEndPoint, sipRequest, DeviceID))
+                    {
+                        if (!ditClient.ContainsKey(DeviceID))
+                        {
+                            ditClient[DeviceID] = new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, DeviceID, Settings.SipServerID, sipRequest.URI.HostAddress);
+                        }
+                    }
+                }
+                else
+                {
+                    if (ditClient.TryGetValue(DeviceID, out var client))
+                    {
+                        await client.OnRequest(localSIPEndPoint, remoteEndPoint, sipRequest);
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -302,6 +328,64 @@ namespace SipServer
             }
         }
 
+        /// <summary>
+        /// 注册处理
+        /// </summary>
+        /// <param name="remoteEndPoint"></param>
+        /// <param name="sipRequest"></param>
+        /// <returns></returns>
+        async Task<bool> RegisterProcess(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest, string DeviceID)
+        {
+            SIPResponse res = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
+            res.Header.Allow = null;
+            res.Header.UserAgent = UserAgent;
+            long expiry = sipRequest.Header.Expires;
+            if (sipRequest.Header.Contact.Count > 0 && sipRequest.Header.Contact[0].Expires > 0)
+            {
+                expiry = sipRequest.Header.Contact[0].Expires;
+            }
+            if (expiry <= 0)
+            {
+                //注销设备
+                res.Header.Expires = 0;
+                await SipTransport.SendResponseAsync(res);
+                RemoveClient(DeviceID);
+                return false;
+            }
+            else
+            {
+                //SIPPassword配置为空不验证 直接返回成功
+                if (!string.IsNullOrEmpty(Settings.SipPassword))
+                {
+                    var account = new SIPAccount
+                    {
+                        SIPDomain = Settings.GetSIPDomain(),
+                        SIPPassword = Settings.SipPassword,
+                        SIPUsername = Settings.SipUsername,
+                    };
+                    //配置的SIPUsername为空时直接取上报的Username
+                    if (string.IsNullOrEmpty(account.SIPUsername) && sipRequest.Header.HasAuthenticationHeader)
+                    {
+                        account.SIPUsername = sipRequest.Header.AuthenticationHeaders.First().SIPDigest.Username;
+                    }
+                    var authenticationResult = SIPRequestAuthenticator.AuthenticateSIPRequest(localSIPEndPoint, remoteEndPoint, sipRequest, account);
+                    if (!authenticationResult.Authenticated)
+                    {
+                        SIPResponse authReqdResponse = SIPResponse.GetResponse(sipRequest, authenticationResult.ErrorResponse, null);
+                        authReqdResponse.Header.AuthenticationHeaders.Add(authenticationResult.AuthenticationRequiredHeader);
+                        authReqdResponse.Header.Allow = null;
+                        authReqdResponse.Header.UserAgent = UserAgent;
+                        await SipTransport.SendResponseAsync(authReqdResponse);
+                        return false;
+                    }
+                }
+
+                res.Header.Expires = 7200;
+                res.Header.Date = DateTime.Now.ToTStr();
+                await SipTransport.SendResponseAsync(res);
+                return true;
+            }
+        }
 
 
         #endregion
