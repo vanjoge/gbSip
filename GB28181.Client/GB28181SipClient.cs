@@ -353,12 +353,12 @@ namespace GB28181.Client
         /// 发送回复确认
         /// </summary>
         /// <param name="sipRequest"></param>
-        protected async Task SendMessage(SIPRequest sipRequest, SIPResponseStatusCodesEnum messaageResponse = SIPResponseStatusCodesEnum.Ok)
+        protected virtual Task SendMessage(SIPRequest sipRequest, SIPResponseStatusCodesEnum messaageResponse = SIPResponseStatusCodesEnum.Ok)
         {
             var okResponse = GetSIPResponse(sipRequest, messaageResponse);
-            await m_sipTransport.SendResponseAsync(okResponse);
+            return m_sipTransport.SendResponseAsync(okResponse);
         }
-        protected async Task SendDeviceInfo(int sn)
+        protected virtual Task SendDeviceInfo(int sn)
         {
             var req = GetSIPRequest();
             deviceInfo.CmdType = CommandType.DeviceInfo;
@@ -366,10 +366,10 @@ namespace GB28181.Client
 
             req.Body = deviceInfo.ToXmlStr();
 
-            await m_sipTransport.SendRequestAsync(req);
+            return m_sipTransport.SendRequestAsync(req);
 
         }
-        protected async Task SendDeviceStatus(int sn)
+        protected virtual Task SendDeviceStatus(int sn)
         {
             var req = GetSIPRequest();
             var deviceStatusBody = new DeviceStatus();
@@ -383,10 +383,10 @@ namespace GB28181.Client
 
             req.Body = deviceStatusBody.ToXmlStr();
 
-            await m_sipTransport.SendRequestAsync(req);
+            return m_sipTransport.SendRequestAsync(req);
 
         }
-        protected async Task SendCatalog(int sn, SIPRequest sipRequest)
+        protected virtual Task SendCatalog(int sn, SIPRequest sipRequest)
         {
             var req = GetSIPRequest();
             //req.Header.To.ToURI = sipRequest.Header.From.FromURI;
@@ -401,13 +401,13 @@ namespace GB28181.Client
 
             req.Body = catalogBody.ToXmlStr();
 
-            await m_sipTransport.SendRequestAsync(req);
+            return m_sipTransport.SendRequestAsync(req);
 
         }
 
 
 
-        protected SIPResponse GetSIPResponse(SIPRequest sipRequest, SIPResponseStatusCodesEnum messaageResponse = SIPResponseStatusCodesEnum.Ok)
+        protected virtual SIPResponse GetSIPResponse(SIPRequest sipRequest, SIPResponseStatusCodesEnum messaageResponse = SIPResponseStatusCodesEnum.Ok)
         {
             SIPResponse res = SIPResponse.GetResponse(sipRequest, messaageResponse, null);
             res.Header.Allow = null;
@@ -420,7 +420,7 @@ namespace GB28181.Client
 
             return res;
         }
-        protected SIPRequest GetSIPRequest(SIPMethodsEnum methodsEnum = SIPMethodsEnum.MESSAGE)
+        protected virtual SIPRequest GetSIPRequest(SIPMethodsEnum methodsEnum = SIPMethodsEnum.MESSAGE)
         {
             SIPRequest req = SIPRequest.GetRequest(methodsEnum, m_sipAccountAOR, toSIPToHeader, fromSIPFromHeader);
             req.Header.Allow = null;
