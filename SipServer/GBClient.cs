@@ -211,7 +211,7 @@ namespace SipServer
                         ack.Header.To = sipResponse.Header.To;
                         await SendRequestAsync(ack);
                     }
-                    else
+                    else if ((int)sipResponse.Status >= 400)
                     {
                         await Send_Bye(sipResponse.Header.From.FromTag);
                     }
