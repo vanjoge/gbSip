@@ -117,7 +117,7 @@ namespace SipServer
         /// 上线处理
         /// </summary>
         /// <returns></returns>
-        async Task Online()
+        public async Task Online()
         {
             var tuple = await sipServer.DB.GetDevAll(DeviceID);
             deviceInfo = tuple.Item1;
@@ -285,12 +285,12 @@ namespace SipServer
                         break;
                 }
                 Status.KeepAliveTime = DateTime.Now;
-                //此处不严格要求注册认证，有数据上来就认为在线；如果要求注册认证，此处应增加判断
-                if (!Status.Online)
-                {
-                    Status.Online = true;
-                    await Online();
-                }
+                ////此处不严格要求注册认证，有数据上来就认为在线；如果要求注册认证，此处应增加判断
+                //if (!Status.Online)
+                //{
+                //    Status.Online = true;
+                //    await Online();
+                //}
             }
             catch (Exception ex)
             {
@@ -672,9 +672,15 @@ namespace SipServer
 
         public DeviceInfoExt GetDeviceInfoExt()
         {
+            var Device = deviceInfo;
+            if (Device == null)
+            {
+                Device = new DeviceInfo { DeviceID = this.DeviceID };
+
+            }
             return new DeviceInfoExt
             {
-                Device = deviceInfo,
+                Device = Device,
                 Status = Status,
                 RemoteEndPoint = RemoteEndPoint,
             };

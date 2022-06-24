@@ -308,7 +308,11 @@ namespace SipServer
             try
             {
                 string DeviceID = GetSipDeviceId(sipRequest);
-                if (sipRequest.Method == SIPMethodsEnum.REGISTER)
+                if (sipRequest.Method != SIPMethodsEnum.REGISTER && ditClient.TryGetValue(DeviceID, out var client))
+                {
+                    await client.OnRequest(localSIPEndPoint, remoteEndPoint, sipRequest);
+                }
+                else
                 {
                     //服务器ID默认从配置取，如未配置则取设备上传值
                     var SipServerID = Settings.SipServerID;
@@ -320,16 +324,11 @@ namespace SipServer
                     {
                         if (!ditClient.ContainsKey(DeviceID))
                         {
-                            ditClient[DeviceID] = new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, DeviceID, SipServerID, sipRequest.URI.HostAddress);
+                            client = new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, DeviceID, SipServerID, sipRequest.URI.HostAddress);
+                            ditClient[DeviceID] = client;
+                            await client.Online();
                         }
                     }
-                }
-                else
-                {
-                    if (ditClient.TryGetValue(DeviceID, out var client))
-                    {
-                        await client.OnRequest(localSIPEndPoint, remoteEndPoint, sipRequest);
-                    };
                 }
             }
             catch (Exception ex)
@@ -357,7 +356,7 @@ namespace SipServer
             {
                 expiry = sipRequest.Header.Contact[0].Expires;
             }
-            if (expiry <= 0)
+            if (expiry <= 0&& sipRequest.Method== SIPMethodsEnum.REGISTER)
             {
                 //注销设备
                 res.Header.Expires = 0;
