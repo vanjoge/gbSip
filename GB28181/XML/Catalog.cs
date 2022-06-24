@@ -309,7 +309,7 @@ namespace GB28181.XML
             /// 设备状态(必选)
             /// </summary>
             [XmlElement("Status")]
-            public DevStatus Status { get; set; }
+            public string Status { get; set; }
 
             /// <summary>
             /// 经度(可选)
@@ -831,7 +831,7 @@ namespace GB28181.XML
             /// 设备状态(必选)
             /// </summary>
             [XmlElement("Status")]
-            public DevStatus Status { get; set; }
+            public string Status { get; set; }
 
             /// <summary>
             /// 经度(可选)
