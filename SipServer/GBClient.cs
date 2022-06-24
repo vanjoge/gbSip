@@ -334,7 +334,7 @@ namespace SipServer
                             if (channels.Count == catalog.SumNum)
                             {
                                 //表示收全
-                                await sipServer.DB.SaveChannels(DeviceID, channels.ToList());
+                                await sipServer.DB.SaveChannels(DeviceID, channels.ToList(), deviceInfo == null);
                             }
                             break;
                         case "DEVICEINFO":

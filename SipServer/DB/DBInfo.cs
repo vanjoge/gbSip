@@ -105,9 +105,18 @@ namespace SipServer.DB
         /// <param name="DeviceID"></param>
         /// <param name="lst"></param>
         /// <returns></returns>
-        public Task<bool> SaveChannels(string DeviceID, List<Catalog.Item> lst)
+        public Task<bool> SaveChannels(string DeviceID, List<Catalog.Item> lst, bool SaveDeviceIdsKey = false)
         {
-            return RedisHelper.HashSetAsync(GetDevInfoHead(DeviceID), RedisConstant.ChannelsKey, lst);
+            if (SaveDeviceIdsKey)
+            {
+                var db = RedisHelper.GetDatabase();
+                var bat = db.CreateTransaction();
+                bat.HashSetAsync(GetDevInfoHead(DeviceID), hashField: RedisConstant.ChannelsKey, value: lst.ToJson());
+                bat.SortedSetAddAsync(RedisConstant.DeviceIdsKey, DeviceID, Convert.ToDouble(DeviceID));
+                return bat.ExecuteAsync();
+            }
+            else
+                return RedisHelper.HashSetAsync(GetDevInfoHead(DeviceID), RedisConstant.ChannelsKey, lst);
         }
         #endregion
 
@@ -145,26 +154,31 @@ namespace SipServer.DB
                 bat.Execute();
                 foreach (var item in ditDeviceInfo)
                 {
+                    DeviceInfo dev;
                     if (item.Value.Result.HasValue)
                     {
-                        var dev = item.Value.Result.ToString().ParseJSON<DeviceInfo>();
-                        var status = ditStatus[item.Key].Result.ToString().ParseJSON<ConnStatus>();
-                        if (sipServer.TryGetClient(dev.DeviceID, out var client))
-                        {
-                            status.Online = true;
-                            status.KeepAliveTime = client.Status.KeepAliveTime;
-                        }
-                        else
-                        {
-                            status.Online = false;
-                        }
-                        lstDev.Add(new DeviceInfoExt
-                        {
-                            Device = dev,
-                            Status = status,
-                            RemoteEndPoint = client?.RemoteEndPoint,
-                        });
+                        dev = item.Value.Result.ToString().ParseJSON<DeviceInfo>();
                     }
+                    else
+                    {
+                        dev = new DeviceInfo { DeviceID = item.Key };
+                    }
+                    var status = ditStatus[dev.DeviceID].Result.ToString().ParseJSON<ConnStatus>();
+                    if (sipServer.TryGetClient(dev.DeviceID, out var client))
+                    {
+                        status.Online = true;
+                        status.KeepAliveTime = client.Status.KeepAliveTime;
+                    }
+                    else
+                    {
+                        status.Online = false;
+                    }
+                    lstDev.Add(new DeviceInfoExt
+                    {
+                        Device = dev,
+                        Status = status,
+                        RemoteEndPoint = client?.RemoteEndPoint,
+                    });
                 }
             }
 
