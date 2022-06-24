@@ -351,51 +351,64 @@ namespace SipServer
             SIPResponse res = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
             res.Header.Allow = null;
             res.Header.UserAgent = UserAgent;
+            if (sipRequest.Method != SIPMethodsEnum.REGISTER)
+            {
+                await Auth(localSIPEndPoint, remoteEndPoint, sipRequest, SipServerID);
+                return false;
+            }
             long expiry = sipRequest.Header.Expires;
             if (sipRequest.Header.Contact.Count > 0 && sipRequest.Header.Contact[0].Expires > 0)
             {
                 expiry = sipRequest.Header.Contact[0].Expires;
             }
-            if (expiry <= 0&& sipRequest.Method== SIPMethodsEnum.REGISTER)
+            //SIPPassword配置为空不验证 
+            if (string.IsNullOrEmpty(Settings.SipPassword) || await Auth(localSIPEndPoint, remoteEndPoint, sipRequest, SipServerID))
             {
-                //注销设备
-                res.Header.Expires = 0;
-                await SipTransport.SendResponseAsync(res);
-                RemoveClient(DeviceID);
-                return false;
+                if (expiry <= 0)
+                {
+                    //注销设备
+                    res.Header.Expires = 0;
+                    await SipTransport.SendResponseAsync(res);
+                    RemoveClient(DeviceID);
+                }
+                else
+                {
+                    res.Header.Expires = 7200;
+                    res.Header.Date = DateTime.Now.ToTStr();
+                    await SipTransport.SendResponseAsync(res);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        Task<bool> Auth(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest, string SipServerID)
+        {
+            var account = new SIPAccount
+            {
+                SIPDomain = GetSIPDomain(SipServerID),
+                SIPPassword = Settings.SipPassword,
+                SIPUsername = Settings.SipUsername,
+            };
+            //配置的SIPUsername为空时直接取上报的Username
+            if (string.IsNullOrEmpty(account.SIPUsername) && sipRequest.Header.HasAuthenticationHeader)
+            {
+                account.SIPUsername = sipRequest.Header.AuthenticationHeaders.First().SIPDigest.Username;
+            }
+            var authenticationResult = SIPRequestAuthenticator.AuthenticateSIPRequest(localSIPEndPoint, remoteEndPoint, sipRequest, account);
+            if (authenticationResult.Authenticated)
+            {
+                return Task.FromResult(true);
             }
             else
             {
-                //SIPPassword配置为空不验证 直接返回成功
-                if (!string.IsNullOrEmpty(Settings.SipPassword))
-                {
-                    var account = new SIPAccount
-                    {
-                        SIPDomain = GetSIPDomain(SipServerID),
-                        SIPPassword = Settings.SipPassword,
-                        SIPUsername = Settings.SipUsername,
-                    };
-                    //配置的SIPUsername为空时直接取上报的Username
-                    if (string.IsNullOrEmpty(account.SIPUsername) && sipRequest.Header.HasAuthenticationHeader)
-                    {
-                        account.SIPUsername = sipRequest.Header.AuthenticationHeaders.First().SIPDigest.Username;
-                    }
-                    var authenticationResult = SIPRequestAuthenticator.AuthenticateSIPRequest(localSIPEndPoint, remoteEndPoint, sipRequest, account);
-                    if (!authenticationResult.Authenticated)
-                    {
-                        SIPResponse authReqdResponse = SIPResponse.GetResponse(sipRequest, authenticationResult.ErrorResponse, null);
-                        authReqdResponse.Header.AuthenticationHeaders.Add(authenticationResult.AuthenticationRequiredHeader);
-                        authReqdResponse.Header.Allow = null;
-                        authReqdResponse.Header.UserAgent = UserAgent;
-                        await SipTransport.SendResponseAsync(authReqdResponse);
-                        return false;
-                    }
-                }
+                SIPResponse authReqdResponse = SIPResponse.GetResponse(sipRequest, authenticationResult.ErrorResponse, null);
+                authReqdResponse.Header.AuthenticationHeaders.Add(authenticationResult.AuthenticationRequiredHeader);
+                authReqdResponse.Header.Allow = null;
+                authReqdResponse.Header.UserAgent = UserAgent;
+                return SipTransport.SendResponseAsync(authReqdResponse).ContinueWith<bool>(p => { return false; });
 
-                res.Header.Expires = 7200;
-                res.Header.Date = DateTime.Now.ToTStr();
-                await SipTransport.SendResponseAsync(res);
-                return true;
             }
         }
 
