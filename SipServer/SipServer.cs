@@ -353,7 +353,10 @@ namespace SipServer
             res.Header.UserAgent = UserAgent;
             if (sipRequest.Method != SIPMethodsEnum.REGISTER)
             {
-                await Auth(localSIPEndPoint, remoteEndPoint, sipRequest, SipServerID);
+                SIPResponse unauthResponse = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Unauthorised, null);
+                unauthResponse.Header.Allow = null;
+                unauthResponse.Header.UserAgent = UserAgent;
+                await SipTransport.SendResponseAsync(unauthResponse);
                 return false;
             }
             long expiry = sipRequest.Header.Expires;
