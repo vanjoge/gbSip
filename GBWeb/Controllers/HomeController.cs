@@ -50,6 +50,14 @@ namespace GBWeb.Controllers
             return View(model);
         }
 
+        public async Task<IActionResult> RefreshChannel(string DeviceID)
+        {
+            if (Program.sipServer.TryGetClient(DeviceID, out var client))
+            {
+                await client.RefreshChannel();
+            }
+            return RedirectToAction("Index");
+        }
         public async Task<IActionResult> Delete(string DeviceID)
         {
             return View(await Program.sipServer.DB.GetDeviceInfo(DeviceID));

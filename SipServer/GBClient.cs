@@ -175,6 +175,17 @@ namespace SipServer
                 sipServer.RemoveTree(item.DeviceID);
             }
         }
+
+
+        public async Task RefreshChannel()
+        {
+            channels = new ChannelList();
+            if (deviceInfo != null)
+            {
+                deviceInfo.CatalogChannel = 0;
+            }
+            await Send_GetDevCommand(CommandType.Catalog);
+        }
         #endregion
 
         #region 接收处理
@@ -326,15 +337,30 @@ namespace SipServer
                         case "CATALOG": //处理设备目录
                             await SendOkMessage(sipRequest);
                             var catalog = SerializableHelper.DeserializeByStr<Catalog>(sipRequest.Body);
-                            foreach (var item in catalog.DeviceList)
+                            if (catalog.SumNum != 0 && catalog.DeviceList != null)
                             {
-                                sipServer.SetTree(item.DeviceID, DeviceID);
-                                channels.AddOrUpdate(item);
-                            }
-                            if (channels.Count == catalog.SumNum)
-                            {
-                                //表示收全
-                                await sipServer.DB.SaveChannels(DeviceID, channels.ToList(), deviceInfo == null);
+                                foreach (var item in catalog.DeviceList)
+                                {
+                                    sipServer.SetTree(item.DeviceID, DeviceID);
+                                    channels.AddOrUpdate(item);
+                                }
+                                if (channels.Count == catalog.SumNum)
+                                {
+                                    //表示收全
+                                    await sipServer.DB.SaveChannels(DeviceID, channels.ToList(), deviceInfo == null);
+                                    if (deviceInfo == null)
+                                    {
+                                        deviceInfo = new DeviceInfo
+                                        {
+                                            DeviceID = DeviceID,
+                                        };
+                                    }
+                                    if (deviceInfo.CatalogChannel != channels.Count)
+                                    {
+                                        deviceInfo.CatalogChannel = channels.Count;
+                                        await sipServer.DB.SaveDeviceInfo(deviceInfo);
+                                    }
+                                }
                             }
                             break;
                         case "DEVICEINFO":

@@ -406,6 +406,11 @@ namespace GB28181.XML
         [XmlElement(nameof(Channel))]
         public int Channel { get; set; }
 
+        /// <summary>
+        /// Catalog上报视频通道数
+        /// </summary>
+        [XmlIgnore]
+        public int CatalogChannel { get; set; }
         ///// <summary>
         ///// 扩展信息, 可多项
         ///// </summary>
