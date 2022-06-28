@@ -12,9 +12,11 @@ namespace SipServer.Models
         SortedDictionary<string, Catalog.Item> data = new SortedDictionary<string, Catalog.Item>();
         public int Count => data.Count;
 
+        public int AddTimes { get; protected set; }
         public void AddOrUpdate(Catalog.Item item)
         {
             data[item.DeviceID] = item;
+            AddTimes++;
         }
 
         public List<Catalog.Item> ToList()

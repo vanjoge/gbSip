@@ -344,7 +344,7 @@ namespace SipServer
                                     sipServer.SetTree(item.DeviceID, DeviceID);
                                     channels.AddOrUpdate(item);
                                 }
-                                if (channels.Count == catalog.SumNum)
+                                if (channels.Count == catalog.SumNum || channels.AddTimes == catalog.SumNum)
                                 {
                                     //表示收全
                                     await sipServer.DB.SaveChannels(DeviceID, channels.ToList(), deviceInfo == null);
