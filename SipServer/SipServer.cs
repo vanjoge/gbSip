@@ -114,7 +114,7 @@ namespace SipServer
         public void Start()
         {
             Log.WriteLog4($"gbSip Starting SipPort:{Settings.SipPort} EnableSipLog:{ Settings.EnableSipLog}");
-
+            SIPConstants.DEFAULT_ENCODING = Encoding.GetEncoding("GBK");
             DB = new DBInfo(this);
             thCheck = new SQ.Base.ThreadWhile<object>();
             thCheck.SleepMs = 1000;
