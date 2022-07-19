@@ -1,4 +1,5 @@
-﻿using SipServer.DB;
+﻿using SipServer.Cascade;
+using SipServer.DB;
 using SIPSorcery.SIP;
 using SIPSorcery.SIP.App;
 using SQ.Base;
@@ -31,7 +32,10 @@ namespace SipServer
         /// Value:设备ID
         /// </summary>
         ConcurrentDictionary<string, string> ditReverseTree = new ConcurrentDictionary<string, string>();
-
+        /// <summary>
+        /// 级联平台管理
+        /// </summary>
+        public CascadeManager Cascade { get; protected set; }
         /// <summary>
         /// SIP监听(包含TCP、UDPV4、UDPV6)
         /// </summary>
@@ -102,6 +106,7 @@ namespace SipServer
             {
                 Log.WriteLog4Ex("SipServer", ex);
             }
+            Cascade = new CascadeManager(this);
         }
 
 
@@ -131,6 +136,9 @@ namespace SipServer
             //_sipTransport.SIP
             SipTransport.SIPTransportRequestReceived += OnRequest;
             SipTransport.SIPTransportResponseReceived += OnResponse;
+
+
+            Cascade.Start();
 
             Log.WriteLog4($"gbSip Started");
         }

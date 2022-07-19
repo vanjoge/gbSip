@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GB28181\GB28181.csproj" />
+    <ProjectReference Include="..\GB28181.Client\GB28181.Client.csproj" />
   </ItemGroup>
 
   <ItemGroup>

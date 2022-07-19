@@ -1,0 +1,22 @@
+﻿@model SipServer.Models.SuperiorInfo
+
+@{
+    ViewData["Title"] = "删除上级平台";
+
+}
+
+<h1>确定删除?</h1>
+
+<h4>上级平台</h4>
+<hr />
+
+<form asp-action="Delete">
+    <input type="submit" value="删除" class="btn btn-danger" /> |
+    <a asp-action="Index">返回列表</a>
+</form>
+<hr />
+@await Html.PartialAsync("UcEdit", Model)
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -12,5 +12,6 @@ namespace SipServer
         public const string DeviceInfoKey = "DeviceInfo";
         public const string DeviceStatusKey = "DeviceStatus";
         public const string StatusKey = "Status";
+        public const string SuperiorKey = "GBSuperior";
     }
 }

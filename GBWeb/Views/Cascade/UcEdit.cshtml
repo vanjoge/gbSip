@@ -1,0 +1,77 @@
+﻿@model SipServer.Models.SuperiorInfo
+
+<div class="row">
+    <div class="col-md-4">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-group form-check">
+            <label class="form-check-label">
+                <input class="form-check-input" asp-for="Enable" /> 启用
+            </label>
+        </div>
+        <div class="form-group">
+            <label asp-for="Name" class="control-label">名称</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="ServerID" class="control-label">上级国标编码</label>
+            <input asp-for="ServerID" class="form-control" />
+            <span asp-validation-for="ServerID" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Server" class="control-label">上级IP/域名</label>
+            <input asp-for="Server" class="form-control" />
+            <span asp-validation-for="Server" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="ServerPort" class="control-label">上级端口</label>
+            <input asp-for="ServerPort" class="form-control" />
+            <span asp-validation-for="ServerPort" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="ClientID" class="control-label">本地SIP国标编码</label>
+            <input asp-for="ClientID" class="form-control" />
+            <span asp-validation-for="ClientID" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="ClientName" class="control-label">本地SIP名称</label>
+            <input asp-for="ClientName" class="form-control" />
+            <span asp-validation-for="ClientName" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="SIPUsername" class="control-label">SIP认证用户名</label>
+            <input asp-for="SIPUsername" class="form-control" />
+            <span asp-validation-for="SIPUsername" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="SIPPassword" class="control-label">SIP认证密码</label>
+            <input asp-for="SIPPassword" class="form-control" />
+            <span asp-validation-for="SIPPassword" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Expiry" class="control-label">注册有效期</label>
+            <input asp-for="Expiry" class="form-control" />
+            <span asp-validation-for="Expiry" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="RegSec" class="control-label">注册间隔</label>
+            <input asp-for="RegSec" class="form-control" />
+            <span asp-validation-for="RegSec" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="HeartSec" class="control-label">心跳周期</label>
+            <input asp-for="HeartSec" class="form-control" />
+            <span asp-validation-for="HeartSec" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="HeartTimeoutTimes" class="control-label">最大心跳超时次数</label>
+            <input asp-for="HeartTimeoutTimes" class="form-control" />
+            <span asp-validation-for="HeartTimeoutTimes" class="text-danger"></span>
+        </div>
+        <div class="form-group form-check">
+            <label class="form-check-label">
+                <input class="form-check-input" asp-for="UseTcp" /> TCP模式
+            </label>
+        </div>
+    </div>
+</div>

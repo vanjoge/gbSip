@@ -89,6 +89,8 @@ namespace SipServer.DB
             }
             return ret;
         }
+
+
         #region Channel
         /// <summary>
         /// 获取设备通道列表
@@ -97,8 +99,20 @@ namespace SipServer.DB
         /// <returns></returns>
         public Task<List<Catalog.Item>> GetChannelList(string DeviceID)
         {
-            return RedisHelper.HashGetAsync<List<Catalog.Item>>(GetDevInfoHead(DeviceID), RedisConstant.ChannelsKey);
+            return SafeHashGetAsync<List<Catalog.Item>>(GetDevInfoHead(DeviceID), RedisConstant.ChannelsKey);
         }
+        Task<T> SafeHashGetAsync<T>(string key, string dataKey)
+        {
+            return RedisHelper.GetDatabase().HashGetAsync(key, dataKey).ContinueWith<T>(p =>
+              {
+                  if (p.Result.HasValue)
+                  {
+                      return SQ.Base.JsonHelper.ParseJSON<T>(p.Result);
+                  }
+                  return default(T);
+              });
+        }
+
         /// <summary>
         /// 保存通道
         /// </summary>
@@ -128,7 +142,7 @@ namespace SipServer.DB
         /// <returns></returns>
         public Task<DeviceInfo> GetDeviceInfo(string DeviceID)
         {
-            return RedisHelper.HashGetAsync<DeviceInfo>(GetDevInfoHead(DeviceID), RedisConstant.DeviceInfoKey);
+            return SafeHashGetAsync<DeviceInfo>(GetDevInfoHead(DeviceID), RedisConstant.DeviceInfoKey);
         }
         /// <summary>
         /// 获取设备列表(支持分页)
@@ -225,6 +239,37 @@ namespace SipServer.DB
             bat.HashSetAsync(GetDevInfoHead(deviceInfo.DeviceID), hashField: RedisConstant.DeviceInfoKey, deviceInfo.ToJson());
             bat.SortedSetAddAsync(RedisConstant.DeviceIdsKey, deviceInfo.DeviceID, Convert.ToDouble(deviceInfo.DeviceID));
             return bat.ExecuteAsync();
+        }
+        #endregion
+
+
+        #region SuperiorInfo
+        public Task<SuperiorInfo> GetSuperiorInfo(string id)
+        {
+            return SafeHashGetAsync<SuperiorInfo>(RedisConstant.SuperiorKey, id);
+        }
+        public async Task<List<SuperiorInfoEx>> GetSuperiorList()
+        {
+            List<SuperiorInfoEx> lst = new List<SuperiorInfoEx>();
+            var superiors = await RedisHelper.HashGetAllAsync(RedisConstant.SuperiorKey);
+            foreach (var item in superiors)
+            {
+                if (item.Value.HasValue)
+                {
+                    var info = TryParseJSON<SuperiorInfoEx>(item.Value);
+                    info.Client = sipServer.Cascade.GetClient(info.ID);
+                    lst.Add(info);
+                }
+            }
+            return lst;
+        }
+        public Task<bool> SaveSuperior(SuperiorInfo sinfo)
+        {
+            return RedisHelper.HashSetAsync(RedisConstant.SuperiorKey, sinfo.ID, sinfo);
+        }
+        public Task<bool> DeleteSuperior(string id)
+        {
+            return RedisHelper.HashDeleteAsync(RedisConstant.SuperiorKey, id);
         }
         #endregion
     }

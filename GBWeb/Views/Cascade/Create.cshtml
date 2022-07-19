@@ -1,0 +1,31 @@
+﻿@model SipServer.Models.SuperiorInfo
+
+@{
+    ViewData["Title"] = "新增上级平台";
+
+    var nmodel = Model;
+    if (nmodel == null)
+    {
+        nmodel = new SipServer.Models.SuperiorInfo();
+    }
+}
+
+<h1>新增</h1>
+
+<h4>上级平台</h4>
+<hr />
+
+<form asp-action="Create">
+    @await Html.PartialAsync("UcEdit", nmodel)
+    <div class="form-group">
+        <input type="submit" value="保存" class="btn btn-primary" />
+    </div>
+</form>
+
+<div>
+    <a asp-action="Index">返回列表</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
