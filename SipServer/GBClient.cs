@@ -1,6 +1,7 @@
 ﻿using GB28181;
 using GB28181.Enums;
 using GB28181.MANSRTSP;
+using GB28181.PTZ;
 using GB28181.XML;
 using SipServer.Models;
 using SIPSorcery.SIP;
@@ -571,6 +572,14 @@ namespace SipServer
             return false;
         }
 
+        public async Task<int> Send_DeviceControl(DeviceControl control)
+        {
+            var req = GetSIPRequest(ContentType: Constant.Application_XML);
+            control.SN = GetSN();
+            req.Body = control.ToXmlStr();
+            await SendRequestAsync(req);
+            return control.SN;
+        }
         #endregion
 
         #region 其他

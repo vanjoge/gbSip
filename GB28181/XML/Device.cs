@@ -86,17 +86,17 @@ namespace GB28181.XML
         [XmlElement(nameof(HomePosition))]
         public HomePositionBody HomePosition { get; set; }
 
-        /// <summary>
-        /// 报警复位控制时, 扩展此项, 携带报警方式, 报警类型
-        /// </summary>
-        [XmlElement("Info")]
-        public AlarmInfoBody AlarmInfo { get; set; }
+        ///// <summary>
+        ///// 报警复位控制时, 扩展此项, 携带报警方式, 报警类型
+        ///// </summary>
+        //[XmlElement("Info")]
+        //public AlarmInfoBody AlarmInfo { get; set; }
 
-        /// <summary>
-        /// 扩展信息, 可多项
-        /// </summary>
-        [XmlElement("Info")]
-        public Catalog.Info Info { get; set; }
+        ///// <summary>
+        ///// 扩展信息, 可多项
+        ///// </summary>
+        //[XmlElement("Info")]
+        //public Catalog.Info Info { get; set; }
 
         public class DragZoomBody
         {

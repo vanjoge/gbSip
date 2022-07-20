@@ -4,8 +4,20 @@
     ViewData["Title"] = "通道";
     var rtvsServer = Program.sipServer.Settings.RTVSVideoServer;
     var rtvsPort = Program.sipServer.Settings.RTVSVideoPort;
+    var rtvssim = this.Context.Request.Query["DeviceID"];
 }
+<style>
+    .HoverItem {
+        width: 20px;
+        height: 20px;
+    }
 
+        .HoverItem:hover {
+            /*color: red;*/
+            cursor: pointer;
+            background-color: red;
+        }
+</style>
 <h1>通道</h1>
 
 <table class="table">
@@ -31,31 +43,30 @@
         {
             foreach (var item in Model)
             {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.DeviceID)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Manufacturer)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Model)
-                </td>
-                <td>
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.DeviceID)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Manufacturer)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Model)
+                    </td>
+                    <td>
 
-                    <button disabled type="button" class="btn btn-primary  btn-sm" data-toggle="modal" data-target="#rtvsPlayer" data-rtvssim="@this.Context.Request.Query["DeviceID"]" data-rtvschannel="@item.DeviceID">
-                        实时视频
-                    </button>
-                </td>
-            </tr>
+                        <button disabled type="button" class="btn btn-primary  btn-sm" data-toggle="modal" data-target="#rtvsPlayer" data-rtvssim="@rtvssim" data-rtvschannel="@item.DeviceID">
+                            实时视频
+                        </button>
+                    </td>
+                </tr>
             }
         }
     </tbody>
 </table>
-
 
 
 
@@ -72,6 +83,30 @@
             <div class="modal-body">
                 <div class="m-auto" id="player" style="width: 854px; height: 480px;">
                 </div>
+                <div class="m-auto" id="ptz">
+                    <span>简易云台控制</span>
+                    <table>
+                        <tr>
+                            <td>@*<span class="HoverItem">&#8598;</span>*@</td>
+                            <td> <span id="up" class="HoverItem">&#8593;</span></td>
+                            <td>@*<span class="HoverItem">&#8599;</span>*@</td>
+                        </tr>
+                        <tr>
+                            <td> <span id="left" class="HoverItem">&#8592;</span></td>
+                            <td> <span>&nbsp;</span></td>
+                            <td> <span id="right" class="HoverItem">&#8594;</span></td>
+                        </tr>
+                        <tr>
+                            <td>@*<span class="HoverItem">&#8601;</span>*@</td>
+                            <td> <span id="down" class="HoverItem">&#8595;</span></td>
+                            <td>@*<span class="HoverItem">&#8600;</span>*@</td>
+                        </tr>
+                    </table>
+
+
+
+
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
@@ -80,11 +115,12 @@
     </div>
 </div>
 
-
 @section Scripts {
     <script type="text/javascript" src="https://lib.cvtsp.com/video/CVNetVideoJs/1.3.0/CvNetVideo.js"></script>
     <script>
         var uc1;
+        var nowChannel="@rtvssim";
+        var ptzChannel = "";
         $(function () {
             uc1 = CvNetVideo.Init(document.querySelector("#player"), 1,
                 {
@@ -127,12 +163,72 @@
             modal.on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget);
                 var sim = button.data('rtvssim');
-                var channel = button.data('rtvschannel');
-                uc1.StartRealTimeVideo(sim, channel);
+                nowChannel = button.data('rtvschannel');
+                uc1.StartRealTimeVideo(sim, nowChannel);
             })
             modal.on('shown.bs.modal', function (event) {
                 uc1.Resize(854, 480);
             })
+
+            var ptcdiv = document.querySelector('#ptz');
+
+            //元素的鼠标落下事件
+            ptcdiv.onmousedown = function (ev) {
+                if (nowChannel) {
+                    //event的兼容性
+                    var ev = ev || event;
+                    if (ev.target.id == "left") {
+                        ptzChannel = nowChannel;
+                        PTZCtrl(ptzChannel, 0, null, null, null, null, 128, null);
+                    }
+                    else if (ev.target.id == "right") {
+                        ptzChannel = nowChannel;
+                        PTZCtrl(ptzChannel, 0, null, null, null, null, null, 128);
+                    }
+                    else if (ev.target.id == "up") {
+                        ptzChannel = nowChannel;
+                        PTZCtrl(ptzChannel, 0, null, null, 128, null, null, null);
+                    }
+                    else if (ev.target.id == "down") {
+                        ptzChannel = nowChannel;
+                        PTZCtrl(ptzChannel, 0, null, null, null, 128, null, null);
+                    }
+                }
+            }
+                //清除
+            document.addEventListener("mouseup", function (ev) {
+                if (ptzChannel.length > 0) {
+                    //发送停止
+                    PTZCtrl(ptzChannel, 0);
+                    ptzChannel = "";
+                }
+            });
         });
+
+        function PTZCtrl(Channel, Address, ZoomIn, ZoomOut, Up, Down, Left, Right) {
+            var url = "/api/DeviceControl/PTZCtrl?DeviceID=@rtvssim&Channel=" + Channel + "&Address=" + Address;
+            if (ZoomIn) {
+                url += "&ZoomIn=" + ZoomIn;
+            }
+            if (ZoomOut) {
+                url += "&ZoomOut=" + ZoomOut;
+            }
+            if (Up) {
+                url += "&Up=" + Up;
+            }
+            if (Down) {
+                url += "&Down=" + Down;
+            }
+            if (Left) {
+                url += "&Left=" + Left;
+            }
+            if (Right) {
+                url += "&Right=" + Right;
+            }
+            $.get(url, function (data) {
+
+            });
+        }
+
     </script>
 }
