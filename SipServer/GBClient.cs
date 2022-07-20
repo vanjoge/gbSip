@@ -511,7 +511,7 @@ namespace SipServer
             if (TalkCov != InviteTalk.Force)
             {
                 var sdp28181 = SDP28181.NewByStr(SDP);
-                if (sdp28181.SType == SDP28181.PlayType.Talk && deviceInfo != null && deviceInfo.Manufacturer == "Hikvision")
+                if (sdp28181.SType == SDP28181.PlayType.Talk && deviceInfo != null && (deviceInfo.Manufacturer == "Hikvision" || deviceInfo.Manufacturer == "TP-LINK"))
                 {
                     if (TalkCov == InviteTalk.Auto)
                         return "2";
