@@ -49,7 +49,7 @@ namespace SipServer
             }
         }
 
-        string LastServerID, LastDeviceID;
+        string ServerID;
         /// <summary>
         /// 设备ID
         /// </summary>
@@ -99,7 +99,7 @@ namespace SipServer
 
             fromSIPFromHeader = new SIPFromHeader(null, new SIPURI(scheme, localSIPEndPoint) { User = ServerID }, CallProperties.CreateNewTag());
 
-            LastServerID = ServerID;
+            this.ServerID = ServerID;
             this.sipServer = sipServer;
             RemoteEndPoint = remoteEndPoint;
             this.DeviceID = DeviceID;
@@ -271,7 +271,7 @@ namespace SipServer
         {
             try
             {
-                LastServerID = sipRequest.URI.User;
+                //ServerID = sipRequest.URI.User;
 
                 if (RemoteEndPoint != null && RemoteEndPoint != remoteEndPoint &&
                     RemoteEndPoint.Protocol == SIPProtocolsEnum.udp
@@ -431,6 +431,10 @@ namespace SipServer
         async Task SendOkMessage(SIPRequest sipRequest)
         {
             SIPResponse okResponse = GetSIPResponse(sipRequest);
+            if (okResponse.Header.To.ToTag == null)
+            {
+                okResponse.Header.To.ToTag = CallProperties.CreateNewTag();
+            }
             await SendResponseAsync(okResponse);
         }
 

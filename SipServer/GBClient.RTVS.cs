@@ -46,8 +46,7 @@ namespace SipServer
 
         async Task AckProcess(SIPEndPoint localSipEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
         {
-            //var SourceID = sipRequest.Header.To.ToURI.User;
-            var SourceID = sipRequest.Header.From.FromURI.User;
+            var SourceID = GetSourceID(sipRequest);
             if (ditBroadcast.TryRemove(SourceID, out var info) && info.InviteID == sipRequest.Header.To.ToTag)
             {
                 await HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/BroadcastAck?DeviceID={DeviceID}&Channel={info.Channel}&SourceID={SourceID}&InviteID={info.InviteID}", false, System.Threading.CancellationToken.None);
@@ -64,7 +63,7 @@ namespace SipServer
         }
         async Task InviteProcess(SIPEndPoint localSipEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
         {
-            var SourceID = sipRequest.Header.From.FromURI.User;
+            var SourceID = GetSourceID(sipRequest);
             if (ditBroadcast.TryGetValue(SourceID, out var info))
             {
                 await SendResponseAsync(GetSIPResponse(sipRequest, SIPResponseStatusCodesEnum.Trying));
@@ -123,6 +122,18 @@ namespace SipServer
                 }
             }
             return Task.FromResult<string>(null);
+        }
+
+        string GetSourceID(SIPRequest sipRequest)
+        {
+            if (sipRequest.Header.To.ToURI.User == ServerID)
+            {
+                return sipRequest.Header.From.FromURI.User;
+            }
+            else
+            {
+                return sipRequest.Header.To.ToURI.User;
+            }
         }
     }
 }
