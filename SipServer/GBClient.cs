@@ -498,6 +498,11 @@ namespace SipServer
                 TargetID = Channel,
             };
             ditBroadcast[SourceID] = new BroadcastInfo { InviteID = InviteID, Channel = Channel };
+
+            //var req = GetSIPRequest(ContentType: Constant.Application_XML, newHeader: true);
+            //req.Header.From.FromTag = CallProperties.CreateNewTag();
+            //req.Header.To.ToURI.User = SourceID;
+
             var req = GetSIPRequest(ContentType: Constant.Application_XML);
             req.Body = body.ToXmlStr();
             await SendRequestAsync(req);

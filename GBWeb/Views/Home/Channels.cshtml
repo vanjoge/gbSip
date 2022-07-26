@@ -10,6 +10,7 @@
     .HoverItem {
         width: 20px;
         height: 20px;
+        font-size: xx-large;
     }
 
         .HoverItem:hover {
@@ -70,6 +71,10 @@
 
 
 
+
+
+
+
 <!-- Modal -->
 <div class="modal fade" id="rtvsPlayer" tabindex="-1" role="dialog" aria-labelledby="rtvsPlayerTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
@@ -85,26 +90,42 @@
                 </div>
                 <div class="m-auto" id="ptz">
                     <span>简易云台控制</span>
+
                     <table>
                         <tr>
+                            <td></td>
+                            <td><span>&nbsp;&nbsp;&nbsp;</span></td>
                             <td>@*<span class="HoverItem">&#8598;</span>*@</td>
                             <td> <span id="up" class="HoverItem">&#8593;</span></td>
                             <td>@*<span class="HoverItem">&#8599;</span>*@</td>
+                            <td><span>&nbsp;&nbsp;&nbsp;</span></td>
+                            <td></td>
+                            <td><span>&nbsp;&nbsp;&nbsp;</span></td>
+                            <td><label>垂直速度:<input id="tiltSpeed" type="number" min="0" max="255" value="128" /></label></td>
                         </tr>
                         <tr>
+                            <td> <span id="zoomIn" class="HoverItem">+</span></td>
+                            <td></td>
                             <td> <span id="left" class="HoverItem">&#8592;</span></td>
                             <td> <span>&nbsp;</span></td>
                             <td> <span id="right" class="HoverItem">&#8594;</span></td>
+                            <td></td>
+                            <td><span id="zoomOut" class="HoverItem">-</span></td>
+                            <td></td>
+                            <td><label>水平速度:<input id="panSpeed" type="number" min="0" max="255" value="128" /></label></td>
                         </tr>
                         <tr>
+                            <td></td>
+                            <td></td>
                             <td>@*<span class="HoverItem">&#8601;</span>*@</td>
                             <td> <span id="down" class="HoverItem">&#8595;</span></td>
                             <td>@*<span class="HoverItem">&#8600;</span>*@</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><label>变倍速度:<input id="zoomSpeed" type="number" min="0" max="15" value="7" /></label></td>
                         </tr>
                     </table>
-
-
-
 
                 </div>
             </div>
@@ -175,23 +196,43 @@
             //元素的鼠标落下事件
             ptcdiv.onmousedown = function (ev) {
                 if (nowChannel) {
+                    var tiltSpeed = document.querySelector("#tiltSpeed").value;
+                    if (tiltSpeed > 255) {
+                        tiltSpeed = 255;
+                    }
+                    var panSpeed = document.querySelector("#panSpeed").value;
+                    if (panSpeed > 255) {
+                        panSpeed = 255;
+                    }
+                    var zoomSpeed = document.querySelector("#zoomSpeed").value;
+                    if (zoomSpeed > 15) {
+                        zoomSpeed = 15;
+                    }
                     //event的兼容性
                     var ev = ev || event;
                     if (ev.target.id == "left") {
                         ptzChannel = nowChannel;
-                        PTZCtrl(ptzChannel, 0, null, null, null, null, 128, null);
+                        PTZCtrl(ptzChannel, 0, null, null, null, null, panSpeed, null);
                     }
                     else if (ev.target.id == "right") {
                         ptzChannel = nowChannel;
-                        PTZCtrl(ptzChannel, 0, null, null, null, null, null, 128);
+                        PTZCtrl(ptzChannel, 0, null, null, null, null, null, panSpeed);
                     }
                     else if (ev.target.id == "up") {
                         ptzChannel = nowChannel;
-                        PTZCtrl(ptzChannel, 0, null, null, 128, null, null, null);
+                        PTZCtrl(ptzChannel, 0, null, null, tiltSpeed, null, null, null);
                     }
                     else if (ev.target.id == "down") {
                         ptzChannel = nowChannel;
-                        PTZCtrl(ptzChannel, 0, null, null, null, 128, null, null);
+                        PTZCtrl(ptzChannel, 0, null, null, null, tiltSpeed, null, null);
+                    }
+                    else if (ev.target.id == "zoomIn") {
+                        ptzChannel = nowChannel;
+                        PTZCtrl(ptzChannel, 0, zoomSpeed, null, null, null, null, null);
+                    }
+                    else if (ev.target.id == "zoomOut") {
+                        ptzChannel = nowChannel;
+                        PTZCtrl(ptzChannel, 0, null, zoomSpeed, null, null, null, null);
                     }
                 }
             }
