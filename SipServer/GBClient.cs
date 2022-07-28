@@ -217,6 +217,8 @@ namespace SipServer
                     }
                     if (sipResponse.Status == SIPResponseStatusCodesEnum.Ok)
                     {
+                        await AnsSDP(sipResponse.Header.To.ToURI.User, sipResponse.Header.From.FromTag, sipResponse.Body);
+
                         var ack = GetSIPRequest(SIPMethodsEnum.ACK, newHeader: true);
                         ack.Header.CSeq = sipResponse.Header.CSeq;
                         ack.Header.From = sipResponse.Header.From;
@@ -520,14 +522,17 @@ namespace SipServer
             if (TalkCov != InviteTalk.Force)
             {
                 var sdp28181 = SDP28181.NewByStr(SDP);
-                if (sdp28181.SType == SDP28181.PlayType.Talk && deviceInfo != null && (deviceInfo.Manufacturer == "Hikvision" || deviceInfo.Manufacturer == "TP-LINK"))
+                if (sdp28181.SType == SDP28181.PlayType.Talk && deviceInfo != null)
                 {
-                    if (TalkCov == InviteTalk.Auto)
-                        return "2";
-                    if (TalkCov == InviteTalk.Transform)
+                    if (deviceInfo.Manufacturer == "Hikvision" || deviceInfo.Manufacturer == "TP-LINK")
                     {
-                        await Send_Broadcast(null, Channel, fromTag);
-                        return "3";
+                        if (TalkCov == InviteTalk.Auto)
+                            return "2";
+                        if (TalkCov == InviteTalk.Transform)
+                        {
+                            await Send_Broadcast(null, Channel, fromTag);
+                            return "3";
+                        }
                     }
                 }
             }

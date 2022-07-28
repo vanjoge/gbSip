@@ -43,6 +43,10 @@ namespace SipServer
         {
             return HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/AnsBroadcastSDP?DeviceID={DeviceID}&Channel={info.Channel}&SourceID={SourceID}&InviteID={info.InviteID}&SDP={sdp.EncryptToBase64()}", false, System.Threading.CancellationToken.None);
         }
+        private Task<string> AnsSDP(string Channel, string InviteID, string sdp)
+        {
+            return HttpHelperByHttpClient.HttpRequestHtml($"{this.sipServer.Settings.RTVSAPI}api/GB/AnsSDP?DeviceID={DeviceID}&Channel={Channel}&InviteID={InviteID}&SDP={sdp.EncryptToBase64()}", false, System.Threading.CancellationToken.None);
+        }
 
         async Task AckProcess(SIPEndPoint localSipEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
         {
