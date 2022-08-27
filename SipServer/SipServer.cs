@@ -118,7 +118,9 @@ namespace SipServer
         /// </summary>
         public void Start()
         {
-            Log.WriteLog4($"gbSip Starting SipPort:{Settings.SipPort} EnableSipLog:{ Settings.EnableSipLog}");
+            Log.WriteLog4($"gbSip Starting SipPort:{Settings.SipPort} EnableSipLog:{Settings.EnableSipLog}");
+
+
             SIPConstants.DEFAULT_ENCODING = Encoding.GetEncoding("GBK");
             DB = new DBInfo(this);
             thCheck = new SQ.Base.ThreadWhile<object>();
@@ -264,8 +266,13 @@ namespace SipServer
         /// 移除Client
         /// </summary>
         /// <param name="key"></param>
-        public void RemoveClient(string key, bool updateDB = true)
+        public void RemoveClient(string key, bool updateDB = true, string CallID = null)
         {
+            if (CallID != null && TryGetClient(key, out var client1) && !client1.VerifyCallID(CallID))
+            {
+                //CallID不一样，跳过
+                return;
+            }
             if (ditClient.TryRemove(key, out var client))
             {
                 client.Dispose(updateDB);
@@ -332,9 +339,9 @@ namespace SipServer
                     {
                         if (!ditClient.ContainsKey(DeviceID))
                         {
-                            client = new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, DeviceID, SipServerID, sipRequest.URI.HostAddress);
-                            ditClient[DeviceID] = client;
+                            client = new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, DeviceID, SipServerID, sipRequest.URI.HostAddress, sipRequest.Header.CallId);
                             await client.Online();
+                            ditClient[DeviceID] = client;
                         }
                     }
                 }
@@ -372,23 +379,20 @@ namespace SipServer
             {
                 expiry = sipRequest.Header.Contact[0].Expires;
             }
-            //SIPPassword配置为空不验证 
-            if (string.IsNullOrEmpty(Settings.SipPassword) || await Auth(localSIPEndPoint, remoteEndPoint, sipRequest, SipServerID))
+            if (expiry <= 0)
             {
-                if (expiry <= 0)
-                {
-                    //注销设备
-                    res.Header.Expires = 0;
-                    await SipTransport.SendResponseAsync(res);
-                    RemoveClient(DeviceID);
-                }
-                else
-                {
-                    res.Header.Expires = 7200;
-                    res.Header.Date = DateTime.Now.ToTStr();
-                    await SipTransport.SendResponseAsync(res);
-                    return true;
-                }
+                //注销设备
+                res.Header.Expires = 0;
+                await SipTransport.SendResponseAsync(res);
+                RemoveClient(DeviceID, CallID: sipRequest.Header.CallId);
+            }
+            //SIPPassword配置为空不验证 
+            else if (string.IsNullOrEmpty(Settings.SipPassword) || await Auth(localSIPEndPoint, remoteEndPoint, sipRequest, SipServerID))
+            {
+                res.Header.Expires = 7200;
+                res.Header.Date = DateTime.Now.ToTStr();
+                await SipTransport.SendResponseAsync(res);
+                return true;
             }
 
             return false;

@@ -363,3 +363,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /GBWeb/.config
+/GB28181/GB28181.xml
+/GBWeb/GBWeb.xml

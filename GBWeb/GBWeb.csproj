@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DocumentationFile>$(OutDir)\GBWeb.xml</DocumentationFile>
+    <DocumentationFile>GBWeb.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug'">

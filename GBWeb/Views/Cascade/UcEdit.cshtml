@@ -1,4 +1,4 @@
-﻿@model SipServer.Models.SuperiorInfo
+﻿@model SipServer.DBModel.TSuperiorInfo
 
 <div class="row">
     <div class="col-md-4">
@@ -14,9 +14,9 @@
             <span asp-validation-for="Name" class="text-danger"></span>
         </div>
         <div class="form-group">
-            <label asp-for="ServerID" class="control-label">上级国标编码</label>
-            <input asp-for="ServerID" class="form-control" />
-            <span asp-validation-for="ServerID" class="text-danger"></span>
+            <label asp-for="ServerId" class="control-label">上级国标编码</label>
+            <input asp-for="ServerId" class="form-control" />
+            <span asp-validation-for="ServerId" class="text-danger"></span>
         </div>
         <div class="form-group">
             <label asp-for="Server" class="control-label">上级IP/域名</label>
@@ -29,9 +29,9 @@
             <span asp-validation-for="ServerPort" class="text-danger"></span>
         </div>
         <div class="form-group">
-            <label asp-for="ClientID" class="control-label">本地SIP国标编码</label>
-            <input asp-for="ClientID" class="form-control" />
-            <span asp-validation-for="ClientID" class="text-danger"></span>
+            <label asp-for="ClientId" class="control-label">本地SIP国标编码</label>
+            <input asp-for="ClientId" class="form-control" />
+            <span asp-validation-for="ClientId" class="text-danger"></span>
         </div>
         <div class="form-group">
             <label asp-for="ClientName" class="control-label">本地SIP名称</label>
@@ -39,14 +39,14 @@
             <span asp-validation-for="ClientName" class="text-danger"></span>
         </div>
         <div class="form-group">
-            <label asp-for="SIPUsername" class="control-label">SIP认证用户名</label>
-            <input asp-for="SIPUsername" class="form-control" />
-            <span asp-validation-for="SIPUsername" class="text-danger"></span>
+            <label asp-for="Sipusername" class="control-label">SIP认证用户名</label>
+            <input asp-for="Sipusername" class="form-control" />
+            <span asp-validation-for="Sipusername" class="text-danger"></span>
         </div>
         <div class="form-group">
-            <label asp-for="SIPPassword" class="control-label">SIP认证密码</label>
-            <input asp-for="SIPPassword" class="form-control" />
-            <span asp-validation-for="SIPPassword" class="text-danger"></span>
+            <label asp-for="Sippassword" class="control-label">SIP认证密码</label>
+            <input asp-for="Sippassword" class="form-control" />
+            <span asp-validation-for="Sippassword" class="text-danger"></span>
         </div>
         <div class="form-group">
             <label asp-for="Expiry" class="control-label">注册有效期</label>

@@ -6,6 +6,7 @@ using GB28181.XML;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SipServer;
+using SipServer.DBModel;
 using SQ.Base;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -24,18 +25,9 @@ namespace GBWeb.Controllers
         /// <param name="DeviceID">设备ID</param>
         /// <returns></returns>
         [HttpGet, HttpPost]
-        public async Task<DeviceInfo> GetDeviceInfo([FromCustom] string DeviceID)
+        public async Task<TDeviceInfo> GetDeviceInfo([FromCustom] string DeviceID)
         {
             return await Program.sipServer.DB.GetDeviceInfo(DeviceID);
-        }
-        /// <summary>
-        /// 获取所有设备ID
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet, HttpPost]
-        public async Task<List<string>> GetAllDeviceID()
-        {
-            return await Program.sipServer.DB.GetDeviceIds();
         }
     }
 }

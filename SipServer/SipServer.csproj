@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DB\DBMysql.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="5.0.4" />
     <PackageReference Include="StackExchange.Redis" Version="2.5.61" />
   </ItemGroup>
 

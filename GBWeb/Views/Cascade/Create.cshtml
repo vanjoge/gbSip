@@ -1,4 +1,4 @@
-﻿@model SipServer.Models.SuperiorInfo
+﻿@model SipServer.DBModel.TSuperiorInfo
 
 @{
     ViewData["Title"] = "新增上级平台";
@@ -6,7 +6,7 @@
     var nmodel = Model;
     if (nmodel == null)
     {
-        nmodel = new SipServer.Models.SuperiorInfo();
+        nmodel = new SipServer.DBModel.TSuperiorInfo();
     }
 }
 

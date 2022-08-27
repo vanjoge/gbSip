@@ -3,14 +3,18 @@ using GB28181.Enums;
 using GB28181.MANSRTSP;
 using GB28181.PTZ;
 using GB28181.XML;
+using SipServer.DBModel;
 using SipServer.Models;
 using SIPSorcery.SIP;
 using SQ.Base;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,6 +32,7 @@ namespace SipServer
         bool isDispose = false;
 
         SIPEndPoint _remoteEndPoint;
+        string _remoteCallID, _regCallID;
         /// <summary>
         /// 客户端远端连接信息
         /// </summary>
@@ -67,31 +72,19 @@ namespace SipServer
         /// <summary>
         /// 设备信息
         /// </summary>
-        DeviceInfo deviceInfo;
+        TDeviceInfo deviceInfo;
         /// <summary>
         /// 设备目录
         /// </summary>
         ChannelList channels = new ChannelList();
-        /// <summary>
-        /// 设备状态
-        /// </summary>
-        DeviceStatus deviceStatus;
 
         object lckCseq = new object();
         object lckSn = new object();
-        /// <summary>
-        /// 状态
-        /// </summary>
-        public ConnStatus Status = new ConnStatus();
 
-        string redisDevKey
-        {
-            get { return RedisConstant.DevInfoHead + DeviceID; }
-        }
         #endregion
 
         #region 构造
-        public GBClient(SipServer sipServer, SIPSchemesEnum scheme, SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, string DeviceID, string ServerID, string ServerHost)
+        public GBClient(SipServer sipServer, SIPSchemesEnum scheme, SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, string DeviceID, string ServerID, string ServerHost, string RegCallID)
         {
             m_contactURI = new SIPURI(scheme, IPAddress.Any, 0);
             toSipUri = new SIPURI(scheme, remoteEndPoint) { User = DeviceID };
@@ -103,11 +96,8 @@ namespace SipServer
             this.sipServer = sipServer;
             RemoteEndPoint = remoteEndPoint;
             this.DeviceID = DeviceID;
-            Status.KeepAliveTime = DateTime.Now;
             m_callID = CallProperties.CreateNewCallId();
-            //this.ServerHost = System.Net.IPAddress.TryParse( ServerHost,out var ;
-
-
+            this._regCallID = RegCallID;
         }
         #endregion
 
@@ -120,32 +110,42 @@ namespace SipServer
         /// <returns></returns>
         public async Task Online()
         {
-            var tuple = await sipServer.DB.GetDevAll(DeviceID);
-            deviceInfo = tuple.Item1;
-            deviceStatus = tuple.Item3;
-            if (tuple.Item2 != null)
+            deviceInfo = await sipServer.DB.GetDeviceInfo(DeviceID);
+            var now = DateTime.Now;
+            bool flag = true;
+            if (deviceInfo == null)
             {
-                foreach (var item in tuple.Item2)
+                deviceInfo = new TDeviceInfo
                 {
-                    if (item != null && item.DeviceID != null)
-                    {
-                        sipServer.SetTree(item.DeviceID, DeviceID);
-                        channels.AddOrUpdate(item);
-                    }
+                    Did = DeviceID,
+                    CreateTime = now
+                };
+                flag = false;
+            }
+            deviceInfo.KeepAliveTime = now;
+            deviceInfo.Online = true;
+            deviceInfo.OnlineTime = now;
+            deviceInfo.RemoteInfo = RemoteEndPoint.ToString();
+            if (flag)
+            {
+                await sipServer.DB.SaveDeviceInfo(deviceInfo);
+            }
+            else
+            {
+                await sipServer.DB.AddDeviceInfo(deviceInfo);
+            }
+
+            var lst = await sipServer.DB.GetChannelList(DeviceID);
+            foreach (var item in lst)
+            {
+                if (item != null && item.Id != null)
+                {
+                    sipServer.SetTree(item.Id, DeviceID);
+                    channels.AddOrUpdate(item);
                 }
             }
-            if (tuple.Item4 != null)
-            {
-                //Status.Online = tuple.Item4.Online;
-                Status.CreateTime = tuple.Item4.CreateTime;
-                //Status.OnlineTime = tuple.Item4.OnlineTime;
-                Status.OfflineTime = tuple.Item4.OfflineTime;
-            }
 
-            Status.Online = true;
-            Status.OnlineTime = DateTime.Now;
-
-            if (deviceInfo == null)
+            if (!deviceInfo.Reported)
             {
                 await Send_GetDevCommand(CommandType.DeviceInfo);
             }
@@ -156,8 +156,6 @@ namespace SipServer
 
             await Send_GetDevCommand(CommandType.DeviceStatus);
 
-            await sipServer.DB.SaveConnStatus(DeviceID, Status);
-
         }
         /// <summary>
         /// 下线处理
@@ -165,15 +163,15 @@ namespace SipServer
         /// <returns></returns>
         async Task Offline(bool updateDB = true)
         {
-            Status.Online = false;
-            Status.OfflineTime = DateTime.Now;
+            deviceInfo.Online = false;
+            deviceInfo.OfflineTime = DateTime.Now;
             if (updateDB)
             {
-                await sipServer.DB.SaveConnStatus(DeviceID, Status);
+                await sipServer.DB.SaveDeviceInfo(deviceInfo);
             }
-            foreach (var item in channels.ToList())
+            foreach (var id in channels.Keys.ToList())
             {
-                sipServer.RemoveTree(item.DeviceID);
+                sipServer.RemoveTree(id);
             }
         }
 
@@ -273,6 +271,7 @@ namespace SipServer
         {
             try
             {
+                this._remoteCallID = sipRequest.Header.CallId;
                 //ServerID = sipRequest.URI.User;
 
                 if (RemoteEndPoint != null && RemoteEndPoint != remoteEndPoint &&
@@ -298,7 +297,7 @@ namespace SipServer
                     default:
                         break;
                 }
-                Status.KeepAliveTime = DateTime.Now;
+                deviceInfo.KeepAliveTime = DateTime.Now;
                 ////此处不严格要求注册认证，有数据上来就认为在线；如果要求注册认证，此处应增加判断
                 //if (!Status.Online)
                 //{
@@ -345,35 +344,58 @@ namespace SipServer
                                 foreach (var item in catalog.DeviceList)
                                 {
                                     sipServer.SetTree(item.DeviceID, DeviceID);
-                                    channels.AddOrUpdate(item);
+                                    TCatalog citem = new TCatalog
+                                    {
+                                        Address = item.Address,
+                                        Block = item.Block,
+                                        BusinessGroupId = item.BusinessGroupID,
+                                        Certifiable = item.Certifiable == 1,
+                                        CertNum = item.CertNum,
+                                        CivilCode = item.CivilCode,
+                                        Id = item.DeviceID,
+                                        EndTime = Str2DT(item.EndTime),
+                                        ErrCode = item.ErrCode,
+                                        Did = DeviceID,
+                                        Ipaddress = item.IPAddress,
+                                        Latitude = item.Latitude.HasValue ? item.Latitude.Value : 0,
+                                        Longitude = item.Longitude.HasValue ? item.Longitude.Value : 0,
+                                        Manufacturer = item.Manufacturer,
+                                        Model = item.Model,
+                                        Name = item.Name,
+                                        Owner = item.Owner,
+                                        Parental = item.Parental == 1,
+                                        ParentId = item.ParentID,
+                                        Password = item.Password,
+                                        Port = item.Port,
+                                        RegisterWay = item.RegisterWay.HasValue ? item.RegisterWay.Value : 1,
+                                        SafetyWay = item.SafetyWay.HasValue ? item.SafetyWay.Value : 0,
+                                        Secrecy = item.Secrecy == 1,
+                                        Status = item.Status,
+                                    };
+                                    channels.AddOrUpdate(citem);
                                 }
                                 if (channels.Count == catalog.SumNum || channels.AddTimes == catalog.SumNum)
                                 {
                                     //表示收全
-                                    await sipServer.DB.SaveChannels(DeviceID, channels.ToList(), deviceInfo == null);
-                                    if (deviceInfo == null)
-                                    {
-                                        deviceInfo = new DeviceInfo
-                                        {
-                                            DeviceID = DeviceID,
-                                        };
-                                    }
-                                    if (deviceInfo.CatalogChannel != channels.Count)
-                                    {
-                                        deviceInfo.CatalogChannel = channels.Count;
-                                        await sipServer.DB.SaveDeviceInfo(deviceInfo);
-                                    }
+                                    await sipServer.DB.SaveChannels(deviceInfo, channels.Values.ToList());
                                 }
                             }
                             break;
                         case "DEVICEINFO":
                             await SendOkMessage(sipRequest);
-                            deviceInfo = SerializableHelper.DeserializeByStr<DeviceInfo>(sipRequest.Body);
+                            var devinfo = SerializableHelper.DeserializeByStr<DeviceInfo>(sipRequest.Body);
+                            deviceInfo.Channel = devinfo.Channel;
+                            deviceInfo.DeviceName = devinfo.DeviceName;
+                            deviceInfo.Manufacturer = devinfo.Manufacturer;
+                            deviceInfo.Model = devinfo.Model;
+                            deviceInfo.Firmware = devinfo.Firmware;
+                            deviceInfo.Reported = true;
+
                             await sipServer.DB.SaveDeviceInfo(deviceInfo);
                             break;
                         case "DEVICESTATUS":
                             await SendOkMessage(sipRequest);
-                            deviceStatus = SerializableHelper.DeserializeByStr<DeviceStatus>(sipRequest.Body);
+                            var deviceStatus = SerializableHelper.DeserializeByStr<DeviceStatus>(sipRequest.Body);
                             await sipServer.DB.SaveDeviceStatus(DeviceID, deviceStatus);
                             break;
                         case "RECORDINFO":
@@ -597,6 +619,19 @@ namespace SipServer
         #endregion
 
         #region 其他
+        public bool VerifyCallID(string callid)
+        {
+            return callid == _regCallID || callid == _remoteCallID;
+        }
+
+        public static DateTime? Str2DT(string str)
+        {
+            if (DateTime.TryParse(str, out var dt))
+            {
+                return dt;
+            }
+            return null;
+        }
 
         /// <summary>
         /// 检查当前是否已超时
@@ -604,7 +639,7 @@ namespace SipServer
         /// <returns></returns>
         public bool Check()
         {
-            if (Status.KeepAliveTime.DiffNowSec() >= sipServer.Settings.KeepAliveTimeoutSec)
+            if (deviceInfo.KeepAliveTime.DiffNowSec() >= sipServer.Settings.KeepAliveTimeoutSec)
             {
                 return false;
             }
@@ -719,20 +754,9 @@ namespace SipServer
             return req;
         }
 
-        public DeviceInfoExt GetDeviceInfoExt()
+        public TDeviceInfo GetDeviceInfo()
         {
-            var Device = deviceInfo;
-            if (Device == null)
-            {
-                Device = new DeviceInfo { DeviceID = this.DeviceID };
-
-            }
-            return new DeviceInfoExt
-            {
-                Device = Device,
-                Status = Status,
-                RemoteEndPoint = RemoteEndPoint,
-            };
+            return deviceInfo;
         }
         #endregion
         #endregion

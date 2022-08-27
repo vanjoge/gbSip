@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <DocumentationFile>$(OutDir)\GB28181.xml</DocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<DocumentationFile>GB28181.xml</DocumentationFile>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="SIPSorcery" Version="6.0.6" />
-    <PackageReference Include="SQ.Base" Version="2.6.0" />
-    <PackageReference Include="System.Text.Json" Version="6.0.3" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="SIPSorcery" Version="6.0.6" />
+		<PackageReference Include="SQ.Base" Version="2.6.0" />
+		<PackageReference Include="System.Text.Json" Version="6.0.3" />
+	</ItemGroup>
 </Project>

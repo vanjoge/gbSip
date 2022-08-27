@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using SQ.Base;
 using SipServer.Models;
 using Microsoft.AspNetCore.Http;
+using SipServer.DBModel;
 
 namespace GBWeb.Controllers
 {
@@ -27,20 +28,20 @@ namespace GBWeb.Controllers
         {
             return View(await Program.sipServer.DB.GetSuperiorList());
         }
-        private void FillClientSetting(SuperiorInfo info, IFormCollection collection)
+        private void FillClientSetting(TSuperiorInfo info, IFormCollection collection)
         {
             //TODO:检查值是否正确
             info.Name = collection["Name"];
-            info.ServerID = collection["ServerID"];
+            info.ServerId = collection["ServerId"];
             info.Server = collection["Server"];
             info.ServerPort = Convert.ToInt32(collection["ServerPort"]);
-            info.ClientID = collection["ClientID"];
+            info.ClientId = collection["ClientId"];
             info.ClientName = collection["ClientName"];
-            info.SIPUsername = collection["SIPUsername"];
-            info.SIPPassword = collection["SIPPassword"];
+            info.Sipusername = collection["Sipusername"];
+            info.Sippassword = collection["Sippassword"];
             info.Expiry = Convert.ToInt32(collection["Expiry"]);
-            info.RegSec = Convert.ToDouble(collection["RegSec"]);
-            info.HeartSec = Convert.ToDouble(collection["HeartSec"]);
+            info.RegSec = Convert.ToInt32(collection["RegSec"]);
+            info.HeartSec = Convert.ToInt32(collection["HeartSec"]);
             info.HeartTimeoutTimes = Convert.ToInt32(collection["HeartTimeoutTimes"]);
             info.Enable = collection["Enable"][0] == "true";
             info.UseTcp = collection["UseTcp"][0] == "true";
@@ -55,11 +56,11 @@ namespace GBWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(IFormCollection collection)
         {
-            SuperiorInfo sinfo = new SuperiorInfo();
+            TSuperiorInfo sinfo = new TSuperiorInfo();
             try
             {
                 FillClientSetting(sinfo, collection);
-                sinfo.ID = Guid.NewGuid().ToString();
+                sinfo.Id = Guid.NewGuid().ToString();
                 await Program.sipServer.Cascade.Add(sinfo);
                 return RedirectToAction(nameof(Index));
             }
@@ -78,7 +79,7 @@ namespace GBWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(string id, IFormCollection collection)
         {
-            SuperiorInfo sinfo = null;
+            TSuperiorInfo sinfo = null;
             try
             {
                 sinfo = await Program.sipServer.DB.GetSuperiorInfo(id);

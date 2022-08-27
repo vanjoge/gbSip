@@ -23,25 +23,9 @@ namespace GBWeb.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index(bool onlyOnline = true, long start = 0, long end = -1)
+        public async Task<IActionResult> Index(bool onlyOnline = true, int start = 0, int count = -1)
         {
-            List<DeviceInfoExt> lstDev;
-            if (onlyOnline)
-            {
-                lstDev = new List<DeviceInfoExt>();
-                Program.sipServer.EachClient(cl =>
-                {
-                    var deviceInfo = cl.GetDeviceInfoExt();
-                    if (deviceInfo.Device != null)
-                    {
-                        lstDev.Add(deviceInfo);
-                    }
-                });
-            }
-            else
-            {
-                lstDev = await Program.sipServer.DB.GetDeviceInfoList(start, end);
-            }
+            var lstDev = await Program.sipServer.DB.GetDeviceInfoList(onlyOnline, start, count);
             return View(lstDev);
         }
         public async Task<IActionResult> Channels(string DeviceID)
@@ -58,14 +42,14 @@ namespace GBWeb.Controllers
             }
             return RedirectToAction("Index");
         }
-        public async Task<IActionResult> Delete(string DeviceID)
+        public async Task<IActionResult> Delete(string Did)
         {
-            return View(await Program.sipServer.DB.GetDeviceInfo(DeviceID));
+            return View(await Program.sipServer.DB.GetDeviceInfo(Did));
         }
         [HttpPost]
-        public async Task<IActionResult> Delete(string DeviceID, IFormCollection collection)
+        public async Task<IActionResult> Delete(string Did, IFormCollection collection)
         {
-            await Program.sipServer.DB.DeleteDeviceInfo(DeviceID);
+            await Program.sipServer.DB.DeleteDeviceInfo(Did);
             return RedirectToAction("Index");
         }
         public IActionResult Privacy()

@@ -28,6 +28,8 @@ namespace GBWeb
             services.AddControllersWithViews().AddJsonOptions(config =>
             {
                 config.JsonSerializerOptions.PropertyNamingPolicy = null;
+                config.JsonSerializerOptions.IgnoreNullValues = true;
+                //config.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
             });
             services.AddSwaggerGen(c =>
             {

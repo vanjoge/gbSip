@@ -1,4 +1,4 @@
-﻿@model IEnumerable<GB28181.XML.Catalog.Item>
+﻿ @model IEnumerable<SipServer.DBModel.TCatalog>
 
 @{
     ViewData["Title"] = "通道";
@@ -46,7 +46,7 @@
             {
                 <tr>
                     <td>
-                        @Html.DisplayFor(modelItem => item.DeviceID)
+                        @Html.DisplayFor(modelItem => item.Id)
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => item.Name)
@@ -59,7 +59,7 @@
                     </td>
                     <td>
 
-                        <button disabled type="button" class="btn btn-primary  btn-sm" data-toggle="modal" data-target="#rtvsPlayer" data-rtvssim="@rtvssim" data-rtvschannel="@item.DeviceID">
+                        <button disabled type="button" class="btn btn-primary  btn-sm" data-toggle="modal" data-target="#rtvsPlayer" data-rtvssim="@rtvssim" data-rtvschannel="@item.Id">
                             实时视频
                         </button>
                     </td>

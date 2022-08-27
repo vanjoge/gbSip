@@ -66,6 +66,11 @@ namespace SipServer
         /// </summary>
         [DisplayName("RTVS视频服务端口")]
         public int RTVSVideoPort { get; set; }
+        /// <summary>
+        /// Mysql连接字符串
+        /// </summary>
+        [DisplayName("Mysql连接字符串")]
+        public string MysqlConnectionString { get; set; }
 
 
         public Setting()
@@ -73,6 +78,7 @@ namespace SipServer
             //SipServerID = "51010100492007000001";
             SipPort = 5060;
             RedisExchangeHosts = "127.0.0.1:6379,connectTimeout=20000,syncTimeout=20000,responseTimeout=20000,defaultDatabase=0,password=";
+            MysqlConnectionString = "Database=gbs;Data Source=127.0.0.1;port=3306;User Id=rtvsweb;Password=rtvs2018;charset=utf8;pooling=true";
             KeepAliveTimeoutSec = 180;
             RTVSVideoPort = 17000;
 #if DEBUG

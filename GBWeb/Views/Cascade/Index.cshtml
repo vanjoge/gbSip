@@ -55,10 +55,10 @@
         {
             <tr>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Enable)
+                    @Html.DisplayFor(modelItem => item.superiorInfo.Enable)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Name)
+                    @Html.DisplayFor(modelItem => item.superiorInfo.Name)
                 </td>
                 <td>
                     @item.GetServerSipStr()
@@ -66,7 +66,7 @@
                 <td>
                     @{
                         string str;
-                        if (!item.Enable)
+                        if (!item.superiorInfo.Enable)
                             str = "未启用";
                         else if (item.Client != null && item.Client.IsRegistered)
                             str = "在线";
@@ -76,30 +76,30 @@
                     @str
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.ClientID)
+                    @Html.DisplayFor(modelItem => item.superiorInfo.ClientId)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.ClientName)
+                    @Html.DisplayFor(modelItem => item.superiorInfo.ClientName)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.SIPUsername)
+                    @Html.DisplayFor(modelItem => item.superiorInfo.Sipusername)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Expiry)
+                    @Html.DisplayFor(modelItem => item.superiorInfo.Expiry)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.RegSec)
+                    @Html.DisplayFor(modelItem => item.superiorInfo.RegSec)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.HeartSec)
+                    @Html.DisplayFor(modelItem => item.superiorInfo.HeartSec)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.HeartTimeoutTimes)
+                    @Html.DisplayFor(modelItem => item.superiorInfo.HeartTimeoutTimes)
                 </td>
                 <td>
-                    @Html.ActionLink("编辑", "Edit", new { id = item.ID }) |
-                    @Html.ActionLink("明细", "Details", new { id = item.ID }) |
-                    @Html.ActionLink("删除", "Delete", new { id = item.ID })
+                    @Html.ActionLink("编辑", "Edit", new { id = item.superiorInfo.Id }) |
+                    @Html.ActionLink("明细", "Details", new { id = item.superiorInfo.Id }) |
+                    @Html.ActionLink("删除", "Delete", new { id = item.superiorInfo.Id })
                 </td>
             </tr>
         }

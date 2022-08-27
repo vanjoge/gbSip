@@ -1,32 +1,10 @@
-﻿using GB28181.XML;
-using SipServer.Cascade;
-using System;
-using System.Collections.Concurrent;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace SipServer.Models
+namespace SipServer.DBModel
 {
-    public class SuperiorInfoEx : SuperiorInfo
+    public partial class TSuperiorInfo
     {
-        [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
-        public CascadeClient Client;
-    }
-    /// <summary>
-    /// 上级平台信息
-    /// </summary>
-    public class SuperiorInfo
-    {
-        public SuperiorInfo()
-        {
-            Enable = true;
-            ServerPort = 5060;
-            Expiry = 3600;
-            RegSec = 60;
-            HeartSec = 60;
-            HeartTimeoutTimes = 3;
-        }
         /// <summary>
         /// 启用
         /// </summary>
@@ -34,7 +12,7 @@ namespace SipServer.Models
         /// <summary>
         /// 唯一ID
         /// </summary>
-        public string ID { get; set; }
+        public string Id { get; set; }
         /// <summary>
         /// 名称
         /// </summary>
@@ -42,7 +20,7 @@ namespace SipServer.Models
         /// <summary>
         /// 上级国标编码
         /// </summary>
-        public string ServerID { get; set; }
+        public string ServerId { get; set; }
         /// <summary>
         /// 上级IP/域名
         /// </summary>
@@ -54,7 +32,7 @@ namespace SipServer.Models
         /// <summary>
         /// 本地SIP国标编码
         /// </summary>
-        public string ClientID { get; set; }
+        public string ClientId { get; set; }
         /// <summary>
         /// 本地SIP名称
         /// </summary>
@@ -62,11 +40,11 @@ namespace SipServer.Models
         /// <summary>
         /// SIP认证用户名
         /// </summary>
-        public string SIPUsername { get; set; }
+        public string Sipusername { get; set; }
         /// <summary>
         /// SIP认证密码
         /// </summary>
-        public string SIPPassword { get; set; }
+        public string Sippassword { get; set; }
         /// <summary>
         /// 注册有效期
         /// </summary>
@@ -74,11 +52,11 @@ namespace SipServer.Models
         /// <summary>
         /// 注册间隔
         /// </summary>
-        public double RegSec { get; set; }
+        public int RegSec { get; set; }
         /// <summary>
         /// 心跳周期
         /// </summary>
-        public double HeartSec { get; set; }
+        public int HeartSec { get; set; }
         /// <summary>
         /// 最大心跳超时次数
         /// </summary>
@@ -87,15 +65,5 @@ namespace SipServer.Models
         /// TCP/UDP
         /// </summary>
         public bool UseTcp { get; set; }
-
-
-        /// <summary>
-        /// 获取SIP连接信息
-        /// </summary>
-        /// <returns></returns>
-        public string GetServerSipStr()
-        {
-            return $"sip:{ServerID}@{Server}:{ServerPort}{(UseTcp ? ";transport=tcp" : "")}";
-        }
     }
 }

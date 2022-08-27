@@ -1,4 +1,5 @@
-﻿using SipServer.Models;
+﻿using SipServer.DBModel;
+using SipServer.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -25,8 +26,8 @@ namespace SipServer.Cascade
             var lst = await sipServer.DB.GetSuperiorList();
             foreach (var item in lst)
             {
-                if (item.Enable)
-                    AddClient(item);
+                if (item.superiorInfo.Enable)
+                    AddClient(item.superiorInfo);
             }
         }
         public delegate void ItemToDo(CascadeClient item);
@@ -49,9 +50,9 @@ namespace SipServer.Cascade
                 RemoveClient(client.Key);
             });
         }
-        public async Task<bool> Add(SuperiorInfo sinfo)
+        public async Task<bool> Add(TSuperiorInfo sinfo)
         {
-            if (await sipServer.DB.SaveSuperior(sinfo))
+            if (await sipServer.DB.AddSuperior(sinfo))
             {
                 if (sinfo.Enable)
                     return AddClient(sinfo);
@@ -59,11 +60,11 @@ namespace SipServer.Cascade
             return false;
         }
 
-        public async Task Update(SuperiorInfo sinfo)
+        public async Task Update(TSuperiorInfo sinfo)
         {
-            await sipServer.DB.SaveSuperior(sinfo);
+            await sipServer.DB.UpdateSuperior(sinfo);
 
-            RemoveClient(sinfo.ID);
+            RemoveClient(sinfo.Id);
             if (sinfo.Enable)
                 AddClient(sinfo);
         }
@@ -72,17 +73,17 @@ namespace SipServer.Cascade
             await sipServer.DB.DeleteSuperior(id);
             return RemoveClient(id);
         }
-        bool AddClient(SuperiorInfo sinfo)
+        bool AddClient(TSuperiorInfo sinfo)
         {
-            CascadeClient client = new CascadeClient(sinfo.ID, sinfo.GetServerSipStr(), sinfo.ServerID, new GB28181.XML.DeviceInfo
+            CascadeClient client = new CascadeClient(sinfo.Id, SuperiorInfoEx.GetServerSipStr(sinfo), sinfo.ServerId, new GB28181.XML.DeviceInfo
             {
-                DeviceID = sinfo.ClientID,
+                DeviceID = sinfo.ClientId,
                 DeviceName = sinfo.ClientName,
                 Manufacturer = "RTVS",
                 Model = "gbsip",
                 Result = "OK",
 
-            }, null, password: sinfo.SIPPassword, expiry: sinfo.Expiry, UserAgent: sipServer.UserAgent, EnableTraceLogs: sipServer.Settings.EnableSipLog, heartSec: sinfo.HeartSec, timeOutSec: sinfo.HeartTimeoutTimes * sinfo.HeartSec);
+            }, null, password: sinfo.Sippassword, expiry: sinfo.Expiry, UserAgent: sipServer.UserAgent, EnableTraceLogs: sipServer.Settings.EnableSipLog, heartSec: sinfo.HeartSec, timeOutSec: sinfo.HeartTimeoutTimes * sinfo.HeartSec);
             client.Start();
             ditClient[client.Key] = client;
             return true;
