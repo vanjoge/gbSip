@@ -24,12 +24,12 @@ namespace GBWeb.Controllers
         /// <summary>
         /// 获取设备信息
         /// </summary>
-        /// <param name="DeviceID">设备ID</param>
+        /// <param name="DeviceId">设备ID</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ApiResult<TDeviceInfo>> GetDeviceInfo([FromCustom] string DeviceID)
+        public async Task<ApiResult<TDeviceInfo>> GetDeviceInfo([FromCustom] string DeviceId)
         {
-            return RetApiResult(await Program.sipServer.DB.GetDeviceInfo(DeviceID));
+            return RetApiResult(await Program.sipServer.DB.GetDeviceInfo(DeviceId));
         }
         /// <summary>
         /// 获取设备列表 支持模糊查询

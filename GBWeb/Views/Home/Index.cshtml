@@ -56,7 +56,7 @@
         {
             <tr>
                 <td>
-                    @Html.ActionLink(item.DeviceId, "Channels", new { DeviceID = item.DeviceId })
+                    @Html.ActionLink(item.DeviceId, "Channels", new { DeviceId = item.DeviceId })
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.DeviceName)
@@ -75,7 +75,7 @@
                     @if (item.Online)
                     {
                         <br />
-                        @Html.ActionLink("刷新", "RefreshChannel", new { DeviceID = item.DeviceId })
+                        @Html.ActionLink("刷新", "RefreshChannel", new { DeviceId = item.DeviceId })
                     }
                 </td>
                 <td>

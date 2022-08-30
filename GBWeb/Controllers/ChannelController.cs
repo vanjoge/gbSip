@@ -60,7 +60,6 @@ namespace GBWeb.Controllers
         /// <summary>
         /// 删除通道
         /// </summary>
-        /// <param name="DeviceID"></param>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]

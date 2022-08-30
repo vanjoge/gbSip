@@ -28,28 +28,28 @@ namespace GBWeb.Controllers
             var lstDev = await Program.sipServer.DB.GetDeviceList(DeviceId, DeviceName, Manufacturer, Online, Page, Limit);
             return View(lstDev);
         }
-        public async Task<IActionResult> Channels(string DeviceID)
+        public async Task<IActionResult> Channels(string DeviceId)
         {
-            var model = await Program.sipServer.DB.GetChannelList(DeviceID);
+            var model = await Program.sipServer.DB.GetChannelList(DeviceId);
             return View(model);
         }
 
-        public async Task<IActionResult> RefreshChannel(string DeviceID)
+        public async Task<IActionResult> RefreshChannel(string DeviceId)
         {
-            if (Program.sipServer.TryGetClient(DeviceID, out var client))
+            if (Program.sipServer.TryGetClient(DeviceId, out var client))
             {
                 await client.RefreshChannel();
             }
             return RedirectToAction("Index");
         }
-        public async Task<IActionResult> Delete(string DeviceID)
+        public async Task<IActionResult> Delete(string DeviceId)
         {
-            return View(await Program.sipServer.DB.GetDeviceInfo(DeviceID));
+            return View(await Program.sipServer.DB.GetDeviceInfo(DeviceId));
         }
         [HttpPost]
-        public async Task<IActionResult> Delete(string DeviceID, IFormCollection collection)
+        public async Task<IActionResult> Delete(string DeviceId, IFormCollection collection)
         {
-            await Program.sipServer.DB.DeleteDeviceInfo(new string[] { DeviceID });
+            await Program.sipServer.DB.DeleteDeviceInfo(new string[] { DeviceId });
             return RedirectToAction("Index");
         }
         public IActionResult Privacy()

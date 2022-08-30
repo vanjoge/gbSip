@@ -22,15 +22,6 @@ namespace SipServer.DBModel
         public virtual DbSet<TSuperiorInfo> TSuperiorInfos { get; set; }
         public virtual DbSet<TUserInfo> TUserInfos { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseMySql("host=127.0.0.1;database=gbs;username=rtvsweb;password=rtvs2018;persist security info=True", Microsoft.EntityFrameworkCore.ServerVersion.Parse("5.7.31-mysql"));
-            }
-        }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("latin1_swedish_ci")

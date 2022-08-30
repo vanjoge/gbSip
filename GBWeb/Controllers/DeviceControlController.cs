@@ -23,7 +23,7 @@ namespace GBWeb.Controllers
         /// <summary>
         /// PTZ指令
         /// </summary>
-        /// <param name="DeviceID">设备ID</param>
+        /// <param name="DeviceId">设备ID</param>
         /// <param name="Channel">通道ID PTZXML中的DeviceID</param>
         /// <param name="Address">地址 0-4095，其中0作为广播地址</param>
         /// <param name="ZoomIn">放大速度 0-15 非必须 不传表示停止</param>
@@ -34,9 +34,9 @@ namespace GBWeb.Controllers
         /// <param name="Right">右转速度 0-255 非必须 不传表示停止</param>
         /// <returns></returns>
         [HttpGet, HttpPost]
-        public async Task<ApiResult<bool>> PTZCtrl([FromCustom] string DeviceID, [FromCustom] string Channel, [FromCustom] ushort Address, [FromCustom] byte? ZoomIn, [FromCustom] byte? ZoomOut, [FromCustom] byte? Up, [FromCustom] byte? Down, [FromCustom] byte? Left, [FromCustom] byte? Right)
+        public async Task<ApiResult<bool>> PTZCtrl([FromCustom] string DeviceId, [FromCustom] string Channel, [FromCustom] ushort Address, [FromCustom] byte? ZoomIn, [FromCustom] byte? ZoomOut, [FromCustom] byte? Up, [FromCustom] byte? Down, [FromCustom] byte? Left, [FromCustom] byte? Right)
         {
-            if (Program.sipServer.TryGetClient(DeviceID, out var client))
+            if (Program.sipServer.TryGetClient(DeviceId, out var client))
             {
                 var cmd = new PTZCmd
                 {

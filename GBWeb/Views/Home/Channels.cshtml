@@ -4,7 +4,7 @@
     ViewData["Title"] = "通道";
     var rtvsServer = Program.sipServer.Settings.RTVSVideoServer;
     var rtvsPort = Program.sipServer.Settings.RTVSVideoPort;
-    var rtvssim = this.Context.Request.Query["DeviceID"];
+    var rtvssim = this.Context.Request.Query["DeviceId"];
 }
 <style>
     .HoverItem {
@@ -247,7 +247,7 @@
         });
 
         function PTZCtrl(Channel, Address, ZoomIn, ZoomOut, Up, Down, Left, Right) {
-            var url = "/api/DeviceControl/PTZCtrl?DeviceID=@rtvssim&Channel=" + Channel + "&Address=" + Address;
+            var url = "/api/DeviceControl/PTZCtrl?DeviceId=@rtvssim&Channel=" + Channel + "&Address=" + Address;
             if (ZoomIn) {
                 url += "&ZoomIn=" + ZoomIn;
             }
