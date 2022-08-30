@@ -15,7 +15,7 @@
             设备ID
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Did)
+            @Html.DisplayFor(model => model.DeviceId)
         </dd>
         <dt class="col-sm-2">
             目标设备/区域/系统的名称
@@ -32,7 +32,7 @@
     </dl>
 
     <form asp-action="Delete">
-        @Html.HiddenFor(model => model.Did)
+        @Html.HiddenFor(model => model.DeviceId)
         <input type="submit" value="删除" class="btn btn-danger" /> |
         <a asp-action="Index">返回</a>
     </form>

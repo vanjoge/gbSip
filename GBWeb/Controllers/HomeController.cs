@@ -23,9 +23,9 @@ namespace GBWeb.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index(bool onlyOnline = true, int start = 0, int count = -1)
+        public async Task<IActionResult> Index(string DeviceId, string DeviceName, string Manufacturer, bool? Online = true, int Page = 1, int Limit = -1)
         {
-            var lstDev = await Program.sipServer.DB.GetDeviceInfoList(onlyOnline, start, count);
+            var lstDev = await Program.sipServer.DB.GetDeviceList(DeviceId, DeviceName, Manufacturer, Online, Page, Limit);
             return View(lstDev);
         }
         public async Task<IActionResult> Channels(string DeviceID)
@@ -42,14 +42,14 @@ namespace GBWeb.Controllers
             }
             return RedirectToAction("Index");
         }
-        public async Task<IActionResult> Delete(string Did)
+        public async Task<IActionResult> Delete(string DeviceID)
         {
-            return View(await Program.sipServer.DB.GetDeviceInfo(Did));
+            return View(await Program.sipServer.DB.GetDeviceInfo(DeviceID));
         }
         [HttpPost]
-        public async Task<IActionResult> Delete(string Did, IFormCollection collection)
+        public async Task<IActionResult> Delete(string DeviceID, IFormCollection collection)
         {
-            await Program.sipServer.DB.DeleteDeviceInfo(Did);
+            await Program.sipServer.DB.DeleteDeviceInfo(new string[] { DeviceID });
             return RedirectToAction("Index");
         }
         public IActionResult Privacy()

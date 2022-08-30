@@ -22,21 +22,6 @@ namespace GBWeb.Controllers
     public class AdminController : BaseApi
     {
         /// <summary>
-        /// 登录参数
-        /// </summary>
-        public class LoginParams
-        {
-            /// <summary>
-            /// 用户名
-            /// </summary>
-            public string UserName { get; set; }
-            /// <summary>
-            /// 密码
-            /// </summary>
-            public string Password { get; set; }
-        }
-
-        /// <summary>
         /// 登录结果
         /// </summary>
         public class LoginResult
@@ -50,10 +35,11 @@ namespace GBWeb.Controllers
         /// <summary>
         /// 登录
         /// </summary>
-        /// <param name="loginParams">登录参数</param>
+        /// <param name="UserName">用户名</param>
+        /// <param name="Password">密码</param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<ApiResult<LoginResult>> Login(LoginParams loginParams)
+        public async Task<ApiResult<LoginResult>> Login(string UserName, string Password)
         {
             return RetApiResult(new LoginResult { Token = SIPSorcery.SIP.CallProperties.CreateNewTag() });
         }
@@ -93,6 +79,8 @@ namespace GBWeb.Controllers
                 IsShow = true
 
             });
+            perms.Add("DeviceInfo:UpdateDevice");
+            perms.Add("DeviceInfo:DeleteDevice");
             return RetApiResult(new PermMenu
             {
                 Menus = menus,

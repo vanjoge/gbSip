@@ -1,16 +1,21 @@
 ﻿using DnsClient.Protocol;
 using GB28181.XML;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.ObjectPool;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Utilities.Collections;
+using RedisHelp;
 using SipServer.DBModel;
 using SipServer.Models;
 using SQ.Base;
 using StackExchange.Redis;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -45,103 +50,144 @@ namespace SipServer.DB
         }
         SipServer sipServer;
         AllNewObjectPool dbContextPool;
+        /// <summary>
+        /// Redis操作类
+        /// </summary>
+        RedisHelp.RedisHelper RedisHelper;
         public DBInfo(SipServer sipServer)
         {
             this.sipServer = sipServer;
             //this.dbContextPool = new DefaultObjectPoolProvider().Create<gbsContext>();
             this.dbContextPool = new AllNewObjectPool(sipServer.Settings.MysqlConnectionString);
+            RedisHelper = new RedisHelp.RedisHelper(-1, sipServer.Settings.RedisExchangeHosts);
+            RedisHelper.SetSysCustomKey("");
         }
 
-
-        //string GetDevInfoHead(string DeviceID)
-        //{
-        //    return RedisConstant.DevInfoHead + DeviceID;
-        //}
-        ///// <summary>
-        ///// 保存连接状态
-        ///// </summary>
-        ///// <param name="DeviceID"></param>
-        ///// <param name="Status"></param>
-        ///// <returns></returns>
-        //public Task<bool> SaveConnStatus(string DeviceID, ConnStatus Status)
-        //{
-        //    return RedisHelper.HashSetAsync(GetDevInfoHead(DeviceID), RedisConstant.StatusKey, Status);
-        //}
-        /// <summary>
-        /// 保存获取的设备状态
-        /// </summary>
-        /// <param name="DeviceID"></param>
-        /// <param name="deviceStatus"></param>
-        /// <returns></returns>
-        public async Task<bool> SaveDeviceStatus(string DeviceID, DeviceStatus deviceStatus)
+        Task<T> SafeHashGetAsync<T>(string key, string dataKey)
         {
-            var dbContext = dbContextPool.Get();
-            try
+            return RedisHelper.GetDatabase().HashGetAsync(key, dataKey).ContinueWith<T>(p =>
             {
-                var old = await GetDeviceInfo(DeviceID);
-                if (old != null)
+                if (p.Result.HasValue)
                 {
-                    old.DsOnline = deviceStatus.Online;
-                    old.DsStatus = deviceStatus.Status;
-                    old.DsReason = deviceStatus.Reason;
-                    old.DsEncode = deviceStatus.Encode;
-                    old.DsRecord = deviceStatus.Record;
-                    old.DsDeviceTime = deviceStatus.DeviceTime;
-                    old.GetDsTime = DateTime.Now;
-                    dbContext.TDeviceInfos.Update(old);
-                    return await dbContext.SaveChangesAsync() > 0;
+                    return SQ.Base.JsonHelper.ParseJSON<T>(p.Result);
                 }
-                return false;
-            }
-            finally
-            {
-                dbContextPool.Return(dbContext);
-            }
+                return default(T);
+            });
         }
-        ///// <summary>
-        ///// 一次获取设备、通道、状态和连接状态信息
-        ///// </summary>
-        ///// <param name="DeviceID"></param>
-        ///// <returns></returns>
-        //public async Task<(DeviceInfo, List<Catalog.Item>, DeviceStatus, ConnStatus)> GetDevAll(string DeviceID)
-        //{
-        //    (DeviceInfo, List<Catalog.Item>, DeviceStatus, ConnStatus) ret = default;
-        //    var gbdevs = await RedisHelper.HashGetAllAsync(RedisConstant.DevInfoHead + DeviceID);
-        //    foreach (var entry in gbdevs)
-        //    {
-        //        if (entry.Name == RedisConstant.DeviceInfoKey && entry.Value.HasValue)
-        //        {
-        //            ret.Item1 = TryParseJSON<DeviceInfo>(entry.Value);
-        //        }
-        //        else if (entry.Name == RedisConstant.ChannelsKey && entry.Value.HasValue)
-        //        {
-        //            ret.Item2 = TryParseJSON<List<Catalog.Item>>(entry.Value);
-        //        }
-        //        else if (entry.Name == RedisConstant.DeviceStatusKey && entry.Value.HasValue)
-        //        {
-        //            ret.Item3 = TryParseJSON<DeviceStatus>(entry.Value);
-        //        }
-        //        else if (entry.Name == RedisConstant.StatusKey)
-        //        {
-        //            ret.Item4 = TryParseJSON<ConnStatus>(entry.Value);
-        //        }
-        //    }
-        //    return ret;
-        //}
-
 
         #region Channel
+        //public async Task<TChannel> GetChannel(string DeviceId, string ChannelId, gbsContext dbContext = null, bool OnlyDB = false)
+        //{
+        //    if (!OnlyDB && sipServer.TryGetClient(DeviceId, out var client) && client.TryGetChannel(ChannelId, out var old))
+        //    {
+        //        return old;
+        //    }
+        //    bool flag = dbContext == null;
+        //    if (flag)
+        //        dbContext = dbContextPool.Get();
+        //    try
+        //    {
+        //        var data = from p in dbContext.TCatalogs
+        //                   where p.DeviceId == DeviceId && p.DeviceId == ChannelId
+        //                   select p;
+        //        var lst = await data.Take(1).ToListAsync();
+        //        if (lst.Count == 0)
+        //        {
+        //            return null;
+        //        }
+        //        else
+        //        {
+        //            return lst[0];
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        if (flag)
+        //            dbContextPool.Return(dbContext);
+        //    }
+        //}
         /// <summary>
         /// 获取设备通道列表
         /// </summary>
         /// <param name="DeviceID"></param>
         /// <returns></returns>
-        public async Task<List<TCatalog>> GetChannelList(string DeviceID)
+        public async Task<DPager<Channel>> GetChannelList(string DeviceID, int Page = 1, int Limit = -1, bool OnlyDB = false)
         {
             var dbContext = dbContextPool.Get();
             try
             {
-                return await dbContext.TCatalogs.Where(p => p.Did == DeviceID).ToListAsync();
+
+                var data = from u in dbContext.TCatalogs
+                           where u.DeviceId == DeviceID
+                           select new Channel(u);
+                //var data = dbContext.TCatalogs.Where(p => p.DeviceId == DeviceID);
+                var sum = await data.CountAsync();
+                if (Page > 1)
+                {
+                    data = data.Skip(GetStart(Page, Limit));
+                }
+                List<Channel> lst;
+                if (Limit >= 0)
+                {
+                    lst = await data.Take(Limit).ToListAsync();
+                }
+                else
+                {
+                    Limit = sum;
+                    lst = await data.ToListAsync();
+                }
+                //如果不在线 将状态设为离线
+                bool setOff = false;
+                if (!OnlyDB && !sipServer.TryGetClient(DeviceID, out var client))
+                {
+                    setOff = true;
+                }
+                //List<Channel> lstRet = new List<Channel>(lst.Count);
+                //从redis取配置
+                var confs = await GetChannelConfs(DeviceID, lst.Select(p => p.ChannelId));
+                foreach (var item in lst)
+                {
+                    if (setOff)
+                    {
+                        item.Online = false;
+                    }
+                    item.SetChannelConf(confs[item.ChannelId]);
+                }
+                return new DPager<Channel>(lst, Page, Limit, sum);
+            }
+            finally
+            {
+                dbContextPool.Return(dbContext);
+            }
+        }
+
+        /// <summary>
+        /// 设备部分通道
+        /// </summary>
+        /// <param name="DeviceID"></param>
+        /// <param name="ChannelIds"></param>
+        /// <returns></returns>
+        public async Task<bool> DeleteChannel(string DeviceID, string[] ChannelIds)
+        {
+            if (ChannelIds == null || ChannelIds.Length == 0)
+            {
+                return true;
+            }
+            var dbContext = dbContextPool.Get();
+            try
+            {
+                string str = "";
+                sipServer.TryGetClient(DeviceID, out var client);
+                foreach (var ChannelId in ChannelIds)
+                {
+                    client?.RemoveChannel(ChannelId);
+                    str += $",'{ChannelId}'";
+                }
+                str = str.Substring(1);
+                await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM T_Catalog WHERE ChannelID in ({str}) AND DeviceID ='{DeviceID}';");
+                var count = await dbContext.TCatalogs.CountAsync(p => p.DeviceId == DeviceID);
+                await dbContext.Database.ExecuteSqlRawAsync($"UPDATE T_DeviceInfo SET CatalogChannel = {count} WHERE DeviceID ='{DeviceID}';");
+                return true;
             }
             finally
             {
@@ -150,9 +196,9 @@ namespace SipServer.DB
         }
 
 
-        Task<int> DeleteChannelsByDid(gbsContext dbContext, string Did)
+        Task<int> DeleteChannelsByDid(gbsContext dbContext, string DeviceID)
         {
-            return dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM T_Catalog WHERE DID = '{Did}';");
+            return dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM T_Catalog WHERE DeviceID = '{DeviceID}';");
         }
         /// <summary>
         /// 保存通道
@@ -160,26 +206,90 @@ namespace SipServer.DB
         /// <param name="DeviceID"></param>
         /// <param name="lst"></param>
         /// <returns></returns>
-        public async Task<bool> SaveChannels(TDeviceInfo DeviceInfo, List<TCatalog> lst)
+        internal async Task<bool> SaveChannels(TDeviceInfo DeviceInfo, List<Channel> lst)
         {
             var dbContext = dbContextPool.Get();
             try
             {
+                var dt = DateTime.Now;
+                DeviceInfo.GetCatalogTime = dt;
                 if (DeviceInfo.CatalogChannel != lst.Count)
                 {
                     DeviceInfo.CatalogChannel = lst.Count;
-                    DeviceInfo.UpTime = DateTime.Now;
+                    DeviceInfo.UpTime = dt;
                     dbContext.TDeviceInfos.Update(DeviceInfo);
                 }
-                await DeleteChannelsByDid(dbContext, DeviceInfo.Did);
-                await dbContext.TCatalogs.AddRangeAsync(lst);
-                return await dbContext.SaveChangesAsync() > 0;
+
+                await DeleteChannelsByDid(dbContext, DeviceInfo.DeviceId);
+                List<TCatalog> catalogs = new List<TCatalog>(lst.Count);
+                List<ChannelConf> confList = new List<ChannelConf>();
+                List<string> channelIds = new List<string>();
+                foreach (var item in lst)
+                {
+                    catalogs.Add(item);
+                    confList.Add(item.ToChannelConf());
+                    channelIds.Add(item.ChannelId);
+                }
+                await dbContext.TCatalogs.AddRangeAsync(catalogs);
+                await dbContext.SaveChangesAsync();
+                await UpdateChannelsConfs(DeviceInfo.DeviceId, channelIds, confList);
+                return true;
             }
             finally
             {
                 dbContextPool.Return(dbContext);
             }
         }
+
+        public async Task<Dictionary<string, ChannelConf>> GetChannelConfs(string DeviceId, IEnumerable<string> ChannelIds)
+        {
+            Dictionary<string, ChannelConf> dic = new Dictionary<string, ChannelConf>();
+            if (ChannelIds.Count() == 0)
+            {
+                return dic;
+            }
+            var bat = RedisHelper.GetDatabase().CreateBatch();
+            Dictionary<string, Task<RedisValue>> dicTask = new Dictionary<string, Task<RedisValue>>();
+            foreach (var id in ChannelIds)
+            {
+                dicTask[id] = bat.HashGetAsync(RedisConstant.DeviceConfKey + DeviceId, RedisConstant.ChannelKey + id);
+            }
+            bat.Execute();
+            foreach (var tsk in dicTask)
+            {
+                var item = await tsk.Value;
+                if (item.HasValue)
+                {
+                    var conf = item.ToString().ParseJSON<ChannelConf>();
+                    dic[tsk.Key] = conf;
+                }
+                else
+                {
+                    dic[tsk.Key] = new ChannelConf();
+                }
+            }
+            return dic;
+        }
+        public Task<ChannelConf> GetChannelConf(string DeviceId, string ChannelId)
+        {
+            return SafeHashGetAsync<ChannelConf>(RedisConstant.DeviceConfKey + DeviceId, RedisConstant.ChannelKey + ChannelId);
+        }
+
+        public Task UpdateChannelsConfs(string DeviceId, List<string> ChannelIds, List<ChannelConf> Channels)
+        {
+            var entry = new HashEntry[Channels.Count()];
+            for (int i = 0; i < Channels.Count(); i++)
+            {
+                entry[i] = new HashEntry(ChannelIds[i], Channels[i].ToJson());
+            }
+            return RedisHelper.GetDatabase().HashSetAsync(RedisConstant.DeviceConfKey + DeviceId, entry);
+        }
+        public Task<bool> UpdateChannelConf(string DeviceId, string ChannelId, ChannelConf Channel)
+        {
+            return this.RedisHelper.HashSetAsync(RedisConstant.DeviceConfKey + DeviceId, RedisConstant.ChannelKey + ChannelId, Channel);
+        }
+
+
         #endregion
 
         #region DeviceInfo
@@ -187,13 +297,22 @@ namespace SipServer.DB
         /// 获取设备信息
         /// </summary>
         /// <param name="DeviceID"></param>
+        /// <param name="dbContext"></param>
+        /// <param name="OnlyDB">仅从DB获取，为flase时会先找一遍在线列表</param>
         /// <returns></returns>
-        public async Task<TDeviceInfo> GetDeviceInfo(string DeviceID)
+        public async Task<TDeviceInfo> GetDeviceInfo(string DeviceID, gbsContext dbContext = null, bool OnlyDB = false)
         {
-            var dbContext = dbContextPool.Get();
+            if (!OnlyDB && sipServer.TryGetClient(DeviceID, out var client))
+            {
+                return client.GetDeviceInfo();
+            }
+
+            bool flag = dbContext == null;
+            if (flag)
+                dbContext = dbContextPool.Get();
             try
             {
-                var lst = await dbContext.TDeviceInfos.Where(p => p.Did == DeviceID).Take(1).ToListAsync();
+                var lst = await dbContext.TDeviceInfos.Where(p => p.DeviceId == DeviceID).Take(1).ToListAsync();
                 if (lst.Count == 0)
                 {
                     return null;
@@ -205,8 +324,13 @@ namespace SipServer.DB
             }
             finally
             {
-                dbContextPool.Return(dbContext);
+                if (flag)
+                    dbContextPool.Return(dbContext);
             }
+        }
+        private int GetStart(int Page, int Limit)
+        {
+            return (Page - 1) * Limit;
         }
         /// <summary>
         /// 获取设备列表(支持分页)
@@ -214,29 +338,58 @@ namespace SipServer.DB
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        public async Task<List<TDeviceInfo>> GetDeviceInfoList(bool onlyOnline, int start = 0, int count = -1)
+        public async Task<DPager<TDeviceInfo>> GetDeviceList(string DeviceId, string DeviceName, string Manufacturer, bool? Online, int Page = 1, int Limit = 10)
         {
             var dbContext = dbContextPool.Get();
             try
             {
                 IQueryable<TDeviceInfo> data;
-                if (onlyOnline)
+                if (Online.HasValue)
                 {
-                    data = dbContext.TDeviceInfos.Where(p => p.Online);
+                    data = dbContext.TDeviceInfos.Where(p => p.Online == Online.Value);
                 }
                 else
                 {
                     data = dbContext.TDeviceInfos;
                 }
-                data = data.Skip(start);
-                if (count >= 0)
+                if (!string.IsNullOrWhiteSpace(DeviceId))
                 {
-                    return await data.Take(count).ToListAsync();
+                    data = data.Where(p => p.DeviceId.Contains(DeviceId));
+                }
+                if (!string.IsNullOrWhiteSpace(DeviceName))
+                {
+                    data = data.Where(p => p.DeviceName.Contains(DeviceName));
+                }
+                if (!string.IsNullOrWhiteSpace(Manufacturer))
+                {
+                    data = data.Where(p => p.Manufacturer.Contains(Manufacturer));
+                }
+
+                var sum = await data.CountAsync();
+                data = data.OrderByDescending(p => p.CreateTime).Skip(GetStart(Page, Limit));
+                List<TDeviceInfo> lst;
+                if (Limit >= 0)
+                {
+                    lst = await data.Take(Limit).ToListAsync();
                 }
                 else
                 {
-                    return await data.ToListAsync();
+                    Limit = sum;
+                    lst = await data.ToListAsync();
                 }
+                for (int i = 0; i < lst.Count; i++)
+                {
+                    var item = lst[i];
+                    if (sipServer.TryGetClient(item.DeviceId, out var client))
+                    {
+                        lst[i] = client.GetDeviceInfo();
+                    }
+                    else
+                    {
+                        item.Online = false;
+                    }
+                }
+                return new DPager<TDeviceInfo>(lst, Page, Limit, sum);
             }
             finally
             {
@@ -249,38 +402,30 @@ namespace SipServer.DB
         /// <param name="DeviceID"></param>
         /// <param name="removeClient"></param>
         /// <returns></returns>
-        public async Task<bool> DeleteDeviceInfo(string DeviceID, bool removeClient = true)
+        public async Task<bool> DeleteDeviceInfo(string[] DeviceIDs, bool removeClient = true)
         {
+            if (DeviceIDs == null || DeviceIDs.Length == 0)
+            {
+                return true;
+            }
             var dbContext = dbContextPool.Get();
             try
             {
-                if (removeClient)
-                    sipServer.RemoveClient(DeviceID, false);
-                dbContext.TDeviceInfos.Remove(new TDeviceInfo
+                string str = "";
+                foreach (var DeviceID in DeviceIDs)
                 {
-                    Did = DeviceID
-                });
-                await DeleteChannelsByDid(dbContext, DeviceID);
-                return await dbContext.SaveChangesAsync() > 0;
+                    if (removeClient)
+                        sipServer.RemoveClient(DeviceID, false);
+                    str += $",'{DeviceID}'";
+                }
+                str = str.Substring(1);
+                return await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM T_Catalog WHERE DeviceID in ({str});DELETE FROM T_DeviceInfo WHERE DeviceID in ({str});") > 0;
             }
             finally
             {
                 dbContextPool.Return(dbContext);
             }
         }
-        ///// <summary>
-        ///// 仅获取设备ID(支持分页)
-        ///// </summary>
-        ///// <param name="start"></param>
-        ///// <param name="end"></param>
-        ///// <returns></returns>
-        //public Task<List<string>> GetDeviceIds(long start = 0, long end = -1)
-        //{
-        //    return RedisHelper.GetDatabase().SortedSetRangeByRankAsync(RedisConstant.DeviceIdsKey, start, end).ContinueWith(lst =>
-        //    {
-        //        return lst.Result.Select(p => p.ToString()).ToList();
-        //    }); ;
-        //}
 
         public async Task<bool> AddDeviceInfo(TDeviceInfo deviceInfo)
         {
@@ -300,7 +445,7 @@ namespace SipServer.DB
         /// 保存设备信息
         /// </summary>
         /// <param name="deviceInfo"></param>
-        public async Task<bool> SaveDeviceInfo(TDeviceInfo deviceInfo)
+        internal async Task<bool> SaveDeviceInfo(TDeviceInfo deviceInfo)
         {
             var dbContext = dbContextPool.Get();
             try
@@ -328,7 +473,7 @@ namespace SipServer.DB
             //{
             //    TDeviceInfo device = new TDeviceInfo
             //    {
-            //        Did = deviceInfo.DeviceID,
+            //        DeviceId = deviceInfo.DeviceID,
             //        Channel = deviceInfo.Channel,
             //        DeviceName = deviceInfo.DeviceName,
             //        Manufacturer = deviceInfo.Manufacturer,
@@ -340,7 +485,28 @@ namespace SipServer.DB
             //}
             //await dbContext.SaveChangesAsync();
         }
-
+        /// <summary>
+        /// 更新设备信息
+        /// </summary>
+        /// <param name="deviceInfo"></param>
+        /// <returns></returns>
+        public async Task<bool> UpdateDeviceInfo(TDeviceInfo deviceInfo)
+        {
+            var dbContext = dbContextPool.Get();
+            try
+            {
+                TDeviceInfo old = await GetDeviceInfo(deviceInfo.DeviceId, dbContext);
+                old.NickName = deviceInfo.NickName;
+                old.SubscribeExpires = deviceInfo.SubscribeExpires;
+                old.UpTime = DateTime.Now;
+                dbContext.TDeviceInfos.Update(old);
+                return await dbContext.SaveChangesAsync() > 0;
+            }
+            finally
+            {
+                dbContextPool.Return(dbContext);
+            }
+        }
         #endregion
 
 
@@ -419,11 +585,7 @@ namespace SipServer.DB
             var dbContext = dbContextPool.Get();
             try
             {
-                dbContext.TSuperiorInfos.Remove(new TSuperiorInfo
-                {
-                    Id = id,
-                });
-                return await dbContext.SaveChangesAsync() > 0;
+                return await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM TSuperiorInfos WHERE ID = '{id}';") > 0;
             }
             finally
             {

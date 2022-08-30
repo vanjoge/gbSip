@@ -1,4 +1,4 @@
-﻿@model IEnumerable<SipServer.DBModel.TDeviceInfo>
+﻿@model SipServer.Models.DPager<SipServer.DBModel.TDeviceInfo>
 
 @{
     ViewData["Title"] = "已注册设备列表";
@@ -52,11 +52,11 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.list)
         {
             <tr>
                 <td>
-                    @Html.ActionLink(item.Did, "Channels", new { DeviceID = item.Did })
+                    @Html.ActionLink(item.DeviceId, "Channels", new { DeviceID = item.DeviceId })
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.DeviceName)
@@ -75,11 +75,11 @@
                     @if (item.Online)
                     {
                         <br />
-                        @Html.ActionLink("刷新", "RefreshChannel", new { DeviceID = item.Did })
+                        @Html.ActionLink("刷新", "RefreshChannel", new { DeviceID = item.DeviceId })
                     }
                 </td>
                 <td>
-                    @(item.Online?item.RemoteInfo:"离线")
+                    @(item.Online ? item.RemoteInfo : "离线")
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.CreateTime)
@@ -94,7 +94,7 @@
                     @Html.DisplayFor(modelItem => item.OfflineTime)
                 </td>
                 <td>
-                    @Html.ActionLink("删除", "Delete", new { Did = item.Did })
+                    @Html.ActionLink("删除", "Delete", new { DeviceId = item.DeviceId })
                 </td>
             </tr>
         }

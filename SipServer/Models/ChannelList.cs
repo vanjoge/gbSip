@@ -1,5 +1,4 @@
 ﻿using GB28181.XML;
-using SipServer.DBModel;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,13 +7,13 @@ using System.Text;
 
 namespace SipServer.Models
 {
-    public class ChannelList: ConcurrentDictionary<string, TCatalog>
+    public class ChannelList : ConcurrentDictionary<string, Channel>
     {
 
         public int AddTimes { get; protected set; }
-        public void AddOrUpdate(TCatalog item)
+        public void AddOrUpdate(Channel item)
         {
-            this[item.Did] = item;
+            this[item.ChannelId] = item;
             AddTimes++;
         }
     }

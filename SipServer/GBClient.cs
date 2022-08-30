@@ -110,14 +110,14 @@ namespace SipServer
         /// <returns></returns>
         public async Task Online()
         {
-            deviceInfo = await sipServer.DB.GetDeviceInfo(DeviceID);
+            deviceInfo = await sipServer.DB.GetDeviceInfo(DeviceID, OnlyDB: true);
             var now = DateTime.Now;
             bool flag = true;
             if (deviceInfo == null)
             {
                 deviceInfo = new TDeviceInfo
                 {
-                    Did = DeviceID,
+                    DeviceId = DeviceID,
                     CreateTime = now
                 };
                 flag = false;
@@ -135,12 +135,12 @@ namespace SipServer
                 await sipServer.DB.AddDeviceInfo(deviceInfo);
             }
 
-            var lst = await sipServer.DB.GetChannelList(DeviceID);
-            foreach (var item in lst)
+            var lst = await sipServer.DB.GetChannelList(DeviceID, OnlyDB: true);
+            foreach (var item in lst.list)
             {
-                if (item != null && item.Id != null)
+                if (item != null && item.ChannelId != null)
                 {
-                    sipServer.SetTree(item.Id, DeviceID);
+                    sipServer.SetTree(item.ChannelId, DeviceID);
                     channels.AddOrUpdate(item);
                 }
             }
@@ -341,10 +341,11 @@ namespace SipServer
                             var catalog = SerializableHelper.DeserializeByStr<Catalog>(sipRequest.Body);
                             if (catalog.SumNum != 0 && catalog.DeviceList != null)
                             {
+                                var confs = await sipServer.DB.GetChannelConfs(DeviceID, catalog.DeviceList.Select(p => p.DeviceID));
                                 foreach (var item in catalog.DeviceList)
                                 {
                                     sipServer.SetTree(item.DeviceID, DeviceID);
-                                    TCatalog citem = new TCatalog
+                                    Channel citem = new Channel
                                     {
                                         Address = item.Address,
                                         Block = item.Block,
@@ -352,10 +353,10 @@ namespace SipServer
                                         Certifiable = item.Certifiable == 1,
                                         CertNum = item.CertNum,
                                         CivilCode = item.CivilCode,
-                                        Id = item.DeviceID,
+                                        ChannelId = item.DeviceID,
                                         EndTime = Str2DT(item.EndTime),
-                                        ErrCode = item.ErrCode,
-                                        Did = DeviceID,
+                                        ErrCode = item.ErrCode.HasValue ? item.ErrCode.Value : 0,
+                                        DeviceId = DeviceID,
                                         Ipaddress = item.IPAddress,
                                         Latitude = item.Latitude.HasValue ? item.Latitude.Value : 0,
                                         Longitude = item.Longitude.HasValue ? item.Longitude.Value : 0,
@@ -366,12 +367,14 @@ namespace SipServer
                                         Parental = item.Parental == 1,
                                         ParentId = item.ParentID,
                                         Password = item.Password,
-                                        Port = item.Port,
+                                        Port = item.Port.HasValue ? item.Port.Value : 0,
                                         RegisterWay = item.RegisterWay.HasValue ? item.RegisterWay.Value : 1,
                                         SafetyWay = item.SafetyWay.HasValue ? item.SafetyWay.Value : 0,
                                         Secrecy = item.Secrecy == 1,
                                         Status = item.Status,
+                                        Online = "ON".IgnoreEquals(item.Status),
                                     };
+                                    citem.SetChannelConf(confs[item.DeviceID]);
                                     channels.AddOrUpdate(citem);
                                 }
                                 if (channels.Count == catalog.SumNum || channels.AddTimes == catalog.SumNum)
@@ -396,7 +399,14 @@ namespace SipServer
                         case "DEVICESTATUS":
                             await SendOkMessage(sipRequest);
                             var deviceStatus = SerializableHelper.DeserializeByStr<DeviceStatus>(sipRequest.Body);
-                            await sipServer.DB.SaveDeviceStatus(DeviceID, deviceStatus);
+                            deviceInfo.DsOnline = deviceStatus.Online;
+                            deviceInfo.DsStatus = deviceStatus.Status;
+                            deviceInfo.DsReason = deviceStatus.Reason;
+                            deviceInfo.DsEncode = deviceStatus.Encode;
+                            deviceInfo.DsRecord = deviceStatus.Record;
+                            deviceInfo.DsDeviceTime = deviceStatus.DeviceTime;
+                            deviceInfo.GetDsTime = DateTime.Now;
+                            await sipServer.DB.SaveDeviceInfo(deviceInfo);
                             break;
                         case "RECORDINFO":
                             var recordInfo = SerializableHelper.DeserializeByStr<RecordInfo>(sipRequest.Body);
@@ -757,6 +767,19 @@ namespace SipServer
         public TDeviceInfo GetDeviceInfo()
         {
             return deviceInfo;
+        }
+        public bool TryGetChannel(string ChannelID, out Channel Channel)
+        {
+            return channels.TryGetValue(ChannelID, out Channel);
+        }
+        public bool RemoveChannel(string ChannelID)
+        {
+            if (channels.TryRemove(ChannelID, out var catalog))
+            {
+                deviceInfo.CatalogChannel--;
+                return true;
+            }
+            return false;
         }
         #endregion
         #endregion

@@ -8,7 +8,7 @@ namespace SipServer.DBModel
         /// <summary>
         /// 设备ID
         /// </summary>
-        public string Did { get; set; }
+        public string DeviceId { get; set; }
         /// <summary>
         /// 目标设备/区域/系统的名称(可选)
         /// </summary>
@@ -40,7 +40,7 @@ namespace SipServer.DBModel
         /// <summary>
         /// 上次获取Catalog时间
         /// </summary>
-        public DateTime GetCatalogTime { get; set; }
+        public DateTime? GetCatalogTime { get; set; }
         /// <summary>
         /// 在线状态
         /// </summary>
@@ -56,7 +56,7 @@ namespace SipServer.DBModel
         /// <summary>
         /// 离线时间
         /// </summary>
-        public DateTime OfflineTime { get; set; }
+        public DateTime? OfflineTime { get; set; }
         /// <summary>
         /// 远端连接信息
         /// </summary>
@@ -88,7 +88,7 @@ namespace SipServer.DBModel
         /// <summary>
         /// 上次设备状态信息查询应答时间
         /// </summary>
-        public DateTime GetDsTime { get; set; }
+        public DateTime? GetDsTime { get; set; }
         /// <summary>
         /// 是否有报警
         /// </summary>
@@ -101,5 +101,13 @@ namespace SipServer.DBModel
         /// 更新时间
         /// </summary>
         public DateTime UpTime { get; set; }
+        /// <summary>
+        /// 别名
+        /// </summary>
+        public string NickName { get; set; }
+        /// <summary>
+        /// 目录订阅有效期
+        /// </summary>
+        public int SubscribeExpires { get; set; }
     }
 }

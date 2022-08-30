@@ -8,11 +8,11 @@ namespace SipServer.DBModel
         /// <summary>
         /// CatalogID
         /// </summary>
-        public string Id { get; set; }
+        public string ChannelId { get; set; }
         /// <summary>
         /// 设备ID
         /// </summary>
-        public string Did { get; set; }
+        public string DeviceId { get; set; }
         /// <summary>
         /// 上级ID
         /// </summary>
@@ -72,7 +72,7 @@ namespace SipServer.DBModel
         /// <summary>
         /// 无效原因码
         /// </summary>
-        public int? ErrCode { get; set; }
+        public int ErrCode { get; set; }
         /// <summary>
         /// 证书终止有效期
         /// </summary>
@@ -88,7 +88,7 @@ namespace SipServer.DBModel
         /// <summary>
         /// 设备/区域/系统端口
         /// </summary>
-        public int? Port { get; set; }
+        public int Port { get; set; }
         /// <summary>
         /// 设备口令
         /// </summary>
@@ -109,5 +109,17 @@ namespace SipServer.DBModel
         /// 远程设备终结点
         /// </summary>
         public string RemoteEp { get; set; }
+        /// <summary>
+        /// 在线状态
+        /// </summary>
+        public bool Online { get; set; }
+        /// <summary>
+        /// 上次上线时间
+        /// </summary>
+        public DateTime OnlineTime { get; set; }
+        /// <summary>
+        /// 离线时间
+        /// </summary>
+        public DateTime? OfflineTime { get; set; }
     }
 }

@@ -17,6 +17,10 @@
         /// 结果代码
         /// </summary>
         public int code { get; set; }
+        /// <summary>
+        /// 消息 一般是错误消息
+        /// </summary>
+        public string message { get; set; }
     }
     /// <summary>
     /// 

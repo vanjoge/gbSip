@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using GB28181.PTZ;
 using GB28181.XML;
+using GBWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SipServer;
@@ -17,7 +18,7 @@ namespace GBWeb.Controllers
     /// </summary>
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class DeviceControlController : ControllerBase
+    public class DeviceControlController : BaseApi
     {
         /// <summary>
         /// PTZ指令
@@ -33,7 +34,7 @@ namespace GBWeb.Controllers
         /// <param name="Right">右转速度 0-255 非必须 不传表示停止</param>
         /// <returns></returns>
         [HttpGet, HttpPost]
-        public async Task<bool> PTZCtrl([FromCustom] string DeviceID, [FromCustom] string Channel, [FromCustom] ushort Address, [FromCustom] byte? ZoomIn, [FromCustom] byte? ZoomOut, [FromCustom] byte? Up, [FromCustom] byte? Down, [FromCustom] byte? Left, [FromCustom] byte? Right)
+        public async Task<ApiResult<bool>> PTZCtrl([FromCustom] string DeviceID, [FromCustom] string Channel, [FromCustom] ushort Address, [FromCustom] byte? ZoomIn, [FromCustom] byte? ZoomOut, [FromCustom] byte? Up, [FromCustom] byte? Down, [FromCustom] byte? Left, [FromCustom] byte? Right)
         {
             if (Program.sipServer.TryGetClient(DeviceID, out var client))
             {
@@ -53,9 +54,9 @@ namespace GBWeb.Controllers
                     PTZCmd = cmd.ToPTZStr(),
                 };
                 await client.Send_DeviceControl(control);
-                return true;
+                return RetApiResult(true);
             }
-            return false;
+            return RetApiResult(false);
         }
     }
 }
