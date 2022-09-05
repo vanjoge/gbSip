@@ -366,7 +366,7 @@ namespace SipServer
             SIPResponse res = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
             res.Header.Allow = null;
             res.Header.UserAgent = UserAgent;
-            if (sipRequest.Method != SIPMethodsEnum.REGISTER)
+            if (sipRequest.Method != SIPMethodsEnum.REGISTER || DeviceID == null || SipServerID == null)
             {
                 SIPResponse unauthResponse = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Unauthorised, null);
                 unauthResponse.Header.Allow = null;
