@@ -58,13 +58,28 @@ namespace SipServer.Models
         /// 对讲模式(0 自动; 1 Invite被动; 2 Invite主动; 3 广播)
         /// </summary>
         public int TalkType { get; set; }
+        /// <summary>
+        /// RTVS视频服务地址
+        /// </summary>
+        public string RTVSVideoServer { get; set; }
+        /// <summary>
+        /// RTVS视频服务端口
+        /// </summary>
+        public int RTVSVideoPort { get; set; }
+        /// <summary>
+        /// 0 自动; 3 软解; 4 fmp4; 5 webrtc; 6 hls
+        /// </summary>
+        public int PlayerMode { get; set; }
 
-        public void SetChannelConf(ChannelConf conf)
+        public void SetChannelConf(ChannelConf conf, Setting setting)
         {
             this.RemoteEp = conf.RemoteEp;
             this.NickName = conf.NickName;
             this.NetType = conf.NetType;
             this.TalkType = conf.TalkType;
+            this.RTVSVideoServer = setting.RTVSVideoServer;
+            this.RTVSVideoPort = setting.RTVSVideoPort;
+            this.PlayerMode = conf.PlayerMode;
         }
         public void FillChannelConf(ChannelConf conf)
         {
@@ -72,6 +87,7 @@ namespace SipServer.Models
             conf.NickName = this.NickName;
             conf.NetType = this.NetType;
             conf.TalkType = this.TalkType;
+            conf.PlayerMode = this.PlayerMode;
         }
         public ChannelConf ToChannelConf()
         {

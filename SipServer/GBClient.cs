@@ -374,7 +374,7 @@ namespace SipServer
                                         Status = item.Status,
                                         Online = "ON".IgnoreEquals(item.Status),
                                     };
-                                    citem.SetChannelConf(confs[item.DeviceID]);
+                                    citem.SetChannelConf(confs[item.DeviceID], sipServer.Settings);
                                     channels.AddOrUpdate(citem);
                                 }
                                 if (channels.Count == catalog.SumNum || channels.AddTimes == catalog.SumNum)

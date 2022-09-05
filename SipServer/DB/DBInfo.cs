@@ -151,7 +151,7 @@ namespace SipServer.DB
                     {
                         item.Online = false;
                     }
-                    item.SetChannelConf(confs[item.ChannelId]);
+                    item.SetChannelConf(confs[item.ChannelId],sipServer.Settings);
                 }
                 return new DPager<Channel>(lst, Page, Limit, sum);
             }

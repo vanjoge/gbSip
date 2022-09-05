@@ -21,5 +21,9 @@ namespace SipServer.DBModel
         /// 对讲模式(0 自动; 1 Invite被动; 2 Invite主动; 3 广播)
         /// </summary>
         public int TalkType { get; set; }
+        /// <summary>
+        /// 0 自动; 3 软解; 4 fmp4; 5 webrtc; 6 hls
+        /// </summary>
+        public int PlayerMode { get; set; }
     }
 }
