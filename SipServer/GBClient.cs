@@ -374,6 +374,10 @@ namespace SipServer
                                         Status = item.Status,
                                         Online = "ON".IgnoreEquals(item.Status),
                                     };
+                                    if (string.IsNullOrWhiteSpace(citem.ParentId)|| citem.ParentId==ServerID)
+                                    {
+                                        citem.ParentId = DeviceID;
+                                    }
                                     citem.SetChannelConf(confs[item.DeviceID], sipServer.Settings);
                                     channels.AddOrUpdate(citem);
                                 }
