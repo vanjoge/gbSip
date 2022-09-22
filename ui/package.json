@@ -1,0 +1,147 @@
+{
+  "name": "gbsip",
+  "version": "1.0.0",
+  "author": {
+    "name": "vanjoge",
+    "email": "wjj58200@163.com",
+    "url": "https://github.com/vanjoge"
+  },
+  "scripts": {
+    "dev": "npm run serve",
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "build:test": "vue-cli-service build --mode test",
+    "build:preview": "npm run build && npx serve -s dist",
+    "build:prod": "vue-cli-service build --mode production",
+    "build:report": "vue-cli-service build --report && npx live-server --open=dist/report.html",
+    "clean:lib": "npx rimraf node_modules",
+    "deploy": "npm run build && npx gh-pages -d dist",
+    "dev:debug": "cross-env DEBUG_ANTDV=true npm run serve",
+    "format": "prettier --write .",
+    "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx,.md,.json --max-warnings 0 && pretty-quick --check --branch dev",
+    "lint:fix": "eslint --fix . --ext .vue,.js,.ts,.jsx,.tsx,.md,.json && pretty-quick --branch dev",
+    "lint:eslint": "eslint --cache --max-warnings 0  \"{src,mock}/**/*.{vue,ts,tsx}\" --fix",
+    "lint:prettier": "prettier --write  \"src/**/*.{js,json,tsx,css,less,scss,vue,html,md}\"",
+    "lint:stylelint": "stylelint --cache --fix \"**/*.{vue,less,postcss,css,scss}\" --cache --cache-location node_modules/.cache/stylelint/",
+    "lint:lint-staged": "lint-staged",
+    "prepare": "",
+    "postversion": "git push && git push origin --tags",
+    "reinstall": "rimraf yarn.lock && rimraf package.lock.json && rimraf node_modules && npm run dev",
+    "version": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
+    "test:gzip": "npx http-server dist --cors --gzip -c-1",
+    "test:br": "npx http-server dist --cors --brotli -c-1",
+    "commit": "czg"
+  },
+  "dependencies": {
+    "@ant-design/icons-vue": "~6.1.0",
+    "@vueuse/core": "~9.1.0",
+    "ant-design-vue": "3.2.11",
+    "axios": "~0.27.2",
+    "core-js": "~3.24.1",
+    "dayjs": "~1.11.5",
+    "file-saver": "~2.0.5",
+    "lodash-es": "~4.17.21",
+    "mitt": "~3.0.0",
+    "mockjs": "~1.1.0",
+    "nprogress": "~1.0.0-1",
+    "pinia": "~2.0.20",
+    "qs": "~6.11.0",
+    "socket.io-client": "~4.5.1",
+    "sortablejs": "~1.15.0",
+    "vue": "3.2.37",
+    "vue-i18n": "9.2.2",
+    "vue-router": "~4.0.16",
+    "vue-types": "~4.2.1",
+    "xlsx": "~0.18.5"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "~17.0.3",
+    "@commitlint/config-conventional": "~17.0.3",
+    "@types/lodash-es": "~4.17.6",
+    "@types/node": "~18.7.6",
+    "@types/webpack-env": "~1.18.0",
+    "@typescript-eslint/eslint-plugin": "~5.33.1",
+    "@typescript-eslint/parser": "~5.33.1",
+    "@vue/cli-plugin-babel": "~5.0.8",
+    "@vue/cli-plugin-eslint": "~5.0.8",
+    "@vue/cli-plugin-router": "~5.0.8",
+    "@vue/cli-plugin-typescript": "~5.0.8",
+    "@vue/cli-service": "~5.0.8",
+    "@vue/eslint-config-typescript": "~11.0.0",
+    "@vue/tsconfig": "^0.1.3",
+    "babel-plugin-import": "~1.13.5",
+    "conventional-changelog-cli": "~2.2.2",
+    "cross-env": "~7.0.3",
+    "cz-git": "~1.3.10",
+    "czg": "~1.3.10",
+    "eslint": "~8.22.0",
+    "eslint-config-prettier": "~8.5.0",
+    "eslint-plugin-import": "2.26.0",
+    "eslint-plugin-prettier": "~4.2.1",
+    "eslint-plugin-vue": "~9.3.0",
+    "husky": "~8.0.1",
+    "less": "~4.1.3",
+    "less-loader": "11.0.0",
+    "lint-staged": "~12.5.0",
+    "path-browserify": "~1.0.1",
+    "postcss-html": "~1.5.0",
+    "postcss-less": "~6.0.0",
+    "prettier": "~2.7.1",
+    "pretty-quick": "~3.1.3",
+    "regenerator-runtime": "~0.13.9",
+    "speed-measure-webpack-plugin": "~1.5.0",
+    "stylelint": "~14.11.0",
+    "stylelint-config-html": "~1.1.0",
+    "stylelint-config-prettier": "~9.0.3",
+    "stylelint-config-recommended": "~9.0.0",
+    "stylelint-config-recommended-vue": "~1.4.0",
+    "stylelint-config-standard": "~27.0.0",
+    "stylelint-order": "~5.0.0",
+    "svg-sprite-loader": "~6.0.11",
+    "typescript": "~4.7.4",
+    "unplugin-vue-define-options": "~0.7.3",
+    "vue-cli-plugin-windicss": "~1.1.6",
+    "vue-eslint-parser": "~9.0.3",
+    "vue-tsc": "^0.40.1"
+  },
+  "__npminstall_done": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vanjoge/gbSip"
+  },
+  "homepage": "https://github.com/vanjoge/gbSip",
+  "keywords": [
+    "vue",
+    "ant-design-vue",
+    "vue3",
+    "ts",
+    "tsx",
+    "admin",
+    "typescript"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=14"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.json": [
+      "prettier --write"
+    ],
+    "*.vue": [
+      "eslint --fix",
+      "prettier --write",
+      "stylelint --fix"
+    ],
+    "*.{scss,less,styl,html}": [
+      "stylelint --fix",
+      "prettier --write"
+    ],
+    "*.md": [
+      "prettier --write"
+    ]
+  }
+}

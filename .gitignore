@@ -365,3 +365,7 @@ FodyWeavers.xsd
 /GBWeb/.config
 /GB28181/GB28181.xml
 /GBWeb/GBWeb.xml
+/ConsoleApp1
+!/ui/.vscode
+/ui/yarn.lock
+/ui/dist
