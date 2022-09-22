@@ -17,12 +17,14 @@ jobs:
       run: |
         echo "::set-output name=major::$(awk -F, '{print $2}' .tags)"
         echo "::set-output name=full::$(awk -F, '{print $1}' .tags)"
-        cd ui
 
     - name: Setup Node.js v14.x
       uses: actions/setup-node@v1
       with:
         node-version: '14.x'
+        
+    - name: cd ui
+      run: cd ui && pwd
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
