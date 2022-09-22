@@ -44,7 +44,7 @@ jobs:
     - uses: actions/cache@v3
       with:
         # 缓存文件夹
-        path: node_modules/.cache/webpack/
+        path: ui/node_modules/.cache/webpack/
         key: ${{ github.ref.name }}-webpack-build
         # 兜底使用 "main" 分支缓存
         restore-keys: |
@@ -52,7 +52,7 @@ jobs:
 
     - name: Build UI
       working-directory: ./ui
-      run: yarn build && mv -f dist/* ../GBWeb/wwwroot/
+      run: yarn build && rsync -a dist/* ../GBWeb/wwwroot/
 
     - name: Docker Setup qemu-action
       uses: docker/setup-qemu-action@v1
