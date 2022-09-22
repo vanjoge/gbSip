@@ -23,12 +23,11 @@ jobs:
       with:
         node-version: '14.x'
         
-    - name: cd ui
-      run: cd ui && pwd
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
       run: echo "::set-output name=dir::$(yarn cache dir)"
+      working-directory: ./ui
 
     - uses: actions/cache@v3
       id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
@@ -40,6 +39,7 @@ jobs:
 
     - name: yarn Install 
       run: yarn install --frozen-lockfile
+      working-directory: ./ui
 
     - uses: actions/cache@v3
       with:
@@ -51,7 +51,8 @@ jobs:
           main-webpack-build
 
     - name: Build UI
-      run: yarn build && mv dist/* ../GBWeb/wwwroot/ && cd ..
+      working-directory: ./ui
+      run: yarn build && mv dist/* ../GBWeb/wwwroot/
 
     - name: Docker Setup qemu-action
       uses: docker/setup-qemu-action@v1
