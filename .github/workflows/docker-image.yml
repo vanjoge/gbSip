@@ -52,7 +52,7 @@ jobs:
 
     - name: Build UI
       working-directory: ./ui
-      run: yarn build && mv dist/* ../GBWeb/wwwroot/
+      run: yarn build && mv -f dist/* ../GBWeb/wwwroot/
 
     - name: Docker Setup qemu-action
       uses: docker/setup-qemu-action@v1
