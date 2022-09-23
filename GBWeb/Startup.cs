@@ -35,7 +35,7 @@ namespace GBWeb
             });
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("api", new OpenApiInfo { Title = "API½Ó¿Ú", Version = "v1" });
+                c.SwaggerDoc("api", new OpenApiInfo { Title = "API", Version = "v1" });
                 c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "GBWeb.xml"), true);
                 c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "GB28181.xml"), true);
             });

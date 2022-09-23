@@ -57,6 +57,54 @@
           </Dropdown>
         </template> -->
       </Tree>
+      <div class="ptz">
+        <div>
+          <div class="ptz-btn ptz-up" @mousedown="ptz({ DeviceId: '', Channel: '', Up: ptzSpeed })"
+            ><UpCircleTwoTone
+          /></div>
+          <div
+            class="ptz-btn ptz-left"
+            @mousedown="ptz({ DeviceId: '', Channel: '', Left: ptzSpeed })"
+            ><LeftCircleTwoTone
+          /></div>
+          <div class="ptz-btn ptz-center"><AudioTwoTone /></div>
+          <div
+            class="ptz-btn ptz-right"
+            @mousedown="ptz({ DeviceId: '', Channel: '', Right: ptzSpeed })"
+            ><RightCircleTwoTone
+          /></div>
+          <div
+            class="ptz-btn ptz-down"
+            @mousedown="ptz({ DeviceId: '', Channel: '', Down: ptzSpeed })"
+            ><DownCircleTwoTone
+          /></div>
+          <div
+            class="ptz-btn ptz-zoomin"
+            @mousedown="ptz({ DeviceId: '', Channel: '', ZoomIn: parseInt(ptzSpeed / 17) })"
+            ><PlusCircleTwoTone
+          /></div>
+          <div
+            class="ptz-btn ptz-zoomout"
+            @mousedown="ptz({ DeviceId: '', Channel: '', ZoomOut: parseInt(ptzSpeed / 17) })"
+            ><MinusCircleTwoTone /></div
+        ></div>
+        <div class="ptz-speed">
+          <Row align="middle">
+            <Col :span="20">
+              <Slider v-model:value="ptzSpeed" :min="1" :max="255" />
+            </Col>
+            <Col :span="2">
+              <InputNumber
+                v-model:value="ptzSpeed"
+                :min="1"
+                :max="255"
+                size="small"
+                style="margin-left: 10px; width: 60px"
+              />
+            </Col>
+          </Row>
+        </div>
+      </div>
     </template>
     <template #right-content>
       <div ref="rcontent">
@@ -108,23 +156,64 @@
 </template>
 
 <script setup lang="tsx">
-  import { nextTick, ref, reactive, onMounted } from 'vue';
+  import { nextTick, ref, reactive, onMounted, onBeforeUnmount } from 'vue';
   //CheckCircleTwoTone,
-  import { SyncOutlined, VideoCameraTwoTone, FolderTwoTone } from '@ant-design/icons-vue';
+  import {
+    SyncOutlined,
+    VideoCameraTwoTone,
+    FolderTwoTone,
+    LeftCircleTwoTone,
+    RightCircleTwoTone,
+    UpCircleTwoTone,
+    DownCircleTwoTone,
+    AudioTwoTone,
+    PlusCircleTwoTone,
+    MinusCircleTwoTone,
+  } from '@ant-design/icons-vue';
   import { difference } from 'lodash';
-  import { Space, Tree, Tooltip, Button, message } from 'ant-design-vue';
+  import {
+    Space,
+    Tree,
+    Tooltip,
+    Button,
+    message,
+    Row,
+    Col,
+    Slider,
+    InputNumber,
+  } from 'ant-design-vue';
   import { getNickName, type TreeDataItem, formatDevice, formatChannel } from './treeSchemas';
   import type { TreeProps } from 'ant-design-vue';
   import { SplitPanel } from '@/components/basic/split-panel';
   import { RtvsPlayer } from '@/components/business/rtvsplayer';
   import { getDeviceList } from '@/api/device';
   import { getChannelList } from '@/api/channel';
+  import { ptzCtrl } from '@/api/deviceControl';
   import { t } from '@/hooks/useI18n';
 
   defineOptions({
     name: 'RealTime',
   });
   const devTreeLoading = ref(false);
+  const ptzSpeed = ref<number>(127);
+  let nowptzChannel = '';
+  let nowptzDeviceId = '';
+  const ptz = (params: API.PPTZCtrl) => {
+    const cfg = rtvsplayer.value.getUc()?.GetOperateUCVideo().config;
+    if (cfg && cfg.DeviceId?.length > 0 && cfg.ChannelId?.length > 0) {
+      nowptzDeviceId = params.DeviceId = cfg.DeviceId;
+      nowptzChannel = params.Channel = cfg.ChannelId;
+      ptzCtrl(params);
+    }
+  };
+  const onMouseUp = () => {
+    if (nowptzChannel.length > 0 && nowptzDeviceId.length > 0) {
+      //发送停止
+      ptzCtrl({ DeviceId: nowptzDeviceId, Channel: nowptzChannel, Address: 0 });
+      nowptzChannel = '';
+      nowptzDeviceId = '';
+    }
+  };
   let needDoSelect = false;
   /**
    * 设备选中
@@ -151,6 +240,8 @@
                 clusterPort: item.RTVSVideoPort,
                 protocol: 2,
                 treekey: key,
+                DeviceId: item.DeviceId,
+                ChannelId: item.ChannelId,
               },
               null,
               item.PlayerMode,
@@ -294,6 +385,7 @@
   };
   fetchDeviceList();
   onMounted(() => {
+    window.addEventListener('mouseup', onMouseUp);
     nextTick(() => {
       if (rcontent.value && rcontent.value.parentElement) {
         state.videoWidth = rcontent.value.parentElement.clientWidth;
@@ -301,4 +393,75 @@
       }
     });
   });
+  onBeforeUnmount(() => {
+    window.removeEventListener('mouseup', onMouseUp);
+  });
 </script>
+
+<style lang="less">
+  .ptz {
+    width: 250px;
+    height: 200px;
+    text-align: center;
+    position: relative;
+    font-size: 24px;
+    color: #333;
+
+    &-btn {
+      width: 50px;
+      height: 50px;
+      line-height: 50px;
+      position: absolute;
+      cursor: pointer;
+    }
+
+    &-btn:hover {
+      background-color: #c7e4ff;
+      border-radius: 25px;
+    }
+
+    &-up {
+      top: 0;
+      left: 100px;
+    }
+
+    &-left {
+      top: 50px;
+      left: 50px;
+    }
+
+    &-center {
+      top: 50px;
+      left: 100px;
+      border-radius: 25px;
+      background-color: #effaff;
+    }
+
+    &-right {
+      top: 50px;
+      left: 150px;
+    }
+
+    &-down {
+      top: 100px;
+      left: 100px;
+    }
+
+    &-zoomin {
+      top: 50px;
+      left: 0px;
+    }
+
+    &-zoomout {
+      top: 50px;
+      left: 200px;
+    }
+
+    &-speed {
+      top: 150px;
+      left: 0px;
+      width: 100%;
+      position: absolute;
+    }
+  }
+</style>

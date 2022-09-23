@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { nextTick, ref, onMounted, defineExpose, watch } from 'vue';
+  import { nextTick, ref, onMounted, defineExpose, watch, onBeforeUnmount } from 'vue';
   const root = ref(null);
   const props = defineProps({
     videoWidth: {
@@ -96,6 +96,9 @@
         }
       }
     });
+  });
+  onBeforeUnmount(() => {
+    uc1?.Stop(-1);
   });
   defineExpose({
     getUc,
