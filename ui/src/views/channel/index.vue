@@ -1,34 +1,35 @@
 <template>
-  <DynamicTable
-    row-key="ChannelId"
-    header-title="通道管理"
-    show-index
-    title-tooltip="此处可对通道进行管理。"
-    :data-request="loadTableData"
-    :columns="columns"
-    :scroll="{ x: 2000 }"
-    :row-selection="rowSelection"
-  >
-    <template v-if="isCheckRows" #title>
-      <Alert class="w-full" type="info" show-icon>
-        <template #message>
-          已选 {{ isCheckRows }} 项
-          <a-button type="link" @click="rowSelection.selectedRowKeys = []">取消选择</a-button>
-        </template>
-      </Alert>
-    </template>
-    <template #toolbar>
-      <a-button type="primary" a @click="router.go(-1)"> <RollbackOutlined /> 返回 </a-button>
-      <a-button
-        type="danger"
-        :disabled="!isCheckRows || !$auth('DeviceInfo.DeleteDevice')"
-        @click="delRowConfirm(rowSelection.selectedRowKeys)"
-      >
-        <DeleteOutlined /> 删除
-      </a-button>
-    </template>
-  </DynamicTable>
-  <!-- <DraggableModal
+  <div>
+    <DynamicTable
+      row-key="ChannelId"
+      header-title="通道管理"
+      show-index
+      title-tooltip="此处可对通道进行管理。"
+      :data-request="loadTableData"
+      :columns="columns"
+      :scroll="{ x: 2000 }"
+      :row-selection="rowSelection"
+    >
+      <template v-if="isCheckRows" #title>
+        <Alert class="w-full" type="info" show-icon>
+          <template #message>
+            已选 {{ isCheckRows }} 项
+            <a-button type="link" @click="rowSelection.selectedRowKeys = []">取消选择</a-button>
+          </template>
+        </Alert>
+      </template>
+      <template #toolbar>
+        <a-button type="primary" a @click="back()"> <RollbackOutlined /> 返回 </a-button>
+        <a-button
+          type="danger"
+          :disabled="!isCheckRows || !$auth('DeviceInfo.DeleteDevice')"
+          @click="delRowConfirm(rowSelection.selectedRowKeys)"
+        >
+          <DeleteOutlined /> 删除
+        </a-button>
+      </template>
+    </DynamicTable>
+    <!-- <DraggableModal
     v-model:visible="state.visible"
     title="视频播放"
     :width="900"
@@ -38,13 +39,13 @@
     <template #footer> </template>
     <RtvsPlayer ref="rtvsplayer" width="854" height="480" video-nums="1"></RtvsPlayer>
   </DraggableModal> -->
-  <RtvsPlayerModal
-    ref="rtvsplayer"
-    v-model:visible="state.visible"
-    width="854"
-    height="480"
-  ></RtvsPlayerModal>
-</template>
+    <RtvsPlayerModal
+      ref="rtvsplayer"
+      v-model:visible="state.visible"
+      width="854"
+      height="480"
+    ></RtvsPlayerModal> </div
+></template>
 
 <script setup lang="tsx">
   import { ref, computed, reactive } from 'vue';
@@ -96,6 +97,9 @@
     });
   };
 
+  const back = () => {
+    router.back();
+  };
   const rowSelection = ref({
     selectedRowKeys: [] as string[],
     onChange: (selectedRowKeys: string[], selectedRows: TableListItem[]) => {

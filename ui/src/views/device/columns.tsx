@@ -54,7 +54,7 @@ export const baseColumns: TableColumnItem[] = [
   {
     title: '在线情况',
     dataIndex: 'Online',
-    width: 120,
+    width: 180,
     formItemProps: {
       component: 'Select',
       componentProps: {
