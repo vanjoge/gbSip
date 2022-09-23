@@ -10,34 +10,35 @@
           </Tooltip>
         </Space>
       </div>
-      <Tree
-        v-model:expandedKeys="state.expandedKeys"
-        v-model:checkedKeys="state.checkedKeys"
-        checkable
-        block-node
-        show-icon
-        :selectable="false"
-        :tree-data="state.treeData"
-        :load-data="onLoadData"
-        :loaded-keys="state.loadedKeys"
-        @check="onTreeSelect"
-        @load="onLoad"
-      >
-        <template #icon="{ Online, tdType }">
-          <template v-if="tdType == 0">
-            <template v-if="Online">
-              <FolderTwoTone two-tone-color="#52c41a" />
+      <div class="videotree">
+        <Tree
+          v-model:expandedKeys="state.expandedKeys"
+          v-model:checkedKeys="state.checkedKeys"
+          checkable
+          block-node
+          show-icon
+          :selectable="false"
+          :tree-data="state.treeData"
+          :load-data="onLoadData"
+          :loaded-keys="state.loadedKeys"
+          @check="onTreeSelect"
+          @load="onLoad"
+        >
+          <template #icon="{ Online, tdType }">
+            <template v-if="tdType == 0">
+              <template v-if="Online">
+                <FolderTwoTone two-tone-color="#52c41a" />
+              </template>
+              <template v-else> <FolderTwoTone two-tone-color="#a9a9a9" /></template>
             </template>
-            <template v-else> <FolderTwoTone two-tone-color="#a9a9a9" /></template>
-          </template>
-          <template v-else>
-            <template v-if="Online">
-              <VideoCameraTwoTone two-tone-color="#52c41a" />
+            <template v-else>
+              <template v-if="Online">
+                <VideoCameraTwoTone two-tone-color="#52c41a" />
+              </template>
+              <template v-else> <VideoCameraTwoTone two-tone-color="#a9a9a9" /></template>
             </template>
-            <template v-else> <VideoCameraTwoTone two-tone-color="#a9a9a9" /></template>
           </template>
-        </template>
-        <!-- <template #title="{ key, title, formData }">
+          <!-- <template #title="{ key, title, formData }">
           <Dropdown :trigger="['contextmenu']">
             <span>{{ title }}</span>
             <template #overlay>
@@ -56,36 +57,39 @@
             </template>
           </Dropdown>
         </template> -->
-      </Tree>
+        </Tree>
+      </div>
       <div class="ptz">
         <div>
-          <div class="ptz-btn ptz-up" @mousedown="ptz({ DeviceId: '', Channel: '', Up: ptzSpeed })"
+          <div
+            class="ptz-btn ptz-up"
+            @mousedown="sendPtz({ DeviceId: '', Channel: '', Up: ptzSpeed })"
             ><UpCircleTwoTone
           /></div>
           <div
             class="ptz-btn ptz-left"
-            @mousedown="ptz({ DeviceId: '', Channel: '', Left: ptzSpeed })"
+            @mousedown="sendPtz({ DeviceId: '', Channel: '', Left: ptzSpeed })"
             ><LeftCircleTwoTone
           /></div>
-          <div class="ptz-btn ptz-center"><AudioTwoTone /></div>
+          <div class="ptz-btn ptz-center" @click="startSpeek"><AudioTwoTone /></div>
           <div
             class="ptz-btn ptz-right"
-            @mousedown="ptz({ DeviceId: '', Channel: '', Right: ptzSpeed })"
+            @mousedown="sendPtz({ DeviceId: '', Channel: '', Right: ptzSpeed })"
             ><RightCircleTwoTone
           /></div>
           <div
             class="ptz-btn ptz-down"
-            @mousedown="ptz({ DeviceId: '', Channel: '', Down: ptzSpeed })"
+            @mousedown="sendPtz({ DeviceId: '', Channel: '', Down: ptzSpeed })"
             ><DownCircleTwoTone
           /></div>
           <div
             class="ptz-btn ptz-zoomin"
-            @mousedown="ptz({ DeviceId: '', Channel: '', ZoomIn: parseInt(ptzSpeed / 17) })"
+            @mousedown="sendPtz({ DeviceId: '', Channel: '', ZoomIn: parseInt(ptzSpeed / 17) })"
             ><PlusCircleTwoTone
           /></div>
           <div
             class="ptz-btn ptz-zoomout"
-            @mousedown="ptz({ DeviceId: '', Channel: '', ZoomOut: parseInt(ptzSpeed / 17) })"
+            @mousedown="sendPtz({ DeviceId: '', Channel: '', ZoomOut: parseInt(ptzSpeed / 17) })"
             ><MinusCircleTwoTone /></div
         ></div>
         <div class="ptz-speed">
@@ -198,12 +202,14 @@
   const ptzSpeed = ref<number>(127);
   let nowptzChannel = '';
   let nowptzDeviceId = '';
-  const ptz = (params: API.PPTZCtrl) => {
+  const sendPtz = (params: API.PPTZCtrl) => {
     const cfg = rtvsplayer.value.getUc()?.GetOperateUCVideo().config;
     if (cfg && cfg.DeviceId?.length > 0 && cfg.ChannelId?.length > 0) {
       nowptzDeviceId = params.DeviceId = cfg.DeviceId;
       nowptzChannel = params.Channel = cfg.ChannelId;
       ptzCtrl(params);
+    } else {
+      message.warning('请选中正在播放的窗口再次尝试');
     }
   };
   const onMouseUp = () => {
@@ -213,6 +219,10 @@
       nowptzChannel = '';
       nowptzDeviceId = '';
     }
+  };
+
+  const startSpeek = () => {
+    message.warning('对讲集成中...');
   };
   let needDoSelect = false;
   /**
@@ -399,6 +409,10 @@
 </script>
 
 <style lang="less">
+  .videotree {
+    height: calc(100% - 200px);
+  }
+
   .ptz {
     width: 250px;
     height: 200px;
