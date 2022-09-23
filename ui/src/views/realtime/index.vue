@@ -72,7 +72,12 @@
               @mousedown="sendPtz({ DeviceId: '', Channel: '', Left: ptzSpeed })"
               ><LeftCircleTwoTone
             /></div>
-            <div class="ptz-btn ptz-center" @click="startSpeek"><AudioTwoTone /></div>
+            <div class="ptz-btn ptz-center" @click="startSpeek">
+              <template v-if="state.speeking">
+                <AudioTwoTone two-tone-color="#ff4d4f" />
+              </template>
+              <template v-else> <AudioTwoTone /> </template>
+            </div>
             <div
               class="ptz-btn ptz-right"
               @mousedown="sendPtz({ DeviceId: '', Channel: '', Right: ptzSpeed })"
@@ -155,6 +160,7 @@
           :video-height="state.videoHeight.valueOf()"
           :video-nums="10"
           @stop="onStopVideo"
+          @start-speek="onStartSpeek"
           @end-by-server="onEndByServer"
         ></RtvsPlayer> </div
     ></template>
@@ -202,38 +208,57 @@
   });
   const devTreeLoading = ref(false);
   const ptzSpeed = ref<number>(127);
-  let nowptzChannel = '';
-  let nowptzDeviceId = '';
   const sendPtz = (params: API.PPTZCtrl) => {
     const cfg = rtvsplayer.value.getUc()?.GetOperateUCVideo().config;
     if (cfg && cfg.DeviceId?.length > 0 && cfg.ChannelId?.length > 0) {
-      nowptzDeviceId = params.DeviceId = cfg.DeviceId;
-      nowptzChannel = params.Channel = cfg.ChannelId;
+      state.nowptzDeviceId = params.DeviceId = cfg.DeviceId;
+      state.nowptzChannel = params.Channel = cfg.ChannelId;
       ptzCtrl(params);
     } else {
-      message.warning('请选中正在播放的窗口再次尝试');
+      message.warning('请选中正在播放的窗口后再尝试');
     }
   };
   const onMouseUp = () => {
-    if (nowptzChannel.length > 0 && nowptzDeviceId.length > 0) {
+    if (state.nowptzChannel.length > 0 && state.nowptzDeviceId.length > 0) {
       //发送停止
-      ptzCtrl({ DeviceId: nowptzDeviceId, Channel: nowptzChannel, Address: 0 });
-      nowptzChannel = '';
-      nowptzDeviceId = '';
+      ptzCtrl({ DeviceId: state.nowptzDeviceId, Channel: state.nowptzChannel, Address: 0 });
+      state.nowptzChannel = '';
+      state.nowptzDeviceId = '';
     }
   };
 
   const startSpeek = () => {
-    message.warning('对讲集成中...');
+    if (state.speeking) {
+      rtvsplayer.value.ucDo((uc) => {
+        uc.StopSpeak();
+        state.speeking = false;
+      });
+    } else {
+      const cfg = rtvsplayer.value.getUc()?.GetOperateUCVideo().config;
+      if (cfg && cfg.DeviceId?.length > 0 && cfg.ChannelId?.length > 0) {
+        state.speeking = true;
+        rtvsplayer.value.ucDo((uc) => {
+          const ret = uc.StartSpeek(cfg.DeviceId, cfg.ChannelId, {
+            clusterHost: cfg.clusterHost,
+            clusterPort: cfg.clusterPort,
+            protocol: 2,
+          });
+          if (!ret) {
+            alert('未能获取到麦克风，请确认当前页面是https且未设置阻止。');
+          }
+        });
+      } else {
+        message.warning('请选中正在播放的窗口后再尝试');
+      }
+    }
   };
-  let needDoSelect = false;
   /**
    * 设备选中
    */
   const onTreeSelect = (checkedKeys: string[]) => {
-    needDoSelect = false;
-    const _add = difference(checkedKeys, lastCheckKeys);
-    const _remove = difference(lastCheckKeys, checkedKeys);
+    state.needDoSelect = false;
+    const _add = difference(checkedKeys, state.lastCheckKeys);
+    const _remove = difference(state.lastCheckKeys, checkedKeys);
     _add.forEach((key) => {
       const item = state.map[key];
       if (item?.isLeaf) {
@@ -265,7 +290,7 @@
         });
       } else {
         state.expandedKeys.push(key);
-        needDoSelect = true;
+        state.needDoSelect = true;
       }
     });
     _remove.forEach((key) => {
@@ -276,7 +301,7 @@
         });
       }
     });
-    lastCheckKeys = checkedKeys;
+    state.lastCheckKeys = checkedKeys;
   };
   const onLoad = () => {
     // if (needDoSelect) {
@@ -295,21 +320,22 @@
       }
       state.checkedKeys = state.checkedKeys.filter(predicate);
 
-      lastCheckKeys = state.checkedKeys;
+      state.lastCheckKeys = state.checkedKeys;
     }
   };
-  const onStopVideo = (_id: number, ucVideo) => {
-    unCheck(state.map[ucVideo.config.treekey]);
+  const onStopVideo = (id: number, ucVideo) => {
+    if (id > -1) {
+      unCheck(state.map[ucVideo.config.treekey]);
+    }
+  };
+  const onStartSpeek = () => {
+    message.info('对讲链路建立完成，可开始对讲');
   };
 
   const onEndByServer = (msg: string, id: number, ucVideo) => {
     const item = state.map[ucVideo.config.treekey];
     message.error(`${t('gbs.screen')}${id} ${getNickName(item)} ${msg}`);
   };
-  /**
-   * 上次选中keys
-   */
-  let lastCheckKeys: string[] = [];
   const rcontent = ref<HTMLDivElement>();
 
   const onLoadData: TreeProps['loadData'] = async (treeNode) => {
@@ -332,11 +358,11 @@
       const tmparr: string[] = [];
       child.forEach((item) => {
         state.map[item.key] = item;
-        if (needDoSelect) {
+        if (state.needDoSelect) {
           tmparr.push(String(item.key));
         }
       });
-      if (needDoSelect) {
+      if (state.needDoSelect) {
         state.checkedKeys = [...state.checkedKeys, ...tmparr];
         onTreeSelect(state.checkedKeys);
       }
@@ -363,6 +389,14 @@
     map: {
       [idx: string]: TreeDataItem;
     };
+    speeking: boolean;
+    nowptzChannel: string;
+    nowptzDeviceId: string;
+    needDoSelect: boolean;
+    /**
+     * 上次选中keys
+     */
+    lastCheckKeys: string[];
   }
   const state = reactive<State>({
     expandedKeys: [],
@@ -372,6 +406,15 @@
     map: {},
     videoWidth: 0,
     videoHeight: 0,
+
+    speeking: false,
+    nowptzChannel: '',
+    nowptzDeviceId: '',
+    needDoSelect: false,
+    /**
+     * 上次选中keys
+     */
+    lastCheckKeys: [],
   });
 
   const rtvsplayer = ref(RtvsPlayer);

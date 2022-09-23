@@ -24,6 +24,9 @@
     onEndByServer: {
       type: Function,
     },
+    onStartSpeek: {
+      type: Function,
+    },
   });
   let _initOK = false;
   let uc1: any;
@@ -87,6 +90,9 @@
           //参数3 UCVideo对象
           //返回值表示是否取消自动停止，为真时表示取消
           onEndByServer: props.onEndByServer,
+          //对讲开始 与设备链路建立完成，且可开始对讲时触发
+          //参数 无
+          onStartSpeek: props.onStartSpeek,
         },
       });
       if (_initOK) {
