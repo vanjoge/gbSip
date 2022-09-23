@@ -76,7 +76,7 @@
   } from '@ant-design/icons-vue';
 
   import { useRouter, useRoute } from 'vue-router';
-  import { Avatar, message } from 'ant-design-vue';
+  import { Avatar, message, Modal } from 'ant-design-vue';
   import HuaweiCharge from './huawei-charge.vue';
   import XiaomiCharge from './xiaomi-charge.vue';
   import { useOnline } from '@/hooks/useOnline';
@@ -131,6 +131,11 @@
     // } else {
     //   message.info(msg || '登录失败');
     // }
+
+    Modal.destroyAll();
+    message.success('登录成功！');
+    unLockLogin(false);
+    lockscreenStore.setLock(false);
     state.loginLoading = false;
   };
 
