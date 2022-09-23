@@ -1,44 +1,45 @@
 <template>
   <SplitPanel>
     <template #left-content>
-      <div class="flex justify-between">
-        <div>{{ $t('gbs.devices') }}</div>
-        <Space>
-          <Tooltip placement="top">
-            <template #title>{{ $t('common.redo') }}</template>
-            <SyncOutlined :spin="devTreeLoading" @click="fetchDeviceList" />
-          </Tooltip>
-        </Space>
-      </div>
-      <div class="videotree">
-        <Tree
-          v-model:expandedKeys="state.expandedKeys"
-          v-model:checkedKeys="state.checkedKeys"
-          checkable
-          block-node
-          show-icon
-          :selectable="false"
-          :tree-data="state.treeData"
-          :load-data="onLoadData"
-          :loaded-keys="state.loadedKeys"
-          @check="onTreeSelect"
-          @load="onLoad"
-        >
-          <template #icon="{ Online, tdType }">
-            <template v-if="tdType == 0">
-              <template v-if="Online">
-                <FolderTwoTone two-tone-color="#52c41a" />
+      <div style="height: 100%">
+        <div class="flex justify-between">
+          <div>{{ $t('gbs.devices') }}</div>
+          <Space>
+            <Tooltip placement="top">
+              <template #title>{{ $t('common.redo') }}</template>
+              <SyncOutlined :spin="devTreeLoading" @click="fetchDeviceList" />
+            </Tooltip>
+          </Space>
+        </div>
+        <div class="videotree">
+          <Tree
+            v-model:expandedKeys="state.expandedKeys"
+            v-model:checkedKeys="state.checkedKeys"
+            checkable
+            block-node
+            show-icon
+            :selectable="false"
+            :tree-data="state.treeData"
+            :load-data="onLoadData"
+            :loaded-keys="state.loadedKeys"
+            @check="onTreeSelect"
+            @load="onLoad"
+          >
+            <template #icon="{ Online, tdType }">
+              <template v-if="tdType == 0">
+                <template v-if="Online">
+                  <FolderTwoTone two-tone-color="#52c41a" />
+                </template>
+                <template v-else> <FolderTwoTone two-tone-color="#a9a9a9" /></template>
               </template>
-              <template v-else> <FolderTwoTone two-tone-color="#a9a9a9" /></template>
-            </template>
-            <template v-else>
-              <template v-if="Online">
-                <VideoCameraTwoTone two-tone-color="#52c41a" />
+              <template v-else>
+                <template v-if="Online">
+                  <VideoCameraTwoTone two-tone-color="#52c41a" />
+                </template>
+                <template v-else> <VideoCameraTwoTone two-tone-color="#a9a9a9" /></template>
               </template>
-              <template v-else> <VideoCameraTwoTone two-tone-color="#a9a9a9" /></template>
             </template>
-          </template>
-          <!-- <template #title="{ key, title, formData }">
+            <!-- <template #title="{ key, title, formData }">
           <Dropdown :trigger="['contextmenu']">
             <span>{{ title }}</span>
             <template #overlay>
@@ -57,56 +58,57 @@
             </template>
           </Dropdown>
         </template> -->
-        </Tree>
-      </div>
-      <div class="ptz">
-        <div>
-          <div
-            class="ptz-btn ptz-up"
-            @mousedown="sendPtz({ DeviceId: '', Channel: '', Up: ptzSpeed })"
-            ><UpCircleTwoTone
-          /></div>
-          <div
-            class="ptz-btn ptz-left"
-            @mousedown="sendPtz({ DeviceId: '', Channel: '', Left: ptzSpeed })"
-            ><LeftCircleTwoTone
-          /></div>
-          <div class="ptz-btn ptz-center" @click="startSpeek"><AudioTwoTone /></div>
-          <div
-            class="ptz-btn ptz-right"
-            @mousedown="sendPtz({ DeviceId: '', Channel: '', Right: ptzSpeed })"
-            ><RightCircleTwoTone
-          /></div>
-          <div
-            class="ptz-btn ptz-down"
-            @mousedown="sendPtz({ DeviceId: '', Channel: '', Down: ptzSpeed })"
-            ><DownCircleTwoTone
-          /></div>
-          <div
-            class="ptz-btn ptz-zoomin"
-            @mousedown="sendPtz({ DeviceId: '', Channel: '', ZoomIn: parseInt(ptzSpeed / 17) })"
-            ><PlusCircleTwoTone
-          /></div>
-          <div
-            class="ptz-btn ptz-zoomout"
-            @mousedown="sendPtz({ DeviceId: '', Channel: '', ZoomOut: parseInt(ptzSpeed / 17) })"
-            ><MinusCircleTwoTone /></div
-        ></div>
-        <div class="ptz-speed">
-          <Row align="middle">
-            <Col :span="20">
-              <Slider v-model:value="ptzSpeed" :min="1" :max="255" />
-            </Col>
-            <Col :span="2">
-              <InputNumber
-                v-model:value="ptzSpeed"
-                :min="1"
-                :max="255"
-                size="small"
-                style="margin-left: 10px; width: 60px"
-              />
-            </Col>
-          </Row>
+          </Tree>
+        </div>
+        <div class="ptz">
+          <div>
+            <div
+              class="ptz-btn ptz-up"
+              @mousedown="sendPtz({ DeviceId: '', Channel: '', Up: ptzSpeed })"
+              ><UpCircleTwoTone
+            /></div>
+            <div
+              class="ptz-btn ptz-left"
+              @mousedown="sendPtz({ DeviceId: '', Channel: '', Left: ptzSpeed })"
+              ><LeftCircleTwoTone
+            /></div>
+            <div class="ptz-btn ptz-center" @click="startSpeek"><AudioTwoTone /></div>
+            <div
+              class="ptz-btn ptz-right"
+              @mousedown="sendPtz({ DeviceId: '', Channel: '', Right: ptzSpeed })"
+              ><RightCircleTwoTone
+            /></div>
+            <div
+              class="ptz-btn ptz-down"
+              @mousedown="sendPtz({ DeviceId: '', Channel: '', Down: ptzSpeed })"
+              ><DownCircleTwoTone
+            /></div>
+            <div
+              class="ptz-btn ptz-zoomin"
+              @mousedown="sendPtz({ DeviceId: '', Channel: '', ZoomIn: parseInt(ptzSpeed / 17) })"
+              ><PlusCircleTwoTone
+            /></div>
+            <div
+              class="ptz-btn ptz-zoomout"
+              @mousedown="sendPtz({ DeviceId: '', Channel: '', ZoomOut: parseInt(ptzSpeed / 17) })"
+              ><MinusCircleTwoTone /></div
+          ></div>
+          <div class="ptz-speed">
+            <Row align="middle">
+              <Col :span="20">
+                <Slider v-model:value="ptzSpeed" :min="1" :max="255" />
+              </Col>
+              <Col :span="2">
+                <InputNumber
+                  v-model:value="ptzSpeed"
+                  :min="1"
+                  :max="255"
+                  size="small"
+                  style="margin-left: 10px; width: 60px"
+                />
+              </Col>
+            </Row>
+          </div>
         </div>
       </div>
     </template>
