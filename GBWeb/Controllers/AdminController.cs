@@ -39,9 +39,16 @@ namespace GBWeb.Controllers
         /// <param name="Password">密码</param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<ApiResult<LoginResult>> Login(string UserName, string Password)
+        public ApiResult<LoginResult> Login(string UserName, string Password)
         {
-            return RetApiResult(new LoginResult { Token = SIPSorcery.SIP.CallProperties.CreateNewTag() });
+            if (UserName == Program.sipServer.Settings.WebUsrName && Password == Program.sipServer.Settings.WebUsrPwd)
+            {
+                return RetApiResult(new LoginResult { Token = SIPSorcery.SIP.CallProperties.CreateNewTag() });
+            }
+            else
+            {
+                return new ApiResult<LoginResult> { code = 422, message = "用户名或密码错误" };
+            }
         }
 
 
@@ -50,11 +57,11 @@ namespace GBWeb.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet, ApiAuthorize]
-        public async Task<ApiResult<UserInfo>> Info()
+        public ApiResult<UserInfo> Info()
         {
             return RetApiResult(new UserInfo
             {
-                Name = "admin"
+                Name = Program.sipServer.Settings.WebUsrName
             });
         }
         /// <summary>

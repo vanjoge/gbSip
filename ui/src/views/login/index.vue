@@ -7,7 +7,7 @@
     </div>
     <a-form layout="horizontal" :model="state.formInline" @submit.prevent="handleSubmit">
       <a-form-item>
-        <a-input v-model:value="state.formInline.UserName" size="large" placeholder="admin">
+        <a-input v-model:value="state.formInline.UserName" size="large" placeholder="gbsip">
           <template #prefix><user-outlined type="user" /></template>
         </a-input>
       </a-form-item>

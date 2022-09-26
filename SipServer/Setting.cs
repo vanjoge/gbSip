@@ -71,6 +71,14 @@ namespace SipServer
         /// </summary>
         [DisplayName("Mysql连接字符串")]
         public string MysqlConnectionString { get; set; }
+        /// <summary>
+        /// web管理用户名
+        /// </summary>
+        public string WebUsrName { get; set; }
+        /// <summary>
+        /// web管理密码
+        /// </summary>
+        public string WebUsrPwd { get; set; }
 
 
         public Setting()
@@ -84,6 +92,8 @@ namespace SipServer
 #if DEBUG
             EnableSipLog = true;
 #endif
+            WebUsrName = "gbsip";
+            WebUsrPwd = "admin";
         }
 
     }
