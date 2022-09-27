@@ -61,6 +61,15 @@ const routes: Array<RouteRecordRaw> = [
       icon: 'icon-externa-link',
     },
   },
+  {
+    path: '/knife4',
+    name: `${window.location.protocol}//${window.location.host}/Help`,
+    component: RouterView,
+    meta: {
+      title: 'Knife4UI',
+      icon: 'icon-externa-link',
+    },
+  },
 ];
 
 export default routes;

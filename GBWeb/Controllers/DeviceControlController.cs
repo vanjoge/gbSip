@@ -33,7 +33,7 @@ namespace GBWeb.Controllers
         /// <param name="Left">左转速度 0-255 非必须 不传表示停止</param>
         /// <param name="Right">右转速度 0-255 非必须 不传表示停止</param>
         /// <returns></returns>
-        [HttpGet, HttpPost, ApiAuthorize]
+        [HttpGet, HttpPost]
         public async Task<ApiResult<bool>> PTZCtrl([FromCustom] string DeviceId, [FromCustom] string Channel, [FromCustom] ushort Address, [FromCustom] byte? ZoomIn, [FromCustom] byte? ZoomOut, [FromCustom] byte? Up, [FromCustom] byte? Down, [FromCustom] byte? Left, [FromCustom] byte? Right)
         {
             if (Program.sipServer.TryGetClient(DeviceId, out var client))

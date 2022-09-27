@@ -38,7 +38,7 @@ namespace GBWeb.Controllers
         /// <param name="UserName">用户名</param>
         /// <param name="Password">密码</param>
         /// <returns></returns>
-        [HttpPost]
+        [HttpPost, AllowAnonymous]
         public ApiResult<LoginResult> Login(string UserName, string Password)
         {
             if (UserName == Program.sipServer.Settings.WebUsrName && Password == Program.sipServer.Settings.WebUsrPwd)
@@ -56,7 +56,7 @@ namespace GBWeb.Controllers
         /// 获取用户信息
         /// </summary>
         /// <returns></returns>
-        [HttpGet, ApiAuthorize]
+        [HttpGet]
         public ApiResult<UserInfo> Info()
         {
             return RetApiResult(new UserInfo
@@ -68,7 +68,7 @@ namespace GBWeb.Controllers
         /// 获取权限
         /// </summary>
         /// <returns></returns>
-        [HttpGet, ApiAuthorize]
+        [HttpGet]
         public async Task<ApiResult<PermMenu>> Permmenu()
         {
             List<Menu> menus = new List<Menu>();
@@ -99,7 +99,7 @@ namespace GBWeb.Controllers
         /// </summary>
         /// <returns></returns>
 
-        [HttpPost, ApiAuthorize]
+        [HttpPost]
         public async Task<ApiResult> Logout()
         {
             return new ApiResult(200);

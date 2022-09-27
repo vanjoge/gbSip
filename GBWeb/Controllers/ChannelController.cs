@@ -29,7 +29,7 @@ namespace GBWeb.Controllers
         /// <param name="Page"></param>
         /// <param name="Limit"></param>
         /// <returns></returns>
-        [HttpGet, ApiAuthorize]
+        [HttpGet]
         public async Task<ApiResult<DPager<Channel>>> GetChannelList(string DeviceId, bool? Online, int Page = 1, int Limit = 10)
         {
             return await RetApiResult(Program.sipServer.DB.GetChannelList(DeviceId, Page, Limit));
@@ -44,7 +44,7 @@ namespace GBWeb.Controllers
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        [HttpPost, ApiAuthorize]
+        [HttpPost]
         public async Task<ApiResult<bool>> UpdateChannel(UpdateChannelModel info)
         {
             return await RetApiResult(Program.sipServer.DB.UpdateChannelConf(info.DeviceId, info.ChannelId, info));
@@ -62,7 +62,7 @@ namespace GBWeb.Controllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        [HttpPost, ApiAuthorize]
+        [HttpPost]
         public async Task<ApiResult<bool>> DeleteChannel(DeleteChannelModel model)
         {
             if (model == null)

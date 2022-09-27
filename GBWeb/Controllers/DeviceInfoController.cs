@@ -26,7 +26,7 @@ namespace GBWeb.Controllers
         /// </summary>
         /// <param name="DeviceId">设备ID</param>
         /// <returns></returns>
-        [HttpGet, ApiAuthorize]
+        [HttpGet]
         public async Task<ApiResult<TDeviceInfo>> GetDeviceInfo([FromCustom] string DeviceId)
         {
             return RetApiResult(await Program.sipServer.DB.GetDeviceInfo(DeviceId));
@@ -41,7 +41,7 @@ namespace GBWeb.Controllers
         /// <param name="Page"></param>
         /// <param name="Limit"></param>
         /// <returns></returns>
-        [HttpGet, ApiAuthorize]
+        [HttpGet]
         public async Task<ApiResult<DPager<TDeviceInfo>>> GetDeviceList(string DeviceId, string DeviceName, string Manufacturer, bool? Online, int Page = 1, int Limit = 10)
         {
             return await RetApiResult(Program.sipServer.DB.GetDeviceList(DeviceId, DeviceName, Manufacturer, Online, Page, Limit));
@@ -51,7 +51,7 @@ namespace GBWeb.Controllers
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        [HttpPost, ApiAuthorize]
+        [HttpPost]
         public async Task<ApiResult<bool>> UpdateDevice(TDeviceInfo info)
         {
             return await RetApiResult(Program.sipServer.DB.UpdateDeviceInfo(info));
@@ -68,7 +68,7 @@ namespace GBWeb.Controllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        [HttpPost, ApiAuthorize]
+        [HttpPost]
         public async Task<ApiResult<bool>> DeleteDevice(DeleteDeviceModel model)
         {
             if (model == null)
@@ -82,7 +82,7 @@ namespace GBWeb.Controllers
         /// </summary>
         /// <param name="DeviceId"></param>
         /// <returns></returns>
-        [HttpPost, ApiAuthorize]
+        [HttpPost]
         public async Task<ApiResult<bool>> SendRefreshChannel(string DeviceId)
         {
             if (Program.sipServer.TryGetClient(DeviceId, out var client))
