@@ -4,24 +4,25 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using GBWeb.Models;
+using System.Threading.Tasks;
 
 namespace GBWeb.Filter
 {
-    public class AuthenFilter : IAuthorizationFilter
+    public class AuthenFilter : IAsyncAuthorizationFilter
     {
         /// <summary>
         /// 每个action执行之前都会进入这个方法
         /// </summary>
         /// <param name="context"></param>
-        public void OnAuthorization(AuthorizationFilterContext context)
+        /// <returns></returns>
+        public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
-            //如果不通过认证 重定向到/Login/User页
-            if (Check(context) || HasAllowAnonymous(context)) return;
+            if (HasAllowAnonymous(context) || await Check(context)) return;
             context.Result = new JsonResult(new ApiResult(11001));
         }
-        private bool Check(AuthorizationFilterContext context)
+        private async Task<bool> Check(AuthorizationFilterContext context)
         {
-            if (context.HttpContext.Request.Headers.TryGetValue("authorization", out var auth))
+            if (context.HttpContext.Request.Headers.TryGetValue("authorization", out var auth) && await Program.sipServer.DB.CheckToken(auth))
             {
                 return true;
             }
@@ -35,7 +36,7 @@ namespace GBWeb.Filter
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public static bool HasAllowAnonymous(FilterContext context)
+        private bool HasAllowAnonymous(FilterContext context)
         {
             var filters = context.Filters;
             for (var i = 0; i < filters.Count; i++)
@@ -54,5 +55,6 @@ namespace GBWeb.Filter
 
             return false;
         }
+
     }
 }

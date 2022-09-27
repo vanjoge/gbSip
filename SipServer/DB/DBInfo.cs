@@ -27,7 +27,7 @@ using static SIPSorcery.Net.SrtpCipherF8;
 
 namespace SipServer.DB
 {
-    public class DBInfo
+    public partial class DBInfo
     {
         class AllNewObjectPool
         {
@@ -53,7 +53,7 @@ namespace SipServer.DB
         /// <summary>
         /// Redis操作类
         /// </summary>
-        RedisHelp.RedisHelper RedisHelper;
+        public RedisHelp.RedisHelper RedisHelper { protected set; get; }
         public DBInfo(SipServer sipServer)
         {
             this.sipServer = sipServer;
@@ -151,7 +151,7 @@ namespace SipServer.DB
                     {
                         item.Online = false;
                     }
-                    item.SetChannelConf(confs[item.ChannelId],sipServer.Settings);
+                    item.SetChannelConf(confs[item.ChannelId], sipServer.Settings);
                 }
                 return new DPager<Channel>(lst, Page, Limit, sum);
             }

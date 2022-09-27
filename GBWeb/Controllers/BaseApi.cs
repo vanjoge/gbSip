@@ -9,6 +9,12 @@ namespace GBWeb.Controllers
     /// </summary>
     public class BaseApi : ControllerBase
     {
+        protected string GetAuthorization()
+        {
+
+            HttpContext.Request.Headers.TryGetValue("authorization", out var auth);
+            return auth;
+        }
         /// <summary>
         /// 
         /// </summary>

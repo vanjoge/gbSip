@@ -8,5 +8,6 @@ namespace SipServer
     {
         public const string DeviceConfKey = "GBDeviceConf:";
         public const string ChannelKey = "Channel:";
+        public const string TokenKey = "Token:";
     }
 }

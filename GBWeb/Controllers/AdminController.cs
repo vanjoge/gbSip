@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SipServer;
+using SipServer.Models;
 using SQ.Base;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -21,16 +22,6 @@ namespace GBWeb.Controllers
     [ApiController]
     public class AdminController : BaseApi
     {
-        /// <summary>
-        /// 登录结果
-        /// </summary>
-        public class LoginResult
-        {
-            /// <summary>
-            /// 用户名
-            /// </summary>
-            public string Token { get; set; }
-        }
 
         /// <summary>
         /// 登录
@@ -39,11 +30,12 @@ namespace GBWeb.Controllers
         /// <param name="Password">密码</param>
         /// <returns></returns>
         [HttpPost, AllowAnonymous]
-        public ApiResult<LoginResult> Login(string UserName, string Password)
+        public async Task<ApiResult<LoginResult>> Login(string UserName, string Password)
         {
-            if (UserName == Program.sipServer.Settings.WebUsrName && Password == Program.sipServer.Settings.WebUsrPwd)
+            var ret = await Program.sipServer.DB.Login(UserName, Password);
+            if (ret != null)
             {
-                return RetApiResult(new LoginResult { Token = SIPSorcery.SIP.CallProperties.CreateNewTag() });
+                return RetApiResult(ret);
             }
             else
             {
@@ -102,6 +94,7 @@ namespace GBWeb.Controllers
         [HttpPost]
         public async Task<ApiResult> Logout()
         {
+            await Program.sipServer.DB.Logout(GetAuthorization());
             return new ApiResult(200);
         }
     }
