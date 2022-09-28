@@ -15,7 +15,10 @@ namespace GBWeb.Filter
         {
             if (context != null && operation != null)
             {
-                var anonymous = context.MethodInfo
+
+                var anonymous = context.MethodInfo.DeclaringType.GetCustomAttributes(true).OfType<AllowAnonymousAttribute>().Any()
+                    ||
+                    context.MethodInfo
                         .GetCustomAttributes(true)
                         .OfType<AllowAnonymousAttribute>().Any();
 
