@@ -79,7 +79,10 @@ namespace SipServer
         /// web管理密码
         /// </summary>
         public string WebUsrPwd { get; set; }
-
+        /// <summary>
+        /// API Authorization
+        /// </summary>
+        public string APIAuthorization { get; set; }
 
         public Setting()
         {

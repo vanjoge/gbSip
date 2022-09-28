@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using GBWeb.Models;
 using System.Threading.Tasks;
+using GBWeb.Attribute;
+using System.Linq;
 
 namespace GBWeb.Filter
 {
@@ -17,8 +19,18 @@ namespace GBWeb.Filter
         /// <returns></returns>
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
-            if (HasAllowAnonymous(context) || await Check(context)) return;
-            context.Result = new JsonResult(new ApiResult(11001));
+            if (HasAllowAnonymous(context)) return;
+
+            if (context.Filters.OfType<AuthApiAttribute>().Any() || context.HttpContext.GetEndpoint()?.Metadata?.GetMetadata<AuthApiAttribute>() != null)
+            {
+                if (CheckAPIAuthorization(context)) return;
+                context.Result = new ObjectResult(-2);
+            }
+            else
+            {
+                if (await Check(context)) return;
+                context.Result = new JsonResult(new ApiResult(11001));
+            }
         }
         private async Task<bool> Check(AuthorizationFilterContext context)
         {
@@ -30,6 +42,18 @@ namespace GBWeb.Filter
             {
                 return false;
             }
+        }
+
+        private bool CheckAPIAuthorization(AuthorizationFilterContext context)
+        {
+            if (string.IsNullOrWhiteSpace(Program.sipServer.Settings.APIAuthorization))
+            {
+                return true;
+            }
+
+            return context.HttpContext.Request.Headers.TryGetValue("authorization", out var auth)
+                && auth == Program.sipServer.Settings.APIAuthorization;
+
         }
         /// <summary>
         /// 用于判断Action有没有AllowAnonymous标签

@@ -22,13 +22,13 @@ using SQ.Base;
 using System;
 using System.Diagnostics;
 
-namespace GBWeb
+namespace GBWeb.Attribute
 {
     /// <summary>
     /// 
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class FromCustomAttribute : Attribute, IBindingSourceMetadata, IModelNameProvider
+    public class FromCustomAttribute : System.Attribute, IBindingSourceMetadata, IModelNameProvider
     {
         //MyBindingSource bd = new MyBindingSource("All", "All", true, true);
         /// <inheritdoc />

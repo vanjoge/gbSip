@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using GB28181.MANSRTSP;
 using GB28181.XML;
+using GBWeb.Attribute;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +17,7 @@ namespace GBWeb.Controllers
     /// RTVS接口
     /// </summary>
     [Route("api/[controller]/[action]")]
-    [ApiController, AllowAnonymous]
+    [ApiController, AuthApi]
     public class RTVSController : ControllerBase
     {
         private string Base64ToStr(string base64)
