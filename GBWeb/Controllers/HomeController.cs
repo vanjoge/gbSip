@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using SQ.Base;
 using SipServer.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GBWeb.Controllers
 {
@@ -22,7 +23,7 @@ namespace GBWeb.Controllers
         {
             _logger = logger;
         }
-
+        [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
             return Redirect("~/index.html");

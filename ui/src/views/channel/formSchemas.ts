@@ -92,6 +92,10 @@ export const channelSchemas: FormSchema<API.TChannel>[] = [
           label: 'Hls',
           value: 6,
         },
+        {
+          label: 'Codec',
+          value: 7,
+        },
       ],
     },
   },
