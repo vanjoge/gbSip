@@ -7,6 +7,8 @@ using GBWeb.Models;
 using System.Threading.Tasks;
 using GBWeb.Attribute;
 using System.Linq;
+using SQ.Base;
+using Microsoft.Extensions.Primitives;
 
 namespace GBWeb.Filter
 {
@@ -34,7 +36,7 @@ namespace GBWeb.Filter
         }
         private async Task<bool> Check(AuthorizationFilterContext context)
         {
-            if (context.HttpContext.Request.Headers.TryGetValue("authorization", out var auth) && await Program.sipServer.DB.CheckToken(auth))
+            if (GetHeadAuthorization(context, out var auth) && await Program.sipServer.DB.CheckToken(auth))
             {
                 return true;
             }
@@ -51,9 +53,22 @@ namespace GBWeb.Filter
                 return true;
             }
 
-            return context.HttpContext.Request.Headers.TryGetValue("authorization", out var auth)
+            return GetHeadAuthorization(context, out var auth)
                 && auth == Program.sipServer.Settings.APIAuthorization;
 
+        }
+        private bool GetHeadAuthorization(AuthorizationFilterContext context, out StringValues auth)
+        {
+            foreach (var p in context.HttpContext.Request.Headers)
+            {
+                if ("authorization".IgnoreEquals(p.Key))
+                {
+                    auth = p.Value;
+
+                    return true;
+                }
+            }
+            return false;
         }
         /// <summary>
         /// 用于判断Action有没有AllowAnonymous标签
