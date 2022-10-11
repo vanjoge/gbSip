@@ -8,9 +8,21 @@
 
 本项目已集成 RTVS.JS 播放器，可直接播放接入设备的实时视频。
 
+## 演示地址
+
+[https://et.test.cvtsp.com:15006](https://et.test.cvtsp.com:15006)
+
+设备接入地址 116.228.114.206:5060
+
+SIP服务器ID、SIP用户认证ID和密码等可随意填写，演示地址不做验证。
+
+设备ID不要使用默认值，防止重复造成上线冲突。
+
+
 ## UI
 
 [vueUi 见此](/ui) ， 基于 vue3 + antd-design-vue3 + typescript 实现，主要演示如何 vue 如何调用 gbSip 和 RTVS.JS，仅挑选一些有代表性的核心功能实现
+
 
 ## 部署
 
