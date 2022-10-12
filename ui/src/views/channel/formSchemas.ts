@@ -29,16 +29,21 @@ export const channelSchemas: FormSchema<API.TChannel>[] = [
     componentProps: {
       options: [
         {
-          label: 'TCP被动',
+          label: '自动',
           value: 0,
         },
         {
-          label: 'TCP主动',
+          label: 'TCP被动',
           value: 1,
         },
         {
-          label: 'UDP',
+          label: 'TCP主动',
           value: 2,
+          disabled: true,
+        },
+        {
+          label: 'UDP',
+          value: 3,
         },
       ],
     },
@@ -61,6 +66,7 @@ export const channelSchemas: FormSchema<API.TChannel>[] = [
         {
           label: 'Invite主动',
           value: 2,
+          disabled: true,
         },
         {
           label: '广播',
