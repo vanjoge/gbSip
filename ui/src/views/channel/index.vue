@@ -42,8 +42,9 @@
     <RtvsPlayerModal
       ref="rtvsplayer"
       v-model:visible="state.visible"
-      width="854"
-      height="480"
+      :show-history-select="state.showHistorySelect"
+      :video-width="854"
+      :video-height="480"
     ></RtvsPlayerModal> </div
 ></template>
 
@@ -70,6 +71,7 @@
 
   const state = reactive({
     visible: false,
+    showHistorySelect: false,
   });
   const router = useRouter();
   const DeviceId = useRoute().params.deviceId.toString();
@@ -79,6 +81,7 @@
   const rtvsplayer = ref(RtvsPlayerModal);
   const playVideo = (record: API.TChannel) => {
     state.visible = true;
+    state.showHistorySelect = false;
     rtvsplayer.value.ucDo((uc) => {
       uc.StartRealTimeVideo(
         DeviceId,
@@ -97,6 +100,16 @@
     });
   };
 
+  const showPlayBack = (record: API.TChannel) => {
+    state.showHistorySelect = true;
+    state.visible = true;
+    rtvsplayer.value.setBackQuery(
+      DeviceId,
+      record.ChannelId,
+      record.RTVSVideoServer,
+      record.RTVSVideoPort,
+    );
+  };
   const back = () => {
     router.back();
   };
@@ -192,8 +205,12 @@
       fixed: 'right',
       actions: ({ record }) => [
         {
-          label: '播放',
+          label: '实时播放',
           onClick: () => playVideo(record),
+        },
+        {
+          label: '历史',
+          onClick: () => showPlayBack(record),
         },
         {
           label: '编辑',
