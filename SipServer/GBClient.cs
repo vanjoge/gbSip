@@ -277,6 +277,13 @@ namespace SipServer
         {
             try
             {
+                //判断请求是否合法
+                if (RemoteEndPoint != remoteEndPoint && !VerifyCallID(sipRequest.Header.CallId))
+                {
+                    //当远端连接信息变更时，验证CallId
+                    return;
+                }
+
                 this._remoteCallID = sipRequest.Header.CallId;
                 //ServerID = sipRequest.URI.User;
 
