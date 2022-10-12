@@ -162,7 +162,7 @@ namespace SipServer.DB
         }
 
         /// <summary>
-        /// 设备部分通道
+        /// 删除部分通道
         /// </summary>
         /// <param name="DeviceID"></param>
         /// <param name="ChannelIds"></param>
@@ -286,6 +286,10 @@ namespace SipServer.DB
         }
         public Task<bool> UpdateChannelConf(string DeviceId, string ChannelId, ChannelConf Channel)
         {
+            if (sipServer.TryGetClient(DeviceId, out var client)&&client.TryGetChannel(ChannelId,out var old))
+            {
+                old.SetChannelConf(Channel, sipServer.Settings);
+            }
             return this.RedisHelper.HashSetAsync(RedisConstant.DeviceConfKey + DeviceId, RedisConstant.ChannelKey + ChannelId, Channel);
         }
 

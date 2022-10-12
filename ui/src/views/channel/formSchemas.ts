@@ -51,16 +51,20 @@ export const channelSchemas: FormSchema<API.TChannel>[] = [
     componentProps: {
       options: [
         {
-          label: 'Invite被动',
+          label: '自动',
           value: 0,
         },
         {
-          label: 'Invite主动',
+          label: 'Invite被动',
           value: 1,
         },
         {
-          label: '广播',
+          label: 'Invite主动',
           value: 2,
+        },
+        {
+          label: '广播',
+          value: 3,
         },
       ],
     },

@@ -41,7 +41,9 @@ namespace SipServer
             get { return _remoteEndPoint; }
             protected set
             {
-                if (_remoteEndPoint == null || (RemoteEndPoint != value && RemoteEndPoint.Protocol == SIPProtocolsEnum.udp))
+                if (_remoteEndPoint == null || (RemoteEndPoint != value
+                    //&& RemoteEndPoint.Protocol == SIPProtocolsEnum.udp
+                    ))
                 {
                     _remoteEndPoint = value;
 
@@ -49,6 +51,10 @@ namespace SipServer
                     {
                         toSipUri = new SIPURI(toSipUri.Scheme, _remoteEndPoint) { User = toSipUri.User, Parameters = toSipUri.Parameters };
                         toSIPToHeader.ToURI = toSipUri;
+                        if (deviceInfo != null)
+                        {
+                            deviceInfo.RemoteInfo = RemoteEndPoint.ToString();
+                        }
                     }
                 }
             }
@@ -274,8 +280,8 @@ namespace SipServer
                 this._remoteCallID = sipRequest.Header.CallId;
                 //ServerID = sipRequest.URI.User;
 
-                if (RemoteEndPoint != null && RemoteEndPoint != remoteEndPoint &&
-                    RemoteEndPoint.Protocol == SIPProtocolsEnum.udp
+                if (RemoteEndPoint != null && RemoteEndPoint != remoteEndPoint
+                //&&                    RemoteEndPoint.Protocol == SIPProtocolsEnum.udp
                 ) //udp时来源可能变化
                 {
                     RemoteEndPoint = remoteEndPoint;
@@ -374,7 +380,7 @@ namespace SipServer
                                         Status = item.Status,
                                         Online = "ON".IgnoreEquals(item.Status),
                                     };
-                                    if (string.IsNullOrWhiteSpace(citem.ParentId)|| citem.ParentId==ServerID)
+                                    if (string.IsNullOrWhiteSpace(citem.ParentId) || citem.ParentId == ServerID)
                                     {
                                         citem.ParentId = DeviceID;
                                     }
@@ -560,7 +566,10 @@ namespace SipServer
                 var sdp28181 = SDP28181.NewByStr(SDP);
                 if (sdp28181.SType == SDP28181.PlayType.Talk && deviceInfo != null)
                 {
-                    if (deviceInfo.Manufacturer == "Hikvision" || deviceInfo.Manufacturer == "TP-LINK")
+                    if (
+                        (TryGetChannel(Channel, out var channel) && channel.TalkType == 3) //强制广播
+                        || deviceInfo.Manufacturer == "Hikvision"
+                        || deviceInfo.Manufacturer == "TP-LINK")
                     {
                         if (TalkCov == InviteTalk.Auto)
                             return "2";
