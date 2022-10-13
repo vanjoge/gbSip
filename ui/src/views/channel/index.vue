@@ -29,16 +29,6 @@
         </a-button>
       </template>
     </DynamicTable>
-    <!-- <DraggableModal
-    v-model:visible="state.visible"
-    title="视频播放"
-    :width="900"
-    :force-render="true"
-    :after-close="closeVideo"
-  >
-    <template #footer> </template>
-    <RtvsPlayer ref="rtvsplayer" width="854" height="480" video-nums="1"></RtvsPlayer>
-  </DraggableModal> -->
     <RtvsPlayerModal
       ref="rtvsplayer"
       v-model:visible="state.visible"

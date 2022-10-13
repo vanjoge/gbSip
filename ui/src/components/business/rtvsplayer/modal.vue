@@ -2,11 +2,7 @@
   <DraggableModal
     v-model:visible="state.visible"
     title="视频播放"
-    :width="
-      computed(() => {
-        return props.videoWidth + 50;
-      })
-    "
+    :width="props.videoWidth + 50"
     :force-render="true"
     :after-close="closeVideo"
   >
@@ -16,49 +12,50 @@
       ref="rtvsplayer"
       :video-nums="1"
     ></RtvsPlayer>
-
-    <div :style="{ width: props.videoWidth + 'px' }">
-      <Tabs v-if="props.showHistorySelect" active-key="1" size="small">
-        <Tabs.TabPane key="1" tab="历史视频列表">
-          <Space direction="vertical" :size="12">
-            <Row>
-              <Col :span="20"
-                ><DatePicker.RangePicker
-                  v-model:value="selectDate"
-                  :show-time="{ format: 'HH:mm:ss' }"
-                  format="YYYY-MM-DD
+    <template v-if="props.showHistorySelect"
+      ><div :style="{ width: props.videoWidth + 'px' }">
+        <Tabs active-key="1" size="small">
+          <Tabs.TabPane key="1" tab="历史视频列表">
+            <Space direction="vertical" :size="12">
+              <Row>
+                <Col :span="20"
+                  ><DatePicker.RangePicker
+                    v-model:value="selectDate"
+                    :show-time="{ format: 'HH:mm:ss' }"
+                    format="YYYY-MM-DD
               HH:mm:ss"
-              /></Col>
-              <Col :span="4"
-                ><Button type="primary" :disabled="state.tableLoading" @click="queryVideoFileList"
-                  >查询</Button
-                ></Col
-              >
-            </Row>
-          </Space>
-          <Table
-            :columns="columns"
-            :data-source="state.data"
-            size="small"
-            :pagination="false"
-            :scroll="{ y: 150 }"
-            :loading="state.tableLoading"
-          >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'operation'">
-                <Button type="link" @click="playBack(record)">播放</Button>
-                <Button type="link" @click="downLoad(record)">下载</Button>
-              </template>
-            </template></Table
-          >
-        </Tabs.TabPane>
-      </Tabs></div
-    >
+                /></Col>
+                <Col :span="4"
+                  ><Button type="primary" :disabled="state.tableLoading" @click="queryVideoFileList"
+                    >查询</Button
+                  ></Col
+                >
+              </Row>
+            </Space>
+            <Table
+              :columns="columns"
+              :data-source="state.data"
+              size="small"
+              :pagination="false"
+              :scroll="{ y: 150 }"
+              :loading="state.tableLoading"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'operation'">
+                  <Button type="link" @click="playBack(record)">播放</Button>
+                  <Button type="link" @click="downLoad(record)">下载</Button>
+                </template>
+              </template></Table
+            >
+          </Tabs.TabPane>
+        </Tabs></div
+      >
+    </template>
   </DraggableModal>
 </template>
 
 <script lang="tsx" setup>
-  import { nextTick, ref, onMounted, defineExpose, computed, reactive } from 'vue';
+  import { nextTick, ref, onMounted, defineExpose, reactive } from 'vue';
   import { omit } from 'lodash-es';
   import dayjs, { Dayjs } from 'dayjs';
   import { Table, Tabs, Space, DatePicker, Row, Col } from 'ant-design-vue';

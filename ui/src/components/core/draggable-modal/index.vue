@@ -270,38 +270,46 @@
         height: 100% !important;
         max-width: 100vw !important;
       }
+
       .ant-modal-content {
         width: 100% !important;
         height: 100% !important;
       }
     }
+
     .ant-modal {
       position: fixed;
       padding: 0;
       min-height: 200px;
       min-width: 200px;
+
       .ant-modal-close {
         top: 6px;
         right: 6px;
+
         &:hover,
         &:focus {
           color: rgba(0, 0, 0, 0.45);
         }
+
         .ant-space-item:hover .anticon,
         .ant-space-item:focus .anticon {
           color: rgba(0, 0, 0, 0.75);
           text-decoration: none;
         }
+
         .ant-modal-close-x {
           width: 50px;
           height: 50px;
           line-height: 44px;
+
           .ant-space {
             width: 100%;
             height: 100%;
           }
         }
       }
+
       .ant-modal-content {
         /* width: ~'v-bind("props.width")px'; */
         display: flex;
@@ -311,11 +319,13 @@
         min-height: 200px;
         min-width: 200px;
         overflow: hidden;
+
         .ant-modal-body {
           flex: auto;
           overflow: auto;
           height: 100%;
         }
+
         .ant-modal-footer {
         }
       }
