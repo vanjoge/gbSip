@@ -55,7 +55,7 @@
 </template>
 
 <script lang="tsx" setup>
-  import { nextTick, ref, onMounted, defineExpose, reactive } from 'vue';
+  import { nextTick, ref, onMounted, reactive } from 'vue';
   import { omit } from 'lodash-es';
   import dayjs, { Dayjs } from 'dayjs';
   import { Table, Tabs, Space, DatePicker, Row, Col } from 'ant-design-vue';

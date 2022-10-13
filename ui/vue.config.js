@@ -1,7 +1,7 @@
 const path = require('path');
 const { defineConfig } = require('@vue/cli-service');
 const webpack = require('webpack');
-const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
+// const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const dayjs = require('dayjs');
 const TerserPlugin = require('terser-webpack-plugin');
 
@@ -165,7 +165,7 @@ module.exports = defineConfig({
         __APP_INFO__: JSON.stringify(__APP_INFO__),
       }),
       // 打包速度分析
-      new SpeedMeasurePlugin(),
+      // new SpeedMeasurePlugin(),
       // use defineOptions https://github.com/sxzz/unplugin-vue-define-options
       require('unplugin-vue-define-options/webpack')(),
     );
@@ -213,8 +213,8 @@ module.exports = defineConfig({
       // },
       '^/api': {
         // target: process.env.VUE_APP_API_URL,
-        target: 'http://127.0.0.1:5005/api/',
-        // target: 'http://localhost:7001 ',
+        // target: 'http://127.0.0.1:5005/api/',
+        target: 'http://10.10.10.228:9081/api/',
         changeOrigin: true,
         logLevel: 'debug',
         pathRewrite: {

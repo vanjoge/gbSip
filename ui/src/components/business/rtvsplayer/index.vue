@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { nextTick, ref, onMounted, defineExpose, watch, onBeforeUnmount } from 'vue';
+  import { nextTick, ref, onMounted, watch, onBeforeUnmount } from 'vue';
   const root = ref(null);
   const props = defineProps({
     videoWidth: {
