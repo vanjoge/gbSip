@@ -11,7 +11,7 @@
             </Tooltip>
           </Space>
         </div>
-        <div class="videotree">
+        <div ref="tdiv" class="videotree">
           <Tree
             v-model:expandedKeys="state.expandedKeys"
             v-model:checkedKeys="state.checkedKeys"
@@ -22,6 +22,7 @@
             :tree-data="state.treeData"
             :load-data="onLoadData"
             :loaded-keys="state.loadedKeys"
+            :height="tdiv?.clientHeight"
             @check="onTreeSelect"
             @load="onLoad"
           >
@@ -207,6 +208,7 @@
     name: 'RealTime',
   });
   const devTreeLoading = ref(false);
+  const tdiv = ref<HTMLElement>();
   const ptzSpeed = ref<number>(127);
   const sendPtz = (params: API.PPTZCtrl) => {
     const cfg = rtvsplayer.value.getUc()?.GetOperateUCVideo().config;
