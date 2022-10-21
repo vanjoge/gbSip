@@ -571,10 +571,11 @@ namespace SipServer
             if (TalkCov != InviteTalk.Force)
             {
                 var sdp28181 = SDP28181.NewByStr(SDP);
+                TryGetChannel(Channel, out var channel);
                 if (sdp28181.SType == SDP28181.PlayType.Talk && deviceInfo != null)
                 {
                     if (
-                        (TryGetChannel(Channel, out var channel) && channel.TalkType == 3) //强制广播
+                        (channel?.TalkType == 3) //强制广播
                         || deviceInfo.Manufacturer == "Hikvision"
                         || deviceInfo.Manufacturer == "TP-LINK")
                     {
@@ -584,6 +585,25 @@ namespace SipServer
                         {
                             await Send_Broadcast(null, Channel, fromTag);
                             return "3";
+                        }
+                    }
+                }
+                if (channel != null)
+                {
+                    if (channel.NetType == 1)
+                    {
+                        if (sdp28181.NetType != SDP28181.RTPNetType.TCP)
+                        {
+                            sdp28181.NetType = SDP28181.RTPNetType.TCP;
+                            SDP = sdp28181.GetSdpStr();
+                        }
+                    }
+                    else if (channel.NetType == 3)
+                    {
+                        if (sdp28181.NetType != SDP28181.RTPNetType.UDP)
+                        {
+                            sdp28181.NetType = SDP28181.RTPNetType.UDP;
+                            SDP = sdp28181.GetSdpStr();
                         }
                     }
                 }
