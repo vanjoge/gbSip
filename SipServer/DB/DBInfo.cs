@@ -1,29 +1,18 @@
-﻿using DnsClient.Protocol;
-using GB28181.XML;
+﻿
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.Extensions.ObjectPool;
-using Org.BouncyCastle.Crypto.Macs;
-using Org.BouncyCastle.Utilities.Collections;
+#if DEBUG
+using Microsoft.Extensions.Logging;
+#endif
 using RedisHelp;
 using SipServer.DBModel;
 using SipServer.Models;
 using SQ.Base;
 using StackExchange.Redis;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using static log4net.Appender.RollingFileAppender;
-using static SIPSorcery.Net.Mjpeg;
-using static SIPSorcery.Net.SrtpCipherF8;
 
 namespace SipServer.DB
 {
@@ -31,11 +20,17 @@ namespace SipServer.DB
     {
         class AllNewObjectPool
         {
+#if DEBUG
+            public static readonly ILoggerFactory MyLoggerFactory = LoggerFactory.Create(builder => { builder.AddConsole(); });
+#endif
             DbContextOptions<gbsContext> options;
             public AllNewObjectPool(string ConnStr)
             {
                 var build = new DbContextOptionsBuilder(new DbContextOptions<gbsContext>()).UseMySql(ConnStr, Microsoft.EntityFrameworkCore.ServerVersion.Parse("5.7-mysql"));
 
+#if DEBUG
+                build = build.UseLoggerFactory(MyLoggerFactory);
+#endif
                 options = build.Options as DbContextOptions<gbsContext>;
             }
             public gbsContext Get()
@@ -111,31 +106,72 @@ namespace SipServer.DB
         /// </summary>
         /// <param name="DeviceID"></param>
         /// <returns></returns>
-        public async Task<DPager<Channel>> GetChannelList(string DeviceID, int Page = 1, int Limit = -1, bool OnlyDB = false)
+        public async Task<DPager<Channel>> GetChannelList(string DeviceID, string ParentId = null, string ChannelId = null, string Name = null, bool? Parental = null, string Manufacturer = null, bool? Online = null, int Page = 1, int Limit = -1, bool OnlyDB = false)
         {
             var dbContext = dbContextPool.Get();
             try
             {
 
-                var data = from u in dbContext.TCatalogs
-                           where u.DeviceId == DeviceID
-                           select new Channel(u);
+                //var data = from u in dbContext.TCatalogs
+                //           where u.DeviceId == DeviceID
+                //           select new Channel(u);
+
+                var data = dbContext.TCatalogs.Where(p => p.DeviceId == DeviceID);
+
+
+                if (!string.IsNullOrWhiteSpace(ChannelId))
+                {
+                    data = data.Where(p => p.ChannelId.Contains(ChannelId));
+                }
+                if (!string.IsNullOrWhiteSpace(ParentId))
+                {
+                    data = data.Where(p => p.ParentId == ParentId);
+                }
+                if (!string.IsNullOrWhiteSpace(Name))
+                {
+                    data = data.Where(p => p.Name.Contains(Name));
+                }
+                if (!string.IsNullOrWhiteSpace(Manufacturer))
+                {
+                    data = data.Where(p => p.Manufacturer.Contains(Manufacturer));
+                }
+                if (Parental.HasValue)
+                {
+                    data = data.Where(p => p.Parental == Parental.Value);
+                }
+                if (Online.HasValue)
+                {
+                    data = data.Where(p => p.Online == Online.Value);
+                }
+
+
+                //根节点获取时，加载出ParentId不正确的项
+                if (DeviceID == ParentId)
+                {
+                    var all = dbContext.TCatalogs.Where(_ => _.DeviceId == DeviceID);
+
+                    var noHaveParent = from a in all where !(from b in all select b.ChannelId).Contains(a.ParentId) select a;
+
+                    data = data.Union(noHaveParent);
+                }
+
                 //var data = dbContext.TCatalogs.Where(p => p.DeviceId == DeviceID);
-                var sum = await data.CountAsync();
+                var sumData = data;
                 if (Page > 1)
                 {
                     data = data.Skip(GetStart(Page, Limit));
                 }
-                List<Channel> lst;
                 if (Limit >= 0)
                 {
-                    lst = await data.Take(Limit).ToListAsync();
+                    data = data.Take(Limit);
                 }
-                else
-                {
-                    Limit = sum;
-                    lst = await data.ToListAsync();
-                }
+                List<TCatalog> lstC = await data.ToListAsync();
+
+                var tuple = await GetSum(Page, Limit, lstC.Count, sumData);
+                int sum = tuple.Item1;
+                Limit = tuple.Item2;
+
+                List<Channel> lst = lstC.ConvertAll<Channel>(p => new Channel(p));
                 //如果不在线 将状态设为离线
                 bool setOff = false;
                 if (!OnlyDB && !sipServer.TryGetClient(DeviceID, out var client))
@@ -286,7 +322,7 @@ namespace SipServer.DB
         }
         public Task<bool> UpdateChannelConf(string DeviceId, string ChannelId, ChannelConf Channel)
         {
-            if (sipServer.TryGetClient(DeviceId, out var client)&&client.TryGetChannel(ChannelId,out var old))
+            if (sipServer.TryGetClient(DeviceId, out var client) && client.TryGetChannel(ChannelId, out var old))
             {
                 old.SetChannelConf(Channel, sipServer.Settings);
             }
@@ -369,18 +405,19 @@ namespace SipServer.DB
                     data = data.Where(p => p.Manufacturer.Contains(Manufacturer));
                 }
 
-                var sum = await data.CountAsync();
+
+                var sumData = data;
                 data = data.OrderByDescending(p => p.CreateTime).Skip(GetStart(Page, Limit));
-                List<TDeviceInfo> lst;
                 if (Limit >= 0)
                 {
-                    lst = await data.Take(Limit).ToListAsync();
+                    data = data.Take(Limit);
                 }
-                else
-                {
-                    Limit = sum;
-                    lst = await data.ToListAsync();
-                }
+                List<TDeviceInfo> lst = await data.ToListAsync();
+
+                var tuple = await GetSum(Page, Limit, lst.Count, sumData);
+                int sum = tuple.Item1;
+                Limit = tuple.Item2;
+
                 for (int i = 0; i < lst.Count; i++)
                 {
                     var item = lst[i];
@@ -399,6 +436,20 @@ namespace SipServer.DB
             {
                 dbContextPool.Return(dbContext);
             }
+        }
+        async Task<Tuple<int, int>> GetSum<T>(int Page, int Limit, int dataCount, IQueryable<T> sumData)
+        {
+            int sum;
+            if ((Page == 1 && dataCount < Limit) || (Page <= 1 && Limit < 0))
+            {
+                sum = dataCount;
+            }
+            else
+            {
+                sum = await sumData.CountAsync();
+            }
+            if (Limit < 0) Limit = sum;
+            return new Tuple<int, int>(sum, Limit);
         }
         /// <summary>
         /// 删除设备信息

@@ -349,7 +349,7 @@
         page: 1,
         limit: -1,
         DeviceId: treeNode.DeviceId,
-        ParentId: treeNode.tdType == 1 ? treeNode.ChannelId : undefined,
+        ParentId: treeNode.tdType == 1 ? treeNode.ChannelId : treeNode.DeviceId,
       }).finally(() => (devTreeLoading.value = false));
       const child = formatChannel(lst, String(treeNode.key));
       treeNode.dataRef.children = child;

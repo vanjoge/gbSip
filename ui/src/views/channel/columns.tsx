@@ -16,6 +16,7 @@ export const baseColumns: TableColumnItem[] = [
     title: '别名',
     width: 120,
     dataIndex: 'NickName',
+    hideInSearch: true,
     align: 'center',
   },
   {

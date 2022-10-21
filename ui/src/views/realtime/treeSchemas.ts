@@ -39,7 +39,7 @@ export const formatChannel = (
     return Object.assign(item, {
       title: name,
       key: `${item.DeviceId}-${item.ChannelId}`,
-      isLeaf: !item.Parental,
+      isLeaf: !(item.Parental && item.ChannelId != item.DeviceId),
       tdType: 1,
       parentTreeKey: parentKey,
     });

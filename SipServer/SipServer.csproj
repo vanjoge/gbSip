@@ -13,6 +13,9 @@
     <PackageReference Include="StackExchange.Redis" Version="2.5.61" />
   </ItemGroup>
 
+	<ItemGroup Condition="'$(Configuration)'=='Debug'">
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
+	</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GB28181.Client\GB28181.Client.csproj" />
   </ItemGroup>
