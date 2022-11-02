@@ -16,23 +16,21 @@ namespace SipServer
 {
     public partial class GBClient
     {
-        class QueryRecordInfo
-        {
-            public string OrderID;
-            public RecordInfo Info;
-            public int SNOld;
-        }
         class BroadcastInfo
         {
             public string Channel;
             public string InviteID;
         }
-        /// <summary>
-        /// 发起录像查询缓存内容
-        /// </summary>
-        ConcurrentDictionary<int, QueryRecordInfo> ditQueryRecordInfo = new ConcurrentDictionary<int, QueryRecordInfo>();
 
         ConcurrentDictionary<string, BroadcastInfo> ditBroadcast = new ConcurrentDictionary<string, BroadcastInfo>();
+
+        public Task<int> Send_GetRecordInfo_RTVS(string OrderID, RecordInfoQuery query)
+        {
+            return Send_GetRecordInfo(query, (p) =>
+            {
+                return ReportRecordInfo(OrderID, p);
+            });
+        }
         private Task<string> ReportRecordInfo(string OrderID, RecordInfo recordInfo)
         {
             var headers = new DictionaryEx<string, string>();
@@ -98,35 +96,7 @@ namespace SipServer
                 await SendResponseAsync(GetSIPResponse(sipRequest, SIPResponseStatusCodesEnum.NotFound));
             }
         }
-        private Task<string> AnsRTVSGetRecordInfo(RecordInfo recordInfo)
-        {
-            if (ditQueryRecordInfo.TryGetValue(recordInfo.SN, out var query))
-            {
-                if (recordInfo.SumNum == 0)
-                {
-                    ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
-                    return ReportRecordInfo(query.OrderID, recordInfo);
-                }
-                else
-                {
-                    if (query.Info == null)
-                    {
-                        query.Info = recordInfo;
-                    }
-                    else if (recordInfo.SumNum > recordInfo.RecordList.Count)
-                    {
-                        query.Info.RecordList.AddRange(recordInfo.RecordList);
-                    }
 
-                    if (recordInfo.SumNum <= query.Info.RecordList.Count)
-                    {
-                        ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
-                        return ReportRecordInfo(query.OrderID, query.Info);
-                    }
-                }
-            }
-            return Task.FromResult<string>(null);
-        }
 
         string GetSourceID(SIPRequest sipRequest)
         {

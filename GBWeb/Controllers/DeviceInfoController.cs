@@ -58,23 +58,16 @@ namespace GBWeb.Controllers
             return await RetApiResult(Program.sipServer.DB.UpdateDeviceInfo(info));
         }
         /// <summary>
-        /// 
-        /// </summary>
-        public class DeleteDeviceModel
-        {
-            public string[] DeviceIds { get; set; }
-        }
-        /// <summary>
         /// 删除设备
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<ApiResult<bool>> DeleteDevice(DeleteDeviceModel model)
+        public async Task<ApiResult<bool>> DeleteDevice(DeleteModelIds model)
         {
             if (model == null)
                 return RetApiResult(false);
-            return RetApiResult(await Program.sipServer.DB.DeleteDeviceInfo(model.DeviceIds));
+            return RetApiResult(await Program.sipServer.DB.DeleteDeviceInfo(model.Ids));
         }
 
 

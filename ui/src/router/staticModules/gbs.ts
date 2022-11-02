@@ -53,6 +53,18 @@ const routes: Array<RouteRecordRaw> = [
       import(/* webpackChunkName: "dashboard-welcome" */ '@/views/channel/index.vue'),
   },
   {
+    path: '/superior',
+    name: `${moduleName}-superior`,
+    meta: {
+      title: t('gbs.superior'),
+      icon: 'icon-zhuomian',
+      // keepAlive: true,
+      // hideInTabs: true,
+    },
+    component: () =>
+      import(/* webpackChunkName: "dashboard-welcome" */ '@/views/superior/index.vue'),
+  },
+  {
     path: '/swagger',
     name: `${window.location.protocol}//${window.location.host}/swagger`,
     component: RouterView,

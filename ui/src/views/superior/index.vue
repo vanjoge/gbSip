@@ -1,9 +1,9 @@
 <template>
   <DynamicTable
-    row-key="DeviceId"
-    header-title="设备管理"
+    row-key="Id"
+    header-title="上级平台"
     show-index
-    title-tooltip="此处可对接入的国标设备进行管理。"
+    title-tooltip="此处可对接入上级平台进行管理。"
     :data-request="loadTableData"
     :columns="columns"
     :scroll="{ x: 2000 }"
@@ -19,8 +19,26 @@
     </template>
     <template #toolbar>
       <a-button
+        type="primary"
+        :disabled="!$auth('Superior.CreateSuperior')"
+        @click="
+          openSuperiorModal({
+            Enable: true,
+            ServerPort: 5060,
+            RegSec: 60,
+            Expiry: 7200,
+            HeartSec: 60,
+            HeartTimeoutTimes: 3,
+            UseTcp: true,
+            ServerRealm: '自动生成',
+          })
+        "
+      >
+        <PlusOutlined /> 新增
+      </a-button>
+      <a-button
         type="danger"
-        :disabled="!isCheckRows || !$auth('DeviceInfo.DeleteDevice')"
+        :disabled="!isCheckRows || !$auth('Superior.DeleteSuperiors')"
         @click="delRowConfirm(rowSelection.selectedRowKeys)"
       >
         <DeleteOutlined /> 删除
@@ -31,21 +49,19 @@
 
 <script setup lang="tsx">
   import { ref, computed } from 'vue';
-  import { useRouter } from 'vue-router';
   import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue';
   import { Modal, Alert } from 'ant-design-vue';
-  import { deviceSchemas } from './formSchemas';
+  import { superiorSchemas } from './formSchemas';
   import { baseColumns, type TableListItem, type TableColumnItem } from './columns';
   // import type { LoadDataParams } from '@/components/core/dynamic-table';
   import { useTable } from '@/components/core/dynamic-table';
-  import { getDeviceList, updateDevice, deleteDevice, refreshChannels } from '@/api/device';
+  import { getSuperiorList, createSuperior, updateSuperior, deleteSuperior } from '@/api/superior';
   import { useFormModal } from '@/hooks/useModal/index';
 
   defineOptions({
-    name: 'DeviceInfo',
+    name: 'Superior',
   });
 
-  const router = useRouter();
   const [DynamicTable, dynamicTableInstance] = useTable();
   const [showModal] = useFormModal();
 
@@ -63,21 +79,20 @@
   /**
    * @description 打开设备弹窗
    */
-  const openDeviceModal = async (record: Partial<TableListItem> = {}) => {
+  const openSuperiorModal = async (record: Partial<TableListItem> = {}) => {
     const [formRef] = await showModal<any>({
       modalProps: {
-        title: '编辑',
-        width: 700,
+        title: `${record.Id ? '编辑' : '新增'}上级`,
+        width: 1000,
         onFinish: async (values) => {
-          console.log('编辑设备', values);
-          values.id = record.DeviceId;
-          await updateDevice(values);
+          values.id = record.Id;
+          await (record.Id ? updateSuperior : createSuperior)(values);
           dynamicTableInstance?.reload();
         },
       },
       formProps: {
-        labelWidth: 100,
-        schemas: deviceSchemas,
+        labelWidth: 150,
+        schemas: superiorSchemas,
       },
     });
 
@@ -94,29 +109,20 @@
         icon: <ExclamationCircleOutlined />,
         centered: true,
         onOk: async () => {
-          await deleteDevice({ Ids: deviceId }).finally(dynamicTableInstance?.reload);
+          await deleteSuperior({ SuperiorIds: deviceId }).finally(dynamicTableInstance?.reload);
         },
       });
     } else {
-      await deleteDevice({ Ids: [deviceId] }).finally(dynamicTableInstance?.reload);
+      await deleteSuperior({ SuperiorIds: [deviceId] }).finally(dynamicTableInstance?.reload);
     }
   };
 
-  const refreshChannel = async (DeviceId) => {
-    const data = await refreshChannels({
-      DeviceId,
-    });
-    rowSelection.value.selectedRowKeys = [];
-    return data;
-  };
-  const loadTableData = async ({ page, limit, DeviceId, DeviceName, Manufacturer, Online }) => {
-    const data = await getDeviceList({
+  const loadTableData = async ({ page, limit, Id, Name }) => {
+    const data = await getSuperiorList({
       page,
       limit,
-      DeviceId,
-      DeviceName,
-      Manufacturer,
-      Online,
+      Id,
+      Name,
     });
     rowSelection.value.selectedRowKeys = [];
     return data;
@@ -132,35 +138,19 @@
       fixed: 'right',
       actions: ({ record }) => [
         {
-          label: '通道',
-          disabled: record.CatalogChannel == 0,
-          onClick: () =>
-            router.push({
-              name: 'gbs-channelManager',
-              params: {
-                deviceId: record.DeviceId,
-              },
-            }),
-        },
-        {
-          label: '刷新通道',
-          disabled: !record.Online,
-          onClick: () => refreshChannel(record.DeviceId),
-        },
-        {
           label: '编辑',
           auth: {
-            perm: 'DeviceInfo.UpdateDevice',
+            perm: 'Superior.UpdateSuperior',
             effect: 'disable',
           },
-          onClick: () => openDeviceModal(record),
+          onClick: () => openSuperiorModal(record),
         },
         {
           label: '删除',
-          auth: 'DeviceInfo.DeleteDevice',
+          auth: 'Superior.DeleteSuperiors',
           popConfirm: {
             title: '你确定要删除吗？',
-            onConfirm: () => delRowConfirm(record.DeviceId),
+            onConfirm: () => delRowConfirm(record.Id),
           },
         },
       ],

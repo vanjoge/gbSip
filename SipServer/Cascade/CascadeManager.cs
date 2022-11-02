@@ -1,10 +1,7 @@
 ﻿using SipServer.DBModel;
 using SipServer.Models;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SipServer.Cascade
@@ -15,7 +12,7 @@ namespace SipServer.Cascade
         /// 客户端
         /// </summary>
         ConcurrentDictionary<string, CascadeClient> ditClient = new ConcurrentDictionary<string, CascadeClient>();
-        private SipServer sipServer;
+        protected internal SipServer sipServer;
 
         public CascadeManager(SipServer sipServer)
         {
@@ -23,11 +20,11 @@ namespace SipServer.Cascade
         }
         public async Task Start()
         {
-            var lst = await sipServer.DB.GetSuperiorList();
+            var lst = (await sipServer.DB.GetSuperiorList()).list;
             foreach (var item in lst)
             {
-                if (item.superiorInfo.Enable)
-                    AddClient(item.superiorInfo);
+                if (item.Enable)
+                    await AddClient(item);
             }
         }
         public delegate void ItemToDo(CascadeClient item);
@@ -55,35 +52,43 @@ namespace SipServer.Cascade
             if (await sipServer.DB.AddSuperior(sinfo))
             {
                 if (sinfo.Enable)
-                    return AddClient(sinfo);
+                    return await AddClient(sinfo);
             }
             return false;
         }
 
-        public async Task Update(TSuperiorInfo sinfo)
+        public async Task<bool> Update(TSuperiorInfo sinfo)
         {
             await sipServer.DB.UpdateSuperior(sinfo);
 
             RemoveClient(sinfo.Id);
             if (sinfo.Enable)
-                AddClient(sinfo);
+                await AddClient(sinfo);
+            return true;
         }
-        public async Task<bool> Remove(string id)
+        public async Task<bool> Remove(params string[] ids)
         {
-            await sipServer.DB.DeleteSuperior(id);
-            return RemoveClient(id);
+            bool flag = true;
+            await sipServer.DB.DeleteSuperiors(ids);
+            foreach (var id in ids)
+            {
+                flag = RemoveClient(id) && flag;
+            }
+            return flag;
         }
-        bool AddClient(TSuperiorInfo sinfo)
+        async Task<bool> AddClient(TSuperiorInfo sinfo)
         {
-            CascadeClient client = new CascadeClient(sinfo.Id, SuperiorInfoEx.GetServerSipStr(sinfo), sinfo.ServerId, new GB28181.XML.DeviceInfo
+            var channels = await sipServer.DB.GetSuperiorChannels(sinfo.Id);
+            CascadeClient client = new CascadeClient(this, sinfo.Id, SuperiorInfoEx.GetServerSipStr(sinfo), sinfo.ServerId, new GB28181.XML.DeviceInfo
             {
                 DeviceID = sinfo.ClientId,
                 DeviceName = sinfo.ClientName,
                 Manufacturer = "RTVS",
                 Model = "gbsip",
                 Result = "OK",
+                Firmware = "v0.1"
 
-            }, null, password: sinfo.Sippassword, expiry: sinfo.Expiry, UserAgent: sipServer.UserAgent, EnableTraceLogs: sipServer.Settings.EnableSipLog, heartSec: sinfo.HeartSec, timeOutSec: sinfo.HeartTimeoutTimes * sinfo.HeartSec);
+            }, channels, authUsername: sinfo.Sipusername, password: sinfo.Sippassword, expiry: sinfo.Expiry, UserAgent: sipServer.UserAgent, EnableTraceLogs: sipServer.Settings.EnableSipLog, heartSec: sinfo.HeartSec, timeOutSec: sinfo.HeartTimeoutTimes * sinfo.HeartSec);
             client.Start();
             ditClient[client.Key] = client;
             return true;

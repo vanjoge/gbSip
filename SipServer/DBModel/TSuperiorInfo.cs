@@ -22,6 +22,10 @@ namespace SipServer.DBModel
         /// </summary>
         public string ServerId { get; set; }
         /// <summary>
+        /// 服务域
+        /// </summary>
+        public string ServerRealm { get; set; }
+        /// <summary>
         /// 上级IP/域名
         /// </summary>
         public string Server { get; set; }

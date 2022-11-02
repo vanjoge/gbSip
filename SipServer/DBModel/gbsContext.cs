@@ -19,6 +19,7 @@ namespace SipServer.DBModel
         public virtual DbSet<TCatalog> TCatalogs { get; set; }
         public virtual DbSet<TDeviceInfo> TDeviceInfos { get; set; }
         public virtual DbSet<TEvent> TEvents { get; set; }
+        public virtual DbSet<TSuperiorChannel> TSuperiorChannels { get; set; }
         public virtual DbSet<TSuperiorInfo> TSuperiorInfos { get; set; }
         public virtual DbSet<TUserInfo> TUserInfos { get; set; }
 
@@ -35,52 +36,43 @@ namespace SipServer.DBModel
 
                 entity.ToTable("T_Catalog");
 
+                entity.HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
                 entity.Property(e => e.ChannelId)
                     .HasMaxLength(50)
                     .HasColumnName("ChannelID")
-                    .HasComment("CatalogID")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("CatalogID");
 
                 entity.Property(e => e.DeviceId)
                     .HasMaxLength(50)
                     .HasColumnName("DeviceID")
-                    .HasComment("设备ID")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备ID");
 
                 entity.Property(e => e.Address)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("当为设备时，安装地址")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("当为设备时，安装地址");
 
                 entity.Property(e => e.Block)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("警区")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("警区");
 
                 entity.Property(e => e.BusinessGroupId)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasColumnName("BusinessGroupID")
                     .HasDefaultValueSql("''")
-                    .HasComment("虚拟分组ID")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("虚拟分组ID");
 
                 entity.Property(e => e.CertNum)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("证书序列号")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("证书序列号");
 
                 entity.Property(e => e.Certifiable)
                     .HasColumnType("bit(1)")
@@ -90,9 +82,7 @@ namespace SipServer.DBModel
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("行政区域")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("行政区域");
 
                 entity.Property(e => e.EndTime)
                     .HasColumnType("timestamp")
@@ -107,9 +97,7 @@ namespace SipServer.DBModel
                     .HasMaxLength(50)
                     .HasColumnName("IPAddress")
                     .HasDefaultValueSql("''")
-                    .HasComment("设备/区域/系统IP地址")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备/区域/系统IP地址");
 
                 entity.Property(e => e.Latitude).HasComment("纬度");
 
@@ -119,24 +107,18 @@ namespace SipServer.DBModel
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("当为设备时，设备厂商")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("当为设备时，设备厂商");
 
                 entity.Property(e => e.Model)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("当为设备时，设备型号")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("当为设备时，设备型号");
 
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(50)
-                    .HasComment("设备/区域/系统名称")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备/区域/系统名称");
 
                 entity.Property(e => e.OfflineTime)
                     .HasColumnType("timestamp")
@@ -156,17 +138,13 @@ namespace SipServer.DBModel
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("当为设备时，设备归属")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("当为设备时，设备归属");
 
                 entity.Property(e => e.ParentId)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasColumnName("ParentID")
-                    .HasComment("上级ID")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("上级ID");
 
                 entity.Property(e => e.Parental)
                     .HasColumnType("bit(1)")
@@ -176,9 +154,7 @@ namespace SipServer.DBModel
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("''")
-                    .HasComment("设备口令")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备口令");
 
                 entity.Property(e => e.Port)
                     .HasColumnType("int(11)")
@@ -194,9 +170,7 @@ namespace SipServer.DBModel
                     .HasMaxLength(50)
                     .HasColumnName("RemoteEP")
                     .HasDefaultValueSql("''")
-                    .HasComment("远程设备终结点")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("远程设备终结点");
 
                 entity.Property(e => e.SafetyWay)
                     .HasColumnType("int(11)")
@@ -209,9 +183,7 @@ namespace SipServer.DBModel
                 entity.Property(e => e.Status)
                     .IsRequired()
                     .HasMaxLength(50)
-                    .HasComment("设备状态")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备状态");
             });
 
             modelBuilder.Entity<TDeviceInfo>(entity =>
@@ -221,12 +193,13 @@ namespace SipServer.DBModel
 
                 entity.ToTable("T_DeviceInfo");
 
+                entity.HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
                 entity.Property(e => e.DeviceId)
                     .HasMaxLength(50)
                     .HasColumnName("DeviceID")
-                    .HasComment("设备ID")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备ID");
 
                 entity.Property(e => e.CatalogChannel)
                     .HasColumnType("int(11)")
@@ -243,51 +216,35 @@ namespace SipServer.DBModel
 
                 entity.Property(e => e.DeviceName)
                     .HasMaxLength(50)
-                    .HasComment("目标设备/区域/系统的名称(可选)")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("目标设备/区域/系统的名称(可选)");
 
                 entity.Property(e => e.DsDeviceTime)
                     .HasMaxLength(50)
-                    .HasComment("设备时间和日期")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备时间和日期");
 
                 entity.Property(e => e.DsEncode)
                     .HasMaxLength(50)
-                    .HasComment("是否编码")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("是否编码");
 
                 entity.Property(e => e.DsOnline)
                     .HasMaxLength(50)
-                    .HasComment("是否在线(状态查询应答)")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("是否在线(状态查询应答)");
 
                 entity.Property(e => e.DsReason)
                     .HasMaxLength(50)
-                    .HasComment("不正常工作原因")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("不正常工作原因");
 
                 entity.Property(e => e.DsRecord)
                     .HasMaxLength(50)
-                    .HasComment("是否录像")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("是否录像");
 
                 entity.Property(e => e.DsStatus)
                     .HasMaxLength(50)
-                    .HasComment("是否正常工作(状态查询应答)")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("是否正常工作(状态查询应答)");
 
                 entity.Property(e => e.Firmware)
                     .HasMaxLength(100)
-                    .HasComment("设备固件版本(可选)")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备固件版本(可选)");
 
                 entity.Property(e => e.GetCatalogTime)
                     .HasColumnType("timestamp")
@@ -309,23 +266,17 @@ namespace SipServer.DBModel
 
                 entity.Property(e => e.Manufacturer)
                     .HasMaxLength(50)
-                    .HasComment("设备生产商(可选)")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备生产商(可选)");
 
                 entity.Property(e => e.Model)
                     .HasMaxLength(50)
-                    .HasComment("设备型号(可选)")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备型号(可选)");
 
                 entity.Property(e => e.NickName)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("''")
-                    .HasComment("别名")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("别名");
 
                 entity.Property(e => e.OfflineTime)
                     .HasColumnType("timestamp")
@@ -345,9 +296,7 @@ namespace SipServer.DBModel
                     .IsRequired()
                     .HasMaxLength(100)
                     .HasDefaultValueSql("''")
-                    .HasComment("远端连接信息")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("远端连接信息");
 
                 entity.Property(e => e.Reported)
                     .HasColumnType("bit(1)")
@@ -371,6 +320,9 @@ namespace SipServer.DBModel
 
                 entity.ToTable("T_Event");
 
+                entity.HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
                 entity.Property(e => e.RowId)
                     .HasColumnType("bigint(20) unsigned")
                     .HasColumnName("RowID");
@@ -379,17 +331,13 @@ namespace SipServer.DBModel
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasColumnName("ChannelID")
-                    .HasComment("CatalogID")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("CatalogID");
 
                 entity.Property(e => e.DeviceId)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasColumnName("DeviceID")
-                    .HasComment("设备ID")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("设备ID");
 
                 entity.Property(e => e.Event)
                     .HasColumnType("int(11)")
@@ -401,26 +349,71 @@ namespace SipServer.DBModel
                     .HasComment("事件时间");
             });
 
+            modelBuilder.Entity<TSuperiorChannel>(entity =>
+            {
+                entity.HasKey(e => e.RowId)
+                    .HasName("PRIMARY");
+
+                entity.ToTable("T_SuperiorChannel");
+
+                entity.HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
+                entity.Property(e => e.RowId)
+                    .HasColumnType("bigint(20) unsigned")
+                    .HasColumnName("RowID");
+
+                entity.Property(e => e.ChannelId)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnName("ChannelID")
+                    .HasComment("CatalogID");
+
+                entity.Property(e => e.CustomChannelId)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnName("CustomChannelID")
+                    .HasComment("自定义通道ID");
+
+                entity.Property(e => e.DeviceId)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnName("DeviceID")
+                    .HasComment("设备ID");
+
+                entity.Property(e => e.Enable)
+                    .HasColumnType("bit(1)")
+                    .HasComment("启用");
+
+                entity.Property(e => e.SuperiorId)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnName("SuperiorID")
+                    .HasComment("上级ID");
+            });
+
             modelBuilder.Entity<TSuperiorInfo>(entity =>
             {
-                entity.HasNoKey();
-
                 entity.ToTable("T_SuperiorInfo");
+
+                entity.HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
+                entity.Property(e => e.Id)
+                    .HasMaxLength(50)
+                    .HasColumnName("ID")
+                    .HasComment("唯一ID");
 
                 entity.Property(e => e.ClientId)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasColumnName("ClientID")
-                    .HasComment("本地SIP国标编码")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("本地SIP国标编码");
 
                 entity.Property(e => e.ClientName)
                     .IsRequired()
                     .HasMaxLength(50)
-                    .HasComment("本地SIP名称")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("本地SIP名称");
 
                 entity.Property(e => e.Enable)
                     .HasColumnType("bit(1)")
@@ -438,20 +431,10 @@ namespace SipServer.DBModel
                     .HasColumnType("int(11)")
                     .HasComment("最大心跳超时次数");
 
-                entity.Property(e => e.Id)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .HasColumnName("ID")
-                    .HasComment("唯一ID")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
-
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(50)
-                    .HasComment("名称")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("名称");
 
                 entity.Property(e => e.RegSec)
                     .HasColumnType("int(11)")
@@ -460,37 +443,34 @@ namespace SipServer.DBModel
                 entity.Property(e => e.Server)
                     .IsRequired()
                     .HasMaxLength(50)
-                    .HasComment("上级IP/域名")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("上级IP/域名");
 
                 entity.Property(e => e.ServerId)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasColumnName("ServerID")
-                    .HasComment("上级国标编码")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("上级国标编码");
 
                 entity.Property(e => e.ServerPort)
                     .HasColumnType("int(11)")
                     .HasComment("上级端口");
 
+                entity.Property(e => e.ServerRealm)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasComment("服务域");
+
                 entity.Property(e => e.Sippassword)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasColumnName("SIPPassword")
-                    .HasComment("SIP认证密码")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("SIP认证密码");
 
                 entity.Property(e => e.Sipusername)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasColumnName("SIPUsername")
-                    .HasComment("SIP认证用户名")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("SIP认证用户名");
 
                 entity.Property(e => e.UseTcp)
                     .HasColumnType("bit(1)")
@@ -500,6 +480,9 @@ namespace SipServer.DBModel
             modelBuilder.Entity<TUserInfo>(entity =>
             {
                 entity.ToTable("T_UserInfo");
+
+                entity.HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
 
                 entity.Property(e => e.Id)
                     .HasColumnType("int(11)")
@@ -519,78 +502,58 @@ namespace SipServer.DBModel
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("部门名称")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("部门名称");
 
                 entity.Property(e => e.Email)
                     .IsRequired()
                     .HasMaxLength(50)
-                    .HasDefaultValueSql("''")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasDefaultValueSql("''");
 
                 entity.Property(e => e.HeadImg)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("''")
-                    .HasComment("头像")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("头像");
 
                 entity.Property(e => e.LoginIp)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("登录IP")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("登录IP");
 
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("姓名")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("姓名");
 
                 entity.Property(e => e.NickName)
                     .IsRequired()
                     .HasMaxLength(100)
                     .HasDefaultValueSql("''")
-                    .HasComment("昵称")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("昵称");
 
                 entity.Property(e => e.Password)
                     .IsRequired()
                     .HasMaxLength(50)
-                    .HasComment("密码")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("密码");
 
                 entity.Property(e => e.Phone)
                     .IsRequired()
                     .HasMaxLength(20)
-                    .HasDefaultValueSql("''")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasDefaultValueSql("''");
 
                 entity.Property(e => e.Psalt)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasDefaultValueSql("''")
-                    .HasComment("加密盐")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("加密盐");
 
                 entity.Property(e => e.Remark)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("''")
-                    .HasComment("备注")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("备注");
 
                 entity.Property(e => e.Status)
                     .HasColumnType("int(11)")
@@ -604,9 +567,7 @@ namespace SipServer.DBModel
                 entity.Property(e => e.Username)
                     .IsRequired()
                     .HasMaxLength(50)
-                    .HasComment("用户名")
-                    .UseCollation("utf8_general_ci")
-                    .HasCharSet("utf8");
+                    .HasComment("用户名");
             });
 
             OnModelCreatingPartial(modelBuilder);

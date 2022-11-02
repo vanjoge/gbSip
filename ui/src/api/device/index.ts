@@ -22,7 +22,7 @@ export function updateDevice(data: API.TDeviceInfo) {
   );
 }
 
-export function deleteDevice(data: { DeviceIds: string[] }) {
+export function deleteDevice(data: { Ids: string[] }) {
   return request({
     url: Api.delete,
     method: 'post',

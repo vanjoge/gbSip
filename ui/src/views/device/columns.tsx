@@ -46,7 +46,7 @@ export const baseColumns: TableColumnItem[] = [
   },
   {
     title: '通道数',
-    width: 50,
+    width: 80,
     align: 'center',
     hideInSearch: true,
     dataIndex: 'CatalogChannel',

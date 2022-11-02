@@ -18,7 +18,10 @@ namespace GB28181.Client
         private int _sn = 0;
         object lckSN = new object();
         protected DeviceInfo deviceInfo;
-        Dictionary<string, Catalog.Item> ditDevice = new Dictionary<string, Catalog.Item>();
+        /// <summary>
+        /// 下挂通道/设备列表
+        /// </summary>
+        protected Dictionary<string, Catalog.Item> ditDevice = new Dictionary<string, Catalog.Item>();
 
         DateTime LastHeartTime = DateTime.MinValue, LastAnsOKTime;
         SIPEndPoint remoteEndPoint;
@@ -34,13 +37,17 @@ namespace GB28181.Client
         /// <param name="expiry"></param>
         /// <param name="UserAgent"></param>
         /// <param name="EnableTraceLogs"></param>
-        public GB28181SipClient(string server, string server_id, DeviceInfo deviceInfo, IEnumerable<Catalog.Item> deviceList, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300) :
+        public GB28181SipClient(string server, string server_id, DeviceInfo deviceInfo, IEnumerable<Catalog.Item> deviceList, string authUsername = null, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300) :
             this(new SIPTransport(), server_id, deviceInfo.DeviceID, password, server, expiry)
         {
             this.UserAgent = UserAgent;
             this.deviceInfo = deviceInfo;
             this.m_heartSec = heartSec;
             this.m_timeOutSec = timeOutSec;
+            if (!string.IsNullOrEmpty(authUsername))
+            {
+                this.m_authUsername = authUsername;
+            }
             ChangeCatalog(deviceList);
             if (EnableTraceLogs)
                 m_sipTransport.EnableTraceLogs();
@@ -302,11 +309,7 @@ namespace GB28181.Client
                                     RecordInfo model = await On_RECORDINFO(SQ.Base.SerializableHelper.DeserializeByStr<RecordInfoQuery>(sipRequest.Body), sipRequest);
                                     if (model != null)
                                     {
-                                        var req = GetSIPRequest();
-                                        req.Header.CSeq = sipRequest.Header.CSeq;
-                                        req.Body = model.ToXmlStr();
-
-                                        await m_sipTransport.SendRequestAsync(req);
+                                        await AnsRecordInfo(sipRequest, model);
                                     }
                                     break;
                             }
@@ -404,12 +407,24 @@ namespace GB28181.Client
 
         }
 
+        protected Task AnsRecordInfo(SIPRequest sipRequest, RecordInfo model)
+        {
+            var req = GetSIPRequest();
+            req.Header.CSeq = sipRequest.Header.CSeq;
+            req.Body = model.ToXmlStr();
+
+            return m_sipTransport.SendRequestAsync(req);
+        }
         public void ChangeCatalog(IEnumerable<Catalog.Item> deviceList)
         {
             ditDevice.Clear();
             if (deviceList != null)
+            {
                 foreach (var item in deviceList)
                     ditDevice.Add(item.DeviceID, item);
+
+                deviceInfo.Channel = ditDevice.Count;
+            }
         }
 
 

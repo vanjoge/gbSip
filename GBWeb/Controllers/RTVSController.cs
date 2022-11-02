@@ -164,7 +164,7 @@ namespace GBWeb.Controllers
                 SQ.Base.Log.WriteLog4(this.HttpContext.Request.Path + this.HttpContext.Request.QueryString);
                 if (Program.sipServer.TryGetClient(DeviceID, out var client))
                 {
-                    await client.Send_GetRecordInfo(OrderID, query);
+                    await client.Send_GetRecordInfo_RTVS(OrderID, query);
                     return "1";
                 }
                 else

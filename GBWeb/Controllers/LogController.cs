@@ -1,4 +1,5 @@
 ﻿using GBWeb.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace GBWeb.Controllers
 {
+#if DEBUG
+    [AllowAnonymous]
+#endif
     public class LogController : Controller
     {
         public IActionResult Index()

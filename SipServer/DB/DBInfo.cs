@@ -66,7 +66,7 @@ namespace SipServer.DB
                 {
                     return SQ.Base.JsonHelper.ParseJSON<T>(p.Result);
                 }
-                return default(T);
+                return default;
             });
         }
 
@@ -219,7 +219,7 @@ namespace SipServer.DB
                     client?.RemoveChannel(ChannelId);
                     str += $",'{ChannelId}'";
                 }
-                str = str.Substring(1);
+                str = str[1..];
                 await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM T_Catalog WHERE ChannelID in ({str}) AND DeviceID ='{DeviceID}';");
                 var count = await dbContext.TCatalogs.CountAsync(p => p.DeviceId == DeviceID);
                 await dbContext.Database.ExecuteSqlRawAsync($"UPDATE T_DeviceInfo SET CatalogChannel = {count} WHERE DeviceID ='{DeviceID}';");
@@ -473,7 +473,7 @@ namespace SipServer.DB
                         sipServer.RemoveClient(DeviceID, false);
                     str += $",'{DeviceID}'";
                 }
-                str = str.Substring(1);
+                str = str[1..];
                 return await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM T_Catalog WHERE DeviceID in ({str});DELETE FROM T_DeviceInfo WHERE DeviceID in ({str});") > 0;
             }
             finally
@@ -566,7 +566,7 @@ namespace SipServer.DB
 
 
         #region SuperiorInfo
-        public async Task<TSuperiorInfo> GetSuperiorInfo(string id)
+        public async Task<SuperiorInfoEx> GetSuperiorInfo(string id)
         {
             var dbContext = dbContextPool.Get();
             try
@@ -578,7 +578,7 @@ namespace SipServer.DB
                 }
                 else
                 {
-                    return lst[0];
+                    return ToSuperiorInfoEx(lst[0]);
                 }
             }
             finally
@@ -586,7 +586,13 @@ namespace SipServer.DB
                 dbContextPool.Return(dbContext);
             }
         }
-        public async Task<List<SuperiorInfoEx>> GetSuperiorList()
+        SuperiorInfoEx ToSuperiorInfoEx(TSuperiorInfo item)
+        {
+            var si = new SuperiorInfoEx(item);
+            si.SetClient(sipServer.Cascade.GetClient(item.Id));
+            return si;
+        }
+        public async Task<DPager<SuperiorInfoEx>> GetSuperiorList()
         {
             var dbContext = dbContextPool.Get();
             try
@@ -595,14 +601,9 @@ namespace SipServer.DB
                 List<SuperiorInfoEx> lst = new List<SuperiorInfoEx>();
                 foreach (var item in superiors)
                 {
-                    var si = new SuperiorInfoEx()
-                    {
-                        superiorInfo = item,
-                        Client = sipServer.Cascade.GetClient(item.Id),
-                    };
-                    lst.Add(si);
+                    lst.Add(ToSuperiorInfoEx(item));
                 }
-                return lst;
+                return new DPager<SuperiorInfoEx>(lst, 1, lst.Count, lst.Count);
             }
             finally
             {
@@ -635,18 +636,50 @@ namespace SipServer.DB
                 dbContextPool.Return(dbContext);
             }
         }
-        public async Task<bool> DeleteSuperior(string id)
+        public async Task<bool> DeleteSuperiors(params string[] ids)
         {
+            if (ids.Length == 0)
+            {
+                return false;
+            }
             var dbContext = dbContextPool.Get();
             try
             {
-                return await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM TSuperiorInfos WHERE ID = '{id}';") > 0;
+                string str = "";
+                foreach (var id in ids)
+                {
+                    str += $",'{id}'";
+                }
+                str = str[1..];
+
+                return await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM TSuperiorInfos WHERE ID in ({str}';") > 0;
             }
             finally
             {
                 dbContextPool.Return(dbContext);
             }
         }
+
+
+        #region SuperiorChannel
+        public async Task<List<SuperiorChannel>> GetSuperiorChannels(string superiorId)
+        {
+            var dbContext = dbContextPool.Get();
+            try
+            {
+                var userInfos = from c in dbContext.TSuperiorChannels
+                                from t in dbContext.TCatalogs
+                                where c.DeviceId == t.DeviceId && c.ChannelId == t.ChannelId && c.SuperiorId == superiorId
+                                select new SuperiorChannel(t, c);
+
+                return await userInfos.ToListAsync();
+            }
+            finally
+            {
+                dbContextPool.Return(dbContext);
+            }
+        }
+        #endregion
         #endregion
     }
 }

@@ -13,6 +13,17 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.21" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.5" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Views\Cascade\**" />
+    <Content Remove="Views\Cascade\**" />
+    <EmbeddedResource Remove="Views\Cascade\**" />
+    <None Remove="Views\Cascade\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\CascadeController.cs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="IGeekFan.AspNetCore.Knife4jUI" Version="0.0.11" />
     <PackageReference Include="Microsoft.Extensions.Logging.Log4Net.AspNetCore" Version="6.1.0" />

@@ -80,6 +80,9 @@ namespace GBWeb.Controllers
             });
             perms.Add("DeviceInfo:UpdateDevice");
             perms.Add("DeviceInfo:DeleteDevice");
+            perms.Add("Superior:CreateSuperior");
+            perms.Add("Superior:UpdateSuperior");
+            perms.Add("Superior:DeleteSuperiors");
             return RetApiResult(new PermMenu
             {
                 Menus = menus,

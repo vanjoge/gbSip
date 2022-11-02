@@ -9,18 +9,46 @@ using System.Text;
 
 namespace SipServer.Models
 {
-    public class SuperiorInfoEx
+    public class SuperiorInfoEx : TSuperiorInfo
     {
-        public TSuperiorInfo superiorInfo;
+        private CascadeClient Client;
+        public void SetClient(CascadeClient Client)
+        {
+            this.Client = Client;
+        }
+        public SuperiorInfoEx(TSuperiorInfo item)
+        {
+            ClientId = item.ClientId;
+            ClientName = item.ClientName;
+            Enable = item.Enable;
+            Expiry = item.Expiry;
+            HeartSec = item.HeartSec;
+            HeartTimeoutTimes = item.HeartTimeoutTimes;
+            Id = item.Id;
+            Name = item.Name;
+            RegSec = item.RegSec;
+            Server = item.Server;
+            ServerId = item.ServerId;
+            ServerPort = item.ServerPort;
+            Sippassword = item.Sippassword;
+            Sipusername = item.Sipusername;
+            UseTcp = item.UseTcp;
+            ServerRealm = item.ServerRealm;
+        }
 
-        public CascadeClient Client;
         public string GetServerSipStr()
         {
-            return GetServerSipStr(superiorInfo);
+            return GetServerSipStr(this);
         }
         public static string GetServerSipStr(TSuperiorInfo superior)
         {
             return $"sip:{superior.ServerId}@{superior.Server}:{superior.ServerPort}{(superior.UseTcp ? ";transport=tcp" : "")}";
+        }
+        public static void Check(TSuperiorInfo info)
+        {
+            if (info.ClientName == null) info.ClientName = "";
+            if (info.Sippassword == null) info.Sippassword = "";
+            if (info.Sipusername == null) info.Sipusername = "";
         }
     }
 }

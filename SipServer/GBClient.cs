@@ -22,6 +22,7 @@ namespace SipServer
 {
     public partial class GBClient : IDisposable
     {
+        public delegate Task dlgReportRecord(RecordInfo recordInfo);
         #region 变量、字段
         /// <summary>
         /// CmdType判断正则
@@ -87,6 +88,16 @@ namespace SipServer
         object lckCseq = new object();
         object lckSn = new object();
 
+        class QueryRecordInfo
+        {
+            public RecordInfo Info;
+            public int SNOld;
+            public dlgReportRecord Callback;
+        }
+        /// <summary>
+        /// 发起录像查询缓存内容
+        /// </summary>
+        ConcurrentDictionary<int, QueryRecordInfo> ditQueryRecordInfo = new ConcurrentDictionary<int, QueryRecordInfo>();
         #endregion
 
         #region 构造
@@ -427,7 +438,31 @@ namespace SipServer
                             break;
                         case "RECORDINFO":
                             var recordInfo = SerializableHelper.DeserializeByStr<RecordInfo>(sipRequest.Body);
-                            await AnsRTVSGetRecordInfo(recordInfo);
+                            if (ditQueryRecordInfo.TryGetValue(recordInfo.SN, out var query))
+                            {
+                                if (recordInfo.SumNum == 0)
+                                {
+                                    ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
+                                    await query.Callback(recordInfo);
+                                }
+                                else
+                                {
+                                    if (query.Info == null)
+                                    {
+                                        query.Info = recordInfo;
+                                    }
+                                    else if (recordInfo.SumNum > recordInfo.RecordList.Count)
+                                    {
+                                        query.Info.RecordList.AddRange(recordInfo.RecordList);
+                                    }
+
+                                    if (recordInfo.SumNum <= query.Info.RecordList.Count)
+                                    {
+                                        ditQueryRecordInfo.TryRemove(recordInfo.SN, out query);
+                                        await query.Callback(query.Info);
+                                    }
+                                }
+                            }
                             await SendOkMessage(sipRequest);
                             break;
                         case "BROADCAST":
@@ -489,14 +524,14 @@ namespace SipServer
             await SendResponseAsync(okResponse);
         }
 
-        public async Task<int> Send_GetRecordInfo(string OrderID, RecordInfoQuery query)
+        public async Task<int> Send_GetRecordInfo(RecordInfoQuery query, dlgReportRecord callback)
         {
             var req = GetSIPRequest(ContentType: Constant.Application_XML);
             var nowsn = GetSN();
             ditQueryRecordInfo[nowsn] = new QueryRecordInfo
             {
                 SNOld = query.SN,
-                OrderID = OrderID
+                Callback = callback,
             };
             query.SN = nowsn;
             req.Body = query.ToXmlStr();
