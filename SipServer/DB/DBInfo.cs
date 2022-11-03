@@ -149,10 +149,12 @@ namespace SipServer.DB
                 if (DeviceID == ParentId)
                 {
                     var all = dbContext.TCatalogs.Where(_ => _.DeviceId == DeviceID);
-
+                    //ParentId不存在
                     var noHaveParent = from a in all where !(from b in all select b.ChannelId).Contains(a.ParentId) select a;
+                    //ParentId与ChannelId相等
+                    var eq = from a in all where a.ChannelId == a.ParentId select a;
 
-                    data = data.Union(noHaveParent);
+                    data = data.Union(noHaveParent).Union(eq);
                 }
 
                 //var data = dbContext.TCatalogs.Where(p => p.DeviceId == DeviceID);
