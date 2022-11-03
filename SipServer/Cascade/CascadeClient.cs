@@ -159,9 +159,10 @@ namespace SipServer.Cascade
         {
             if (ditChannels.TryGetValue(res.DeviceID, out var channel) && manager.sipServer.TryGetClient(channel.DeviceId, out var client))
             {
+                var oldsn = res.SN;
                 await client.Send_GetRecordInfo(res, p =>
                 {
-                    p.SN=res.SN;
+                    p.SN = oldsn;
                     return AnsRecordInfo(sipRequest, p);
                 });
                 return null;
