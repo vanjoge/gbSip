@@ -5,11 +5,14 @@ namespace SipServer.DBModel
 {
     public partial class TSuperiorChannel
     {
-        public ulong RowId { get; set; }
         /// <summary>
         /// 上级ID
         /// </summary>
         public string SuperiorId { get; set; }
+        /// <summary>
+        /// 自定义通道ID
+        /// </summary>
+        public string CustomChannelId { get; set; }
         /// <summary>
         /// 设备ID
         /// </summary>
@@ -22,9 +25,5 @@ namespace SipServer.DBModel
         /// 启用
         /// </summary>
         public bool Enable { get; set; }
-        /// <summary>
-        /// 自定义通道ID
-        /// </summary>
-        public string CustomChannelId { get; set; }
     }
 }

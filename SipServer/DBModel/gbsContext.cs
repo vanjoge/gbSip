@@ -126,7 +126,6 @@ namespace SipServer.DBModel
 
                 entity.Property(e => e.Online)
                     .HasColumnType("bit(1)")
-                    .HasDefaultValueSql("b'1'")
                     .HasComment("在线状态");
 
                 entity.Property(e => e.OnlineTime)
@@ -351,29 +350,30 @@ namespace SipServer.DBModel
 
             modelBuilder.Entity<TSuperiorChannel>(entity =>
             {
-                entity.HasKey(e => e.RowId)
-                    .HasName("PRIMARY");
+                entity.HasKey(e => new { e.SuperiorId, e.CustomChannelId })
+                    .HasName("PRIMARY")
+                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
                 entity.ToTable("T_SuperiorChannel");
 
                 entity.HasCharSet("utf8")
                     .UseCollation("utf8_general_ci");
 
-                entity.Property(e => e.RowId)
-                    .HasColumnType("bigint(20) unsigned")
-                    .HasColumnName("RowID");
+                entity.Property(e => e.SuperiorId)
+                    .HasMaxLength(50)
+                    .HasColumnName("SuperiorID")
+                    .HasComment("上级ID");
+
+                entity.Property(e => e.CustomChannelId)
+                    .HasMaxLength(50)
+                    .HasColumnName("CustomChannelID")
+                    .HasComment("自定义通道ID");
 
                 entity.Property(e => e.ChannelId)
                     .IsRequired()
                     .HasMaxLength(50)
                     .HasColumnName("ChannelID")
                     .HasComment("CatalogID");
-
-                entity.Property(e => e.CustomChannelId)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .HasColumnName("CustomChannelID")
-                    .HasComment("自定义通道ID");
 
                 entity.Property(e => e.DeviceId)
                     .IsRequired()
@@ -384,12 +384,6 @@ namespace SipServer.DBModel
                 entity.Property(e => e.Enable)
                     .HasColumnType("bit(1)")
                     .HasComment("启用");
-
-                entity.Property(e => e.SuperiorId)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .HasColumnName("SuperiorID")
-                    .HasComment("上级ID");
             });
 
             modelBuilder.Entity<TSuperiorInfo>(entity =>

@@ -44,10 +44,12 @@ namespace SipServer.Models
             OnlineTime = item.OnlineTime;
             OfflineTime = item.OfflineTime;
 
-            RowId = channel.RowId;
-            SuperiorId = channel.SuperiorId;
-            Enable = channel.Enable;
-            CustomChannelId = channel.CustomChannelId;
+            if (channel != null)
+            {
+                SuperiorId = channel.SuperiorId;
+                Enable = channel.Enable;
+                CustomChannelId = channel.CustomChannelId;
+            }
         }
         public ulong RowId { get; set; }
         /// <summary>

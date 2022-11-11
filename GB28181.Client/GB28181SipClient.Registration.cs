@@ -27,7 +27,7 @@ using SIPSorcery.Sys;
 
 namespace GB28181.Client
 {
-    public partial class GB28181SipClient
+    public partial class GB28181SipClient<T> where T : ChannelItem
     {
         SIPToHeader toSIPToHeader;
         SIPFromHeader fromSIPFromHeader;

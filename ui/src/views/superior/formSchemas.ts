@@ -49,7 +49,7 @@ export const superiorSchemas: FormSchema<API.TSuperior>[] = [
   {
     field: 'ClientId',
     component: 'Input',
-    label: '本地SIP国标编码',
+    label: '本地国标编码',
     componentProps: { maxlength: 20 },
     rules: [{ required: true, pattern: /\d{20}/ }],
     colProps: {
@@ -59,7 +59,8 @@ export const superiorSchemas: FormSchema<API.TSuperior>[] = [
   {
     field: 'ClientName',
     component: 'Input',
-    label: '本地SIP名称',
+    label: '上报名称',
+    componentProps: { placeholder: '默认使用名称' },
     colProps: {
       span: 12,
     },

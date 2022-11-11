@@ -11,6 +11,11 @@ namespace SipServer.Models
 {
     public class SuperiorInfoEx : TSuperiorInfo
     {
+        /// <summary>
+        /// 在线状态
+        /// </summary>
+        public bool Online { get { return Client?.IsRegistered == true; } }
+
         private CascadeClient Client;
         public void SetClient(CascadeClient Client)
         {

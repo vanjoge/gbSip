@@ -1,27 +1,31 @@
 ﻿using GB28181.Enums;
 using GB28181.MANSRTSP;
 using GB28181.XML;
+using Newtonsoft.Json.Linq;
 using SIPSorcery.Net;
 using SIPSorcery.SIP;
 using SQ.Base;
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace GB28181.Client
 {
-    public abstract partial class GB28181SipClient
+    public abstract partial class GB28181SipClient<T> where T : ChannelItem
     {
-        SQ.Base.ThreadWhile<Object> th;
+        protected SQ.Base.ThreadWhile<Object> th;
         private int _sn = 0;
         object lckSN = new object();
         protected DeviceInfo deviceInfo;
         /// <summary>
         /// 下挂通道/设备列表
         /// </summary>
-        protected Dictionary<string, Catalog.Item> ditDevice = new Dictionary<string, Catalog.Item>();
+        protected NotifyChangeDictionary<string, T> ditChild;
 
         DateTime LastHeartTime = DateTime.MinValue, LastAnsOKTime;
         SIPEndPoint remoteEndPoint;
@@ -32,12 +36,12 @@ namespace GB28181.Client
         /// <param name="server"></param>
         /// <param name="server_id"></param>
         /// <param name="deviceInfo"></param>
-        /// <param name="deviceList"></param>
+        /// <param name="ditChild"></param>
         /// <param name="password"></param>
         /// <param name="expiry"></param>
         /// <param name="UserAgent"></param>
         /// <param name="EnableTraceLogs"></param>
-        public GB28181SipClient(string server, string server_id, DeviceInfo deviceInfo, IEnumerable<Catalog.Item> deviceList, string authUsername = null, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300) :
+        public GB28181SipClient(string server, string server_id, DeviceInfo deviceInfo, string authUsername = null, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300) :
             this(new SIPTransport(), server_id, deviceInfo.DeviceID, password, server, expiry)
         {
             this.UserAgent = UserAgent;
@@ -48,7 +52,6 @@ namespace GB28181.Client
             {
                 this.m_authUsername = authUsername;
             }
-            ChangeCatalog(deviceList);
             if (EnableTraceLogs)
                 m_sipTransport.EnableTraceLogs();
 
@@ -107,10 +110,16 @@ namespace GB28181.Client
             this.StartReg();
 
         }
-
-        public void Stop(bool waitStop = true)
+        public bool IsRun
         {
-            if (th != null)
+            get
+            {
+                return th != null;
+            }
+        }
+        public virtual void Stop(bool waitStop = true)
+        {
+            if (IsRun)
             {
                 StopReg();
                 if (waitStop)
@@ -296,12 +305,14 @@ namespace GB28181.Client
                                 case "DEVICESTATUS":
                                     //查询设备状态
                                     await SendMessage(sipRequest);
-                                    await SendDeviceStatus(sn);
+                                    var deviceStatusQuery = SQ.Base.SerializableHelper.DeserializeByStr<DeviceStatusQuery>(sipRequest.Body);
+                                    await SendDeviceStatus(sn, deviceStatusQuery.DeviceID);
                                     break;
                                 case "CATALOG":
                                     await SendMessage(sipRequest);
+                                    var catalogQuery = SQ.Base.SerializableHelper.DeserializeByStr<CatalogQuery>(sipRequest.Body);
 
-                                    await SendCatalog(sn, sipRequest);
+                                    await SendCatalog(catalogQuery, sipRequest);
 
                                     break;
                                 case "RECORDINFO":
@@ -365,22 +376,35 @@ namespace GB28181.Client
             var req = GetSIPRequest();
             deviceInfo.CmdType = CommandType.DeviceInfo;
             deviceInfo.SN = sn;
+            deviceInfo.Channel = ditChild.Count;
 
             req.Body = deviceInfo.ToXmlStr();
 
             return m_sipTransport.SendRequestAsync(req);
 
         }
-        protected virtual Task SendDeviceStatus(int sn)
+        protected virtual Task SendDeviceStatus(int sn, string DeviceID)
         {
             var req = GetSIPRequest();
-            var deviceStatusBody = new DeviceStatus();
-            deviceStatusBody.CmdType = CommandType.DeviceStatus;
-            //deviceStatusBody.Alarmstatus ;
-            deviceStatusBody.Online = "ONLINE";
-            deviceStatusBody.DeviceID = deviceInfo.DeviceID;
+            DeviceStatus deviceStatusBody;
+            if (DeviceID == deviceInfo.DeviceID)
+            {
+                deviceStatusBody = new DeviceStatus();
+                //deviceStatusBody.CmdType = CommandType.DeviceStatus;
+                //deviceStatusBody.Alarmstatus ;
+                deviceStatusBody.Online = "ONLINE";
+                deviceStatusBody.DeviceID = deviceInfo.DeviceID;
+                deviceStatusBody.Status = "OK";
+            }
+            else if (ditChild.TryGetValue(DeviceID, out var channelItem))
+            {
+                deviceStatusBody = channelItem.Status;
+            }
+            else
+            {
+                return Task.FromResult(false);
+            }
             deviceStatusBody.Result = "OK";
-            deviceStatusBody.Status = "OK";
             deviceStatusBody.SN = sn;
 
             req.Body = deviceStatusBody.ToXmlStr();
@@ -388,19 +412,20 @@ namespace GB28181.Client
             return m_sipTransport.SendRequestAsync(req);
 
         }
-        protected virtual Task SendCatalog(int sn, SIPRequest sipRequest)
+        protected virtual Task SendCatalog(CatalogQuery query, SIPRequest sipRequest)
         {
+            //TODO:暂未支持DeviceID与设备ID不一致的场景
             var req = GetSIPRequest();
-            //req.Header.To.ToURI = sipRequest.Header.From.FromURI;
-            //req.Header.From.FromURI = sipRequest.Header.To.ToURI;
             req.Header.CSeq = sipRequest.Header.CSeq;
             var catalogBody = new Catalog();
-            catalogBody.CmdType = CommandType.Catalog;
-            catalogBody.SumNum = deviceInfo.Channel;
-            catalogBody.SN = sn;
+            catalogBody.SumNum = deviceInfo.Channel = ditChild.Count;
+            catalogBody.SN = query.SN;
             catalogBody.DeviceID = deviceInfo.DeviceID;
-            catalogBody.DeviceList = new NList<Catalog.Item>(ditDevice.Values);
-
+            catalogBody.DeviceList = new NList<Catalog.Item>(ditChild.Count);
+            foreach (var item in ditChild)
+            {
+                catalogBody.DeviceList.Add(item.Value.CatalogItem);
+            }
             req.Body = catalogBody.ToXmlStr();
 
             return m_sipTransport.SendRequestAsync(req);
@@ -415,17 +440,12 @@ namespace GB28181.Client
 
             return m_sipTransport.SendRequestAsync(req);
         }
-        public void ChangeCatalog(IEnumerable<Catalog.Item> deviceList)
-        {
-            ditDevice.Clear();
-            if (deviceList != null)
-            {
-                foreach (var item in deviceList)
-                    ditDevice.Add(item.DeviceID, item);
 
-                deviceInfo.Channel = ditDevice.Count;
-            }
-        }
+        //public void ChangeCatalog(IEnumerable<ChannelItem> deviceList)
+        //{
+        //    ditDevice.ChangeAll(deviceList);
+        //    deviceInfo.Channel = ditDevice.Count;
+        //}
 
 
         protected virtual SIPResponse GetSIPResponse(SIPRequest sipRequest, SIPResponseStatusCodesEnum messaageResponse = SIPResponseStatusCodesEnum.Ok)

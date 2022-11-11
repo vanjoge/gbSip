@@ -8,6 +8,29 @@ export function getSuperiorList(params: API.PageParams<API.TSuperior>) {
     params,
   });
 }
+export function getChannelList(params: API.PageParams<API.TSuperiorChannel>) {
+  return request<API.TableListResult<API.TSuperiorChannelList>>({
+    url: Api.channelList,
+    method: 'get',
+    params,
+  });
+}
+export function bindChannel(
+  superiorId: string,
+  add: API.TSuperiorChannel[],
+  remove: API.TSuperiorChannel[],
+) {
+  return request(
+    {
+      url: Api.bindChannels,
+      method: 'post',
+      data: { SuperiorId: superiorId, Add: add, Remove: remove },
+    },
+    {
+      successMsg: '绑定成功',
+    },
+  );
+}
 export function createSuperior(data: API.TSuperior) {
   return request(
     {

@@ -13,8 +13,63 @@ using System.Threading.Tasks;
 
 namespace SipServer.Cascade
 {
-    public class CascadeClient : GB28181SipClient
+    public class CascadeClient : GB28181SipClient<CascadeChannelItem>
     {
+        public class CascadeChannelDictionary : NotifyChangeDictionary<string, CascadeChannelItem>
+        {
+            public CascadeChannelDictionary(CascadeClient client)
+            {
+                this.client = client;
+
+            }
+            protected CascadeClient client;
+            protected override string GetKey(CascadeChannelItem item)
+            {
+                return item.CatalogItem.DeviceID;
+            }
+
+            protected override void OnChannelItemAdd(CascadeChannelItem item)
+            {
+                bool Online = false;
+                if (client.manager.sipServer.TryGetClient(item.DeviceId, out var gbClient) && gbClient.TryGetChannel(item.ChannelId, out var gbChannel))
+                {
+                    Online = gbChannel.Data.Online;
+                    item.GBChannel = gbChannel;
+                }
+                else
+                {
+                    client.manager.ditWaitBindChannel.Add(item);
+                }
+                item.ChangeOnline(Online);
+            }
+
+            protected override void OnChannelItemRemove(CascadeChannelItem item)
+            {
+                if (item.GBChannel == null)
+                {
+                    client.manager.ditWaitBindChannel.Remove(item);
+                }
+                else
+                {
+                    item.GBChannel.ditCascadeChannel.TryRemove(item.SuperiorId, out var val);
+                    item.GBChannel = null;
+                }
+            }
+
+            protected override void OnChannelItemUpdate(CascadeChannelItem old, CascadeChannelItem item)
+            {
+                if (old.GBChannel == null)
+                {
+                    client.manager.ditWaitBindChannel.Update(old, item);
+                }
+                else
+                {
+                    item.GBChannel = old.GBChannel;
+                    old.GBChannel = null;
+                    item.GBChannel.ditCascadeChannel[item.SuperiorId] = item;
+                }
+            }
+        }
         protected class fromTagCache
         {
             public string TaskID;
@@ -23,52 +78,21 @@ namespace SipServer.Cascade
         }
         private CascadeManager manager;
         public string Key { get; protected set; }
+        /// <summary>
+        /// 通道信息
+        /// </summary>
         protected ConcurrentDictionary<string, SuperiorChannel> ditChannels = new ConcurrentDictionary<string, SuperiorChannel>();
         protected ConcurrentDictionary<string, fromTagCache> ditFromTagCache = new ConcurrentDictionary<string, fromTagCache>();
-        public CascadeClient(CascadeManager manager, string Key, string server, string server_id, DeviceInfo deviceInfo, List<SuperiorChannel> channels, string authUsername = null, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300) : base(server, server_id, deviceInfo, null, authUsername, password, expiry, UserAgent, EnableTraceLogs, heartSec, timeOutSec)
+        public CascadeClient(CascadeManager manager, string Key, string server, string server_id, DeviceInfo deviceInfo, List<SuperiorChannel> channels, string authUsername = null, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300)
+            : base(server, server_id, deviceInfo, authUsername, password, expiry, UserAgent, EnableTraceLogs, heartSec, timeOutSec)
         {
             this.Key = Key;
             this.manager = manager;
-            List<Catalog.Item> lst = new List<Catalog.Item>();
+            this.ditChild = new CascadeChannelDictionary(this);
             foreach (var item in channels)
             {
-                var channel_id = item.GetChannelId();
-                ditChannels[channel_id] = item;
-                var ci = new Catalog.Item
-                {
-                    DeviceID = channel_id,
-                    Name = item.Name,
-                    Manufacturer = item.Manufacturer,
-                    Model = item.Model,
-                    Owner = item.Owner,
-                    CivilCode = item.CivilCode,
-                    Block = item.Block,
-                    Address = item.Address,
-                    Parental = item.Parental ? 1 : 0,
-                    ParentID = item.ParentId,
-                    BusinessGroupID = item.BusinessGroupId,
-                    SafetyWay = item.SafetyWay,
-                    RegisterWay = item.RegisterWay,
-                    CertNum = item.CertNum,
-                    Certifiable = item.Certifiable ? 1 : 0,
-                    ErrCode = item.ErrCode,
-                    EndTime = item.EndTime?.ToTStr(),
-                    Secrecy = item.Secrecy ? 1 : 0,
-                    IPAddress = item.Ipaddress,
-                    Password = item.Password,
-                    Status = item.Status,
-                    Longitude = item.Longitude,
-                    Latitude = item.Latitude,
-                };
-                if (item.Port > 0)
-                    ci.Port = (ushort)item.Port;
-                if (item.Longitude > 0)
-                    ci.Longitude = item.Longitude;
-                if (item.Latitude > 0)
-                    ci.Latitude = item.Latitude;
-                lst.Add(ci);
+                AddChannel(item);
             }
-            this.ChangeCatalog(lst);
         }
 
         protected override async Task<bool> On_ACK(string fromTag, SIPRequest sipRequest)
@@ -177,6 +201,59 @@ namespace SipServer.Cascade
                     SumNum = 0,
                 };
             }
+        }
+
+        public override void Stop(bool waitStop = true)
+        {
+            if (IsRun)
+            {
+                ditChild.ChangeAll(null);
+                base.Stop(waitStop);
+            }
+        }
+
+        protected internal void AddChannel(SuperiorChannel item)
+        {
+            var channel_id = item.GetChannelId();
+            ditChannels[channel_id] = item;
+            var ci = new Catalog.Item
+            {
+                DeviceID = channel_id,
+                Name = item.Name,
+                Manufacturer = item.Manufacturer,
+                Model = item.Model,
+                Owner = item.Owner,
+                CivilCode = item.CivilCode,
+                Block = item.Block,
+                Address = item.Address,
+                Parental = item.Parental ? 1 : 0,
+                ParentID = item.ParentId,
+                BusinessGroupID = item.BusinessGroupId,
+                SafetyWay = item.SafetyWay,
+                RegisterWay = item.RegisterWay,
+                CertNum = item.CertNum,
+                Certifiable = item.Certifiable ? 1 : 0,
+                ErrCode = item.ErrCode,
+                EndTime = item.EndTime?.ToTStr(),
+                Secrecy = item.Secrecy ? 1 : 0,
+                IPAddress = item.Ipaddress,
+                Password = item.Password,
+                Status = item.Status,
+                Longitude = item.Longitude,
+                Latitude = item.Latitude,
+            };
+            if (item.Port > 0)
+                ci.Port = (ushort)item.Port;
+            if (item.Longitude > 0)
+                ci.Longitude = item.Longitude;
+            if (item.Latitude > 0)
+                ci.Latitude = item.Latitude;
+            ditChild.AddOrUpdate(new CascadeChannelItem(item.SuperiorId, item.DeviceId, item.ChannelId, ci));
+        }
+        protected internal void RemoveChannel(string ChannelId)
+        {
+            ditChannels.Remove(ChannelId, out var item);
+            ditChild.TryRemove(ChannelId, out var citem);
         }
     }
 }

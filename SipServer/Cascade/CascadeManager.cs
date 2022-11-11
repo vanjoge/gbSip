@@ -1,6 +1,7 @@
 ﻿using SipServer.DBModel;
 using SipServer.Models;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,9 +12,13 @@ namespace SipServer.Cascade
         /// <summary>
         /// 客户端
         /// </summary>
-        ConcurrentDictionary<string, CascadeClient> ditClient = new ConcurrentDictionary<string, CascadeClient>();
+        protected ConcurrentDictionary<string, CascadeClient> ditClient = new ConcurrentDictionary<string, CascadeClient>();
         protected internal SipServer sipServer;
 
+        /// <summary>
+        /// KEY 设备ID_通道号
+        /// </summary>
+        protected internal WaitBindChannelManager ditWaitBindChannel = new WaitBindChannelManager();
         public CascadeManager(SipServer sipServer)
         {
             this.sipServer = sipServer;
@@ -82,7 +87,7 @@ namespace SipServer.Cascade
             CascadeClient client = new CascadeClient(this, sinfo.Id, SuperiorInfoEx.GetServerSipStr(sinfo), sinfo.ServerId, new GB28181.XML.DeviceInfo
             {
                 DeviceID = sinfo.ClientId,
-                DeviceName = sinfo.ClientName,
+                DeviceName = string.IsNullOrEmpty(sinfo.ClientName) ? sinfo.Name : sinfo.ClientName,
                 Manufacturer = "RTVS",
                 Model = "gbsip",
                 Result = "OK",

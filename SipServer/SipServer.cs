@@ -261,19 +261,27 @@ namespace SipServer
         {
             return sipRequest.Header.From.FromURI.User;
         }
-        public bool TryGetClient(string key, out GBClient value) => ditClient.TryGetValue(key, out value);
+        public bool TryGetClient(string DeviceID, out GBClient value)
+        {
+            if (DeviceID == null)
+            {
+                value = null;
+                return false;
+            }
+            return ditClient.TryGetValue(DeviceID, out value);
+        }
         /// <summary>
         /// 移除Client
         /// </summary>
         /// <param name="key"></param>
-        public void RemoveClient(string key, bool updateDB = true, string CallID = null)
+        public void RemoveClient(string DeviceID, bool updateDB = true, string CallID = null)
         {
-            if (CallID != null && TryGetClient(key, out var client1) && !client1.VerifyCallID(CallID))
+            if (CallID != null && TryGetClient(DeviceID, out var client1) && !client1.VerifyCallID(CallID))
             {
                 //CallID不一样，跳过
                 return;
             }
-            if (ditClient.TryRemove(key, out var client))
+            if (ditClient.TryRemove(DeviceID, out var client))
             {
                 client.Dispose(updateDB);
             }
@@ -339,9 +347,9 @@ namespace SipServer
                     {
                         if (!ditClient.ContainsKey(DeviceID))
                         {
-                            client = new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, DeviceID, SipServerID, sipRequest.URI.HostAddress, sipRequest.Header.CallId);
+                            ditClient[DeviceID] = client = new GBClient(this, sipRequest.URI.Scheme, localSIPEndPoint, remoteEndPoint, DeviceID, SipServerID, sipRequest.URI.HostAddress, sipRequest.Header.CallId);
                             await client.Online();
-                            ditClient[DeviceID] = client;
+                            //ditClient[DeviceID] = client;
                         }
                     }
                 }

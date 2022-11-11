@@ -16,6 +16,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SipServer
@@ -24,6 +25,7 @@ namespace SipServer
     {
         public delegate Task dlgReportRecord(RecordInfo recordInfo);
         #region 变量、字段
+        int m_Online = 0;
         /// <summary>
         /// CmdType判断正则
         /// </summary>
@@ -83,7 +85,11 @@ namespace SipServer
         /// <summary>
         /// 设备目录
         /// </summary>
-        ChannelList channels = new ChannelList();
+        ChannelList channels;
+        /// <summary>
+        /// 
+        /// </summary>
+        List<Channel> waitCatalog = new List<Channel>();
 
         object lckCseq = new object();
         object lckSn = new object();
@@ -115,6 +121,7 @@ namespace SipServer
             this.DeviceID = DeviceID;
             m_callID = CallProperties.CreateNewCallId();
             this._regCallID = RegCallID;
+            channels = new ChannelList(this);
         }
         #endregion
 
@@ -127,6 +134,11 @@ namespace SipServer
         /// <returns></returns>
         public async Task Online()
         {
+            if (Interlocked.CompareExchange(ref m_Online, 1, 0) == 1)
+            {
+                return;
+            }
+
             deviceInfo = await sipServer.DB.GetDeviceInfo(DeviceID, OnlyDB: true);
             var now = DateTime.Now;
             bool flag = true;
@@ -180,6 +192,8 @@ namespace SipServer
         /// <returns></returns>
         async Task Offline(bool updateDB = true)
         {
+            Interlocked.CompareExchange(ref m_Online, 0, 1);
+
             deviceInfo.Online = false;
             deviceInfo.OfflineTime = DateTime.Now;
             if (updateDB)
@@ -188,6 +202,7 @@ namespace SipServer
             }
             foreach (var id in channels.Keys.ToList())
             {
+                channels.TryRemove(id, out var gbChannel);
                 sipServer.RemoveTree(id);
             }
         }
@@ -195,11 +210,7 @@ namespace SipServer
 
         public async Task RefreshChannel()
         {
-            channels = new ChannelList();
-            if (deviceInfo != null)
-            {
-                deviceInfo.CatalogChannel = 0;
-            }
+            waitCatalog = new List<Channel>();
             await Send_GetDevCommand(CommandType.Catalog);
         }
         #endregion
@@ -304,6 +315,10 @@ namespace SipServer
                 {
                     RemoteEndPoint = remoteEndPoint;
                 }
+                if (deviceInfo == null)
+                {
+                    return;
+                }
                 switch (sipRequest.Method)
                 {
                     case SIPMethodsEnum.MESSAGE:
@@ -403,12 +418,13 @@ namespace SipServer
                                         citem.ParentId = DeviceID;
                                     }
                                     citem.SetChannelConf(confs[item.DeviceID], sipServer.Settings);
-                                    channels.AddOrUpdate(citem);
+                                    waitCatalog.Add(citem);
                                 }
-                                if (channels.Count == catalog.SumNum || channels.AddTimes == catalog.SumNum)
+                                if (waitCatalog.Count == catalog.SumNum)
                                 {
+                                    channels.ChangeAll(waitCatalog);
                                     //表示收全
-                                    await sipServer.DB.SaveChannels(deviceInfo, channels.Values.ToList());
+                                    await sipServer.DB.SaveChannels(deviceInfo, channels.ToList());
                                 }
                             }
                             break;
@@ -610,7 +626,7 @@ namespace SipServer
                 if (sdp28181.SType == SDP28181.PlayType.Talk && deviceInfo != null)
                 {
                     if (
-                        (channel?.TalkType == 3) //强制广播
+                        (channel?.Data.TalkType == 3) //强制广播
                         || deviceInfo.Manufacturer == "Hikvision"
                         || deviceInfo.Manufacturer == "TP-LINK")
                     {
@@ -625,7 +641,7 @@ namespace SipServer
                 }
                 if (channel != null)
                 {
-                    if (channel.NetType == 1)
+                    if (channel.Data.NetType == 1)
                     {
                         if (sdp28181.NetType != SDP28181.RTPNetType.TCP)
                         {
@@ -633,7 +649,7 @@ namespace SipServer
                             SDP = sdp28181.GetSdpStr();
                         }
                     }
-                    else if (channel.NetType == 3)
+                    else if (channel.Data.NetType == 3)
                     {
                         if (sdp28181.NetType != SDP28181.RTPNetType.UDP)
                         {
@@ -724,7 +740,7 @@ namespace SipServer
         /// <returns></returns>
         public bool Check()
         {
-            if (deviceInfo.KeepAliveTime.DiffNowSec() >= sipServer.Settings.KeepAliveTimeoutSec)
+            if (deviceInfo != null && deviceInfo.KeepAliveTime.DiffNowSec() >= sipServer.Settings.KeepAliveTimeoutSec)
             {
                 return false;
             }
@@ -843,7 +859,7 @@ namespace SipServer
         {
             return deviceInfo;
         }
-        public bool TryGetChannel(string ChannelID, out Channel Channel)
+        public bool TryGetChannel(string ChannelID, out GBChannel Channel)
         {
             return channels.TryGetValue(ChannelID, out Channel);
         }

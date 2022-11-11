@@ -32,7 +32,49 @@ declare namespace API {
     HeartTimeoutTimes: number;
     // TCP/UDP
     UseTcp: boolean;
+    // 在线状态
+    Online: boolean;
   };
   /** 获取用户列表结果 */
   type TSuperiorList = TSuperior[];
+
+  type TSuperiorChannel = {
+    ChannelId: string;
+    DeviceId: string;
+    ParentId: string;
+    Name: string;
+    Manufacturer: string;
+    Model: string;
+    Owner: string;
+    CivilCode: string;
+    Block: string;
+    Address: string;
+    Parental: boolean;
+    BusinessGroupId: string;
+    SafetyWay: number;
+    RegisterWay: number;
+    CertNum: string;
+    Certifiable: boolean;
+    ErrCode: number;
+    EndTime: Date;
+    Secrecy: boolean;
+    Ipaddress: string;
+    Port: number;
+    Password: string;
+    Status: string;
+    Longitude: number;
+    Latitude: number;
+    RemoteEp: string;
+    NickName: string;
+    NetType: number;
+    TalkType: number;
+    Online: boolean;
+    OnlineTime: Date;
+    OfflineTime: Date;
+    CustomChannelId: string;
+    SuperiorId: string;
+    SKey: string;
+    OnlyBind: boolean;
+  };
+  type TSuperiorChannelList = TSuperiorChannel[];
 }

@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 #if DEBUG
 using Microsoft.Extensions.Logging;
 #endif
@@ -71,6 +70,18 @@ namespace SipServer.DB
         }
 
         #region Channel
+        public async Task<TCatalog> GetCatalog(gbsContext dbContext, string DeviceId, string ChannelId)
+        {
+            var data = from u in dbContext.TCatalogs
+                       where u.DeviceId == DeviceId && u.ChannelId == ChannelId
+                       select u;
+            var lst = await data.ToListAsync();
+            if (lst.Count > 0)
+            {
+                return lst[0];
+            }
+            return null;
+        }
         //public async Task<TChannel> GetChannel(string DeviceId, string ChannelId, gbsContext dbContext = null, bool OnlyDB = false)
         //{
         //    if (!OnlyDB && sipServer.TryGetClient(DeviceId, out var client) && client.TryGetChannel(ChannelId, out var old))
@@ -326,7 +337,7 @@ namespace SipServer.DB
         {
             if (sipServer.TryGetClient(DeviceId, out var client) && client.TryGetChannel(ChannelId, out var old))
             {
-                old.SetChannelConf(Channel, sipServer.Settings);
+                old.Data.SetChannelConf(Channel, sipServer.Settings);
             }
             return this.RedisHelper.HashSetAsync(RedisConstant.DeviceConfKey + DeviceId, RedisConstant.ChannelKey + ChannelId, Channel);
         }
@@ -680,6 +691,154 @@ namespace SipServer.DB
             {
                 dbContextPool.Return(dbContext);
             }
+        }
+
+        /// <summary>
+        /// 获取通道列表
+        /// </summary>
+        /// <param name="SuperiorId"></param>
+        /// <param name="DeviceID"></param>
+        /// <param name="ChannelId"></param>
+        /// <param name="Name"></param>
+        /// <param name="Parental"></param>
+        /// <param name="Manufacturer"></param>
+        /// <param name="Page"></param>
+        /// <param name="Limit"></param>
+        /// <param name="All"></param>
+        /// <returns></returns>
+        public async Task<DPager<SuperiorChannel>> GetSuperiorChannels(string SuperiorId, string DeviceID = null, string ChannelId = null, string Name = null, bool? Parental = null, string Manufacturer = null, int Page = 1, int Limit = -1, bool All = false)
+        {
+            var dbContext = dbContextPool.Get();
+            try
+            {
+                IQueryable<SuperiorChannel> data;
+                if (All)
+                {
+                    //LEFT JOIN
+                    data = from catalog in dbContext.TCatalogs
+                           join channel in dbContext.TSuperiorChannels on new { catalog.ChannelId, catalog.DeviceId } equals new { channel.ChannelId, channel.DeviceId } into temp
+                           from tt in temp.DefaultIfEmpty()
+                           select new SuperiorChannel(catalog, tt);
+                }
+                else
+                {
+                    data = from channel in dbContext.TSuperiorChannels
+                           from catalog in dbContext.TCatalogs
+                           where channel.DeviceId == catalog.DeviceId && channel.ChannelId == catalog.ChannelId && channel.SuperiorId == SuperiorId
+                           select new SuperiorChannel(catalog, channel);
+                }
+
+                if (!string.IsNullOrWhiteSpace(DeviceID))
+                {
+                    data = data.Where(p => p.DeviceId.Contains(DeviceID));
+                }
+
+                if (!string.IsNullOrWhiteSpace(ChannelId))
+                {
+                    data = data.Where(p => p.ChannelId.Contains(ChannelId));
+                }
+                if (!string.IsNullOrWhiteSpace(Name))
+                {
+                    data = data.Where(p => p.Name.Contains(Name));
+                }
+                if (!string.IsNullOrWhiteSpace(Manufacturer))
+                {
+                    data = data.Where(p => p.Manufacturer.Contains(Manufacturer));
+                }
+                if (Parental.HasValue)
+                {
+                    data = data.Where(p => p.Parental == Parental.Value);
+                }
+                var sumData = data;
+                if (Page > 1)
+                {
+                    data = data.Skip(GetStart(Page, Limit));
+                }
+                if (Limit >= 0)
+                {
+                    data = data.Take(Limit);
+                }
+                List<SuperiorChannel> lstC = await data.ToListAsync();
+
+                var tuple = await GetSum(Page, Limit, lstC.Count, sumData);
+
+                return new DPager<SuperiorChannel>(lstC, Page, tuple.Item2, tuple.Item1);
+            }
+            finally
+            {
+                dbContextPool.Return(dbContext);
+            }
+        }
+
+        /// <summary>
+        /// 绑定通道
+        /// </summary>
+        /// <param name="SuperiorId"></param>
+        /// <param name="Add"></param>
+        /// <param name="Remove"></param>
+        /// <returns></returns>
+        public async Task<bool> BindChannels(string SuperiorId, List<TSuperiorChannel> Add, List<TSuperiorChannel> Remove)
+        {
+            var dbContext = dbContextPool.Get();
+
+            try
+            {
+                if (Remove == null)
+                {
+                    Remove = new List<TSuperiorChannel>();
+                }
+                if (Add == null)
+                {
+                    Add = new List<TSuperiorChannel>();
+                }
+                bool flag = false;
+                if (Remove.Count > 0)
+                {
+                    string sql = "";
+                    foreach (var item in Remove)
+                    {
+                        sql += $"DELETE FROM T_SuperiorChannel WHERE SuperiorID='{SuperiorId}' AND CustomChannelID='{item.CustomChannelId}';";
+                    }
+                    await dbContext.Database.ExecuteSqlRawAsync(sql);
+                    flag = true;
+                }
+                if (Add.Count > 0)
+                {
+                    foreach (var item in Add)
+                    {
+                        item.SuperiorId = SuperiorId;
+                        if (item.CustomChannelId == null)
+                        {
+                            item.CustomChannelId = item.ChannelId;
+                        }
+                    }
+                    await dbContext.TSuperiorChannels.AddRangeAsync(Add);
+                    flag = true;
+                }
+                if (flag)
+                {
+                    await dbContext.SaveChangesAsync();
+                    var cl = sipServer.Cascade.GetClient(SuperiorId);
+                    if (cl != null)
+                    {
+                        foreach (var item in Remove)
+                            cl.RemoveChannel(item.CustomChannelId);
+                        foreach (var item in Add)
+                        {
+                            var catalog = await GetCatalog(dbContext, item.DeviceId, item.ChannelId);
+                            if (catalog != null)
+                                cl.AddChannel(new SuperiorChannel(catalog, item));
+                        }
+
+                    }
+                    return true;
+                }
+            }
+            finally
+            {
+                dbContextPool.Return(dbContext);
+            }
+            return false;
         }
         #endregion
         #endregion

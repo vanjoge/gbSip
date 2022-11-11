@@ -6,13 +6,13 @@ namespace SipServer.DBModel
     public partial class TSuperiorInfo
     {
         /// <summary>
-        /// 启用
-        /// </summary>
-        public bool Enable { get; set; }
-        /// <summary>
         /// 唯一ID
         /// </summary>
         public string Id { get; set; }
+        /// <summary>
+        /// 启用
+        /// </summary>
+        public bool Enable { get; set; }
         /// <summary>
         /// 名称
         /// </summary>
