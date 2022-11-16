@@ -21,6 +21,9 @@
     onStop: {
       type: Function,
     },
+    onChangeH265Player: {
+      type: Function,
+    },
     onEndByServer: {
       type: Function,
     },
@@ -84,6 +87,8 @@
           //参数1 id 表示第几个分屏 从1开始 -1表示对讲通道
           //参数2 停止的UCVideo对象
           onStop: props.onStop,
+          //
+          onChangeH265Player: props.onChangeH265Player,
           //服务端结束
           //参数1 结束原因 字符串
           //参数2 id 表示第几个分屏 从1开始 -1表示对讲通道

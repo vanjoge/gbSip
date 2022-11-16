@@ -5,6 +5,7 @@ export interface TreeDataItem extends ATreeDataItem {
   parentTreeKey?: String;
   NickName: string;
   DeviceId: string;
+  autoChange: boolean;
 }
 interface GetNickNamePar {
   NickName: string;
@@ -18,6 +19,7 @@ export const formatDevice = (devs: API.TableListResult<API.TDeviceInfoList>): Tr
       title: name,
       key: item.DeviceId,
       tdType: 0,
+      autoChange: false,
     });
   });
 };
@@ -42,6 +44,7 @@ export const formatChannel = (
       isLeaf: !(item.Parental && item.ChannelId != item.DeviceId),
       tdType: 1,
       parentTreeKey: parentKey,
+      autoChange: false,
     });
   });
 };

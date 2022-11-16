@@ -161,6 +161,7 @@
           :video-height="state.videoHeight.valueOf()"
           :video-nums="10"
           @stop="onStopVideo"
+          @change-h265-player="onChangeH265Player"
           @start-speek="onStartSpeek"
           @end-by-server="onEndByServer"
         ></RtvsPlayer> </div
@@ -264,6 +265,7 @@
     _add.forEach((key) => {
       const item = state.map[key];
       if (item?.isLeaf) {
+        item.autoChange = false;
         rtvsplayer.value.ucDo((uc) => {
           const vid = rtvsplayer.value.getIdleVideoid();
           if (vid) {
@@ -325,9 +327,15 @@
       state.lastCheckKeys = state.checkedKeys;
     }
   };
+  const onChangeH265Player = (_playermode: number, id: number, ucVideo) => {
+    if (id > -1) {
+      state.map[ucVideo.config.treekey].autoChange = true;
+    }
+  };
   const onStopVideo = (id: number, ucVideo) => {
     if (id > -1) {
-      unCheck(state.map[ucVideo.config.treekey]);
+      const item = state.map[ucVideo.config.treekey];
+      if (!item.autoChange) unCheck(state.map[ucVideo.config.treekey]);
     }
   };
   const onStartSpeek = () => {
