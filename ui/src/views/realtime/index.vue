@@ -161,7 +161,7 @@
           :video-height="state.videoHeight.valueOf()"
           :video-nums="10"
           @stop="onStopVideo"
-          @change-h265-player="onChangeH265Player"
+          @change-h265-player="onChange265"
           @start-speek="onStartSpeek"
           @end-by-server="onEndByServer"
         ></RtvsPlayer> </div
@@ -327,7 +327,7 @@
       state.lastCheckKeys = state.checkedKeys;
     }
   };
-  const onChangeH265Player = (_playermode: number, id: number, ucVideo) => {
+  const onChange265 = (_playermode, id: number, ucVideo) => {
     if (id > -1) {
       state.map[ucVideo.config.treekey].autoChange = true;
     }
