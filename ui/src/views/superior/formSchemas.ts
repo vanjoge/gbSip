@@ -6,6 +6,18 @@ export const superiorSchemas: FormSchema<API.TSuperior>[] = [
     component: 'Input',
     label: '名称',
     rules: [{ required: true }],
+    colProps: {
+      span: 12,
+    },
+  },
+  {
+    field: 'ClientName',
+    component: 'Input',
+    label: '上报名称',
+    componentProps: { placeholder: '默认使用名称' },
+    colProps: {
+      span: 12,
+    },
   },
   {
     field: 'ServerId',
@@ -57,10 +69,11 @@ export const superiorSchemas: FormSchema<API.TSuperior>[] = [
     },
   },
   {
-    field: 'ClientName',
-    component: 'Input',
-    label: '上报名称',
-    componentProps: { placeholder: '默认使用名称' },
+    field: 'ClientPort',
+    component: 'InputNumber',
+    componentProps: { min: 0, max: 65535 },
+    label: '本地端口(0随机)',
+    rules: [{ required: true, min: 0, max: 65535 }],
     colProps: {
       span: 12,
     },

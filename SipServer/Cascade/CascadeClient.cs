@@ -8,6 +8,7 @@ using SQ.Base;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -83,9 +84,20 @@ namespace SipServer.Cascade
         /// </summary>
         protected ConcurrentDictionary<string, SuperiorChannel> ditChannels = new ConcurrentDictionary<string, SuperiorChannel>();
         protected ConcurrentDictionary<string, fromTagCache> ditFromTagCache = new ConcurrentDictionary<string, fromTagCache>();
-        public CascadeClient(CascadeManager manager, string Key, string server, string server_id, DeviceInfo deviceInfo, List<SuperiorChannel> channels, string authUsername = null, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300)
+        public CascadeClient(CascadeManager manager, string Key, string server, string server_id, DeviceInfo deviceInfo, List<SuperiorChannel> channels, string authUsername = null, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300, int localPort = 0)
             : base(server, server_id, deviceInfo, authUsername, password, expiry, UserAgent, EnableTraceLogs, heartSec, timeOutSec)
         {
+            if (localPort > 0)
+            {
+                if (remoteEndPoint.Protocol == SIPProtocolsEnum.tcp)
+                {
+                    SipTransport.AddSIPChannel(new SIPTCPChannel(new IPEndPoint(IPAddress.Any, localPort)));
+                }
+                else
+                {
+                    SipTransport.AddSIPChannel(new SIPUDPChannel(new IPEndPoint(IPAddress.Any, localPort)));
+                }
+            }
             this.Key = Key;
             this.manager = manager;
             this.ditChild = new CascadeChannelDictionary(this);

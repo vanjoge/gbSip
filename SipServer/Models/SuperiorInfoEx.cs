@@ -39,6 +39,7 @@ namespace SipServer.Models
             Sipusername = item.Sipusername;
             UseTcp = item.UseTcp;
             ServerRealm = item.ServerRealm;
+            ClientPort = item.ClientPort;
         }
 
         public string GetServerSipStr()

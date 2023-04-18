@@ -42,6 +42,10 @@ namespace SipServer.DBModel
         /// </summary>
         public string ClientName { get; set; }
         /// <summary>
+        /// 本地端口
+        /// </summary>
+        public int ClientPort { get; set; }
+        /// <summary>
         /// SIP认证用户名
         /// </summary>
         public string Sipusername { get; set; }

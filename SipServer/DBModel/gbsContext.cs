@@ -409,6 +409,10 @@ namespace SipServer.DBModel
                     .HasMaxLength(50)
                     .HasComment("本地SIP名称");
 
+                entity.Property(e => e.ClientPort)
+                    .HasColumnType("int(11)")
+                    .HasComment("本地端口");
+
                 entity.Property(e => e.Enable)
                     .HasColumnType("bit(1)")
                     .HasComment("启用");

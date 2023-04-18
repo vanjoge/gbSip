@@ -26,6 +26,7 @@
             openSuperiorModal({
               Enable: true,
               ServerPort: 5060,
+              ClientPort: 0,
               RegSec: 60,
               Expiry: 7200,
               HeartSec: 60,

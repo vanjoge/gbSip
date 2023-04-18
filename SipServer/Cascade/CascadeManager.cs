@@ -68,7 +68,14 @@ namespace SipServer.Cascade
 
             RemoveClient(sinfo.Id);
             if (sinfo.Enable)
+            {
+                //TODO:临时处理方案，防止未释放端口前开始连接，并不可靠
+                if (sinfo.ClientPort > 0)
+                {
+                    await Task.Delay(2500);
+                }
                 await AddClient(sinfo);
+            }
             return true;
         }
         public async Task<bool> Remove(params string[] ids)
@@ -93,7 +100,8 @@ namespace SipServer.Cascade
                 Result = "OK",
                 Firmware = "v0.1"
 
-            }, channels, authUsername: sinfo.Sipusername, password: sinfo.Sippassword, expiry: sinfo.Expiry, UserAgent: sipServer.UserAgent, EnableTraceLogs: sipServer.Settings.EnableSipLog, heartSec: sinfo.HeartSec, timeOutSec: sinfo.HeartTimeoutTimes * sinfo.HeartSec);
+            }, channels, authUsername: sinfo.Sipusername, password: sinfo.Sippassword, expiry: sinfo.Expiry, UserAgent: sipServer.UserAgent, EnableTraceLogs: sipServer.Settings.EnableSipLog, heartSec: sinfo.HeartSec, timeOutSec: sinfo.HeartTimeoutTimes * sinfo.HeartSec
+            , localPort: sinfo.ClientPort);
             client.Start();
             ditClient[client.Key] = client;
             return true;

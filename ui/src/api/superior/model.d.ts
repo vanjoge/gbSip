@@ -18,6 +18,8 @@ declare namespace API {
     ClientId: string;
     // 本地SIP名称
     ClientName: string;
+    // 本地端口 0随机
+    ClientPort: number;
     // SIP认证用户名
     Sipusername: string;
     // SIP认证密码

@@ -28,7 +28,7 @@ namespace GB28181.Client
         protected NotifyChangeDictionary<string, T> ditChild;
 
         DateTime LastHeartTime = DateTime.MinValue, LastAnsOKTime;
-        SIPEndPoint remoteEndPoint;
+        protected SIPEndPoint remoteEndPoint;
         double m_heartSec, m_timeOutSec;
         /// <summary>
         /// 
