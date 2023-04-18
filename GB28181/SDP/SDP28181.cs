@@ -276,7 +276,7 @@ y={SSRC.StrFixLen(10)}{GetF()}
                                 if (long.TryParse(arr[0], out var s) && long.TryParse(arr[1], out var e))
                                 {
                                     TStart = s;
-                                    TStart = e;
+                                    TEnd = e;
                                 }
                             }
                         }
