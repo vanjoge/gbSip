@@ -406,6 +406,10 @@ y={SSRC.StrFixLen(10)}{GetF()}
                 default:
                     break;
             }
+            if (ret.SSRC == null)
+            {
+                ret.SSRC = "3333333333";
+            }
             return ret;
         }
         /// <summary>
