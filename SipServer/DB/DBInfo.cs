@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using GB28181.XML;
+using Microsoft.EntityFrameworkCore;
 #if DEBUG
 using Microsoft.Extensions.Logging;
 #endif
@@ -712,43 +713,66 @@ namespace SipServer.DB
             try
             {
                 IQueryable<SuperiorChannel> data;
+                //if (All)
+                //{
+                //    //LEFT JOIN
+                //    data = from catalog in dbContext.TCatalogs
+                //           join channel in dbContext.TSuperiorChannels on new { catalog.ChannelId, catalog.DeviceId } equals new { channel.ChannelId, channel.DeviceId } into temp
+                //           from tt in temp.DefaultIfEmpty()
+                //           select new SuperiorChannel(catalog, tt);
+                //}
+                //else
+                //{
+                //    data = from channel in dbContext.TSuperiorChannels
+                //           from catalog in dbContext.TCatalogs
+                //           where channel.DeviceId == catalog.DeviceId && channel.ChannelId == catalog.ChannelId && channel.SuperiorId == SuperiorId
+                //           select new SuperiorChannel(catalog, channel);
+                //}
+
+                IQueryable<TCatalog> catalogs = dbContext.TCatalogs;
+                if (!string.IsNullOrWhiteSpace(DeviceID))
+                {
+                    catalogs = catalogs.Where(p => p.DeviceId.Contains(DeviceID));
+                }
+
+                if (!string.IsNullOrWhiteSpace(ChannelId))
+                {
+                    catalogs = catalogs.Where(p => p.ChannelId.Contains(ChannelId));
+                }
+                if (!string.IsNullOrWhiteSpace(Name))
+                {
+                    catalogs = catalogs.Where(p => p.Name.Contains(Name));
+                }
+                if (!string.IsNullOrWhiteSpace(Manufacturer))
+                {
+                    catalogs = catalogs.Where(p => p.Manufacturer.Contains(Manufacturer));
+                }
+                if (Parental.HasValue)
+                {
+                    catalogs = catalogs.Where(p => p.Parental == Parental.Value);
+                }
+
                 if (All)
                 {
                     //LEFT JOIN
-                    data = from catalog in dbContext.TCatalogs
-                           join channel in dbContext.TSuperiorChannels on new { catalog.ChannelId, catalog.DeviceId } equals new { channel.ChannelId, channel.DeviceId } into temp
+                    data = from catalog in catalogs
+                           join channel in dbContext.TSuperiorChannels.Where(p => p.SuperiorId == SuperiorId) on new { catalog.ChannelId, catalog.DeviceId } equals new { channel.ChannelId, channel.DeviceId } into temp
                            from tt in temp.DefaultIfEmpty()
                            select new SuperiorChannel(catalog, tt);
                 }
                 else
                 {
                     data = from channel in dbContext.TSuperiorChannels
-                           from catalog in dbContext.TCatalogs
+                           from catalog in catalogs
                            where channel.DeviceId == catalog.DeviceId && channel.ChannelId == catalog.ChannelId && channel.SuperiorId == SuperiorId
                            select new SuperiorChannel(catalog, channel);
                 }
 
-                if (!string.IsNullOrWhiteSpace(DeviceID))
-                {
-                    data = data.Where(p => p.DeviceId.Contains(DeviceID));
-                }
 
-                if (!string.IsNullOrWhiteSpace(ChannelId))
-                {
-                    data = data.Where(p => p.ChannelId.Contains(ChannelId));
-                }
-                if (!string.IsNullOrWhiteSpace(Name))
-                {
-                    data = data.Where(p => p.Name.Contains(Name));
-                }
-                if (!string.IsNullOrWhiteSpace(Manufacturer))
-                {
-                    data = data.Where(p => p.Manufacturer.Contains(Manufacturer));
-                }
-                if (Parental.HasValue)
-                {
-                    data = data.Where(p => p.Parental == Parental.Value);
-                }
+
+
+
+
                 var sumData = data;
                 if (Page > 1)
                 {

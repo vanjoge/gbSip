@@ -100,7 +100,7 @@
           record.SKey = `${record.DeviceId}_${record.ChannelId}`;
           if (record.CustomChannelId == null || record.CustomChannelId == '')
             record.CustomChannelId = record.ChannelId;
-          if (record.SuperiorId) {
+          if (record.SuperiorId && record.SuperiorId == props.superiorId) {
             selectKeys.push(record.SKey);
           }
           dataCache[record.SKey] = record;
