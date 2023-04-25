@@ -371,6 +371,10 @@ y={SSRC.StrFixLen(10)}{GetF()}
         /// <returns></returns>
         public SDP28181 AnsSdp(string owner, string localIp, string rtpIp, int rtpPort)
         {
+            if (SSRC == null)
+            {
+                SSRC = "3333333333";
+            }
             var ret = new SDP28181
             {
                 ASSRC = this.ASSRC,
@@ -405,10 +409,6 @@ y={SSRC.StrFixLen(10)}{GetF()}
                     break;
                 default:
                     break;
-            }
-            if (ret.SSRC == null)
-            {
-                ret.SSRC = "3333333333";
             }
             return ret;
         }
