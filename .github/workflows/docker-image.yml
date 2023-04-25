@@ -41,14 +41,14 @@ jobs:
       run: yarn install --frozen-lockfile
       working-directory: ./ui
 
-    - uses: actions/cache@v3
-      with:
-        # 缓存文件夹
-        path: ui/node_modules/.cache/webpack/
-        key: ${{ github.ref.name }}-webpack-build
-        # 兜底使用 "main" 分支缓存
-        restore-keys: |
-          main-webpack-build
+    #- uses: actions/cache@v3
+    #  with:
+    #    # 缓存文件夹
+    #    path: ui/node_modules/.cache/webpack/
+    #    key: ${{ github.ref.name }}-webpack-build
+    #    # 兜底使用 "main" 分支缓存
+    #    restore-keys: |
+    #      main-webpack-build
 
     - name: Build UI
       working-directory: ./ui
