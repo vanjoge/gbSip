@@ -251,28 +251,15 @@ namespace GB28181.Client
 
                         if (sipRequest.Header.ContentType.IgnoreEquals(Constant.Application_MANSRTSP))
                         {
-                            var mrtsp = new MrtspRequest(sipRequest.Body);
-                            RTSPResponse rtspres;
-                            switch (mrtsp.Method)
+                            var rtspres = await On_MANSRTSP(sipRequest.Header.From.FromTag, sipRequest);
+                            if (rtspres != null)
                             {
-                                case RTSPMethodsEnum.PAUSE:
-                                case RTSPMethodsEnum.PLAY:
-                                case RTSPMethodsEnum.TEARDOWN:
-                                    rtspres = new RTSPResponse(RTSPResponseStatusCodesEnum.OK, null);
-                                    break;
-                                default:
-                                    rtspres = new RTSPResponse(RTSPResponseStatusCodesEnum.BadRequest, null);
-                                    break;
+                                var res = GetSIPResponse(sipRequest);
+                                res.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(res.Header.To.ToUserField) };
+                                res.Header.ContentType = Constant.Application_MANSRTSP;
+                                res.Body = rtspres.ToString();
+                                await m_sipTransport.SendResponseAsync(res);
                             }
-                            rtspres.Header = new RTSPHeader(mrtsp.Header.CSeq, null);
-
-
-                            var res = GetSIPResponse(sipRequest);
-                            res.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(res.Header.To.ToUserField) };
-                            res.Header.ContentType = Constant.Application_MANSRTSP;
-                            res.Body = rtspres.ToString();
-                            await m_sipTransport.SendResponseAsync(res);
-
                         }
                         break;
                     case SIPMethodsEnum.NOTIFY:
@@ -534,5 +521,6 @@ namespace GB28181.Client
         protected abstract Task<SDP28181> On_INVITE(string fromTag, SDP28181 sdp, SIPRequest sipRequest);
         protected abstract Task<RecordInfo> On_RECORDINFO(RecordInfoQuery res, SIPRequest sipRequest);
 
+        protected abstract Task<RTSPResponse> On_MANSRTSP(string fromTag, SIPRequest sipRequest);
     }
 }

@@ -368,3 +368,9 @@ FodyWeavers.xsd
 /ConsoleApp1
 !/ui/.vscode
 /ui/dist
+/GBWeb/wwwroot/js
+/GBWeb/wwwroot/index.html
+/GBWeb/wwwroot/img
+/GBWeb/wwwroot/iconfont.js
+/GBWeb/wwwroot/css
+/GBWeb/wwwroot/favicon.ico

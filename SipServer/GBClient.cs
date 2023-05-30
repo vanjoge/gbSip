@@ -1,7 +1,6 @@
 ﻿using GB28181;
 using GB28181.Enums;
 using GB28181.MANSRTSP;
-using GB28181.PTZ;
 using GB28181.XML;
 using SipServer.DBModel;
 using SipServer.Models;
@@ -12,10 +11,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,6 +20,7 @@ namespace SipServer
     public partial class GBClient : IDisposable
     {
         public delegate Task dlgReportRecord(RecordInfo recordInfo);
+        public delegate Task dlgSendCallback(SIPResponse sipResponse);
         #region 变量、字段
         int m_Online = 0;
         /// <summary>
@@ -104,6 +101,10 @@ namespace SipServer
         /// 发起录像查询缓存内容
         /// </summary>
         ConcurrentDictionary<int, QueryRecordInfo> ditQueryRecordInfo = new ConcurrentDictionary<int, QueryRecordInfo>();
+        /// <summary>
+        /// 主动发起应答时回调
+        /// </summary>
+        ConcurrentDictionary<string, dlgSendCallback> ditSendCallback = new ConcurrentDictionary<string, dlgSendCallback>();
         #endregion
 
         #region 构造
@@ -266,6 +267,14 @@ namespace SipServer
                 case SIPMethodsEnum.OPTIONS:
                     break;
                 case SIPMethodsEnum.INFO:
+                    if (sipResponse.Header.ContentType.IgnoreEquals(Constant.Application_MANSRTSP))
+                    {
+                        var request = new MrtspRequest(sipResponse.Body);
+                        if (ditSendCallback.TryRemove("MANSRTSP_" + request.Header.CSeq, out var callback) && callback != null)
+                        {
+                            await callback(sipResponse);
+                        }
+                    }
                     break;
                 case SIPMethodsEnum.NOTIFY:
                     break;
@@ -697,10 +706,15 @@ namespace SipServer
         /// <param name="fromTag"></param>
         /// <param name="mrtsp"></param>
         /// <returns></returns>
-        public async Task<bool> Send_MANSRTSP(string fromTag, string mrtsp)
+        public async Task<bool> Send_MANSRTSP(string fromTag, string mrtsp, dlgSendCallback callback)
         {
             if (sipServer.TryGetTag(fromTag, out var tag))
             {
+                if (callback != null)
+                {
+                    var request = new MrtspRequest(mrtsp);
+                    ditSendCallback["MANSRTSP_" + request.Header.CSeq] = callback;
+                }
                 var req = GetSIPRequest(tag.To, tag.From, SIPMethodsEnum.INFO, Constant.Application_MANSRTSP);
                 req.Body = mrtsp;
                 await SendRequestAsync(req);

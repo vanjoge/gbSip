@@ -1,8 +1,10 @@
 ﻿using GB28181;
 using GB28181.Client;
+using GB28181.MANSRTSP;
 using GB28181.XML;
 using JTServer.Model.RTVS;
 using SipServer.Models;
+using SIPSorcery.Net;
 using SIPSorcery.SIP;
 using SQ.Base;
 using System;
@@ -118,16 +120,18 @@ namespace SipServer.Cascade
                     {
                         case SDP28181.PlayType.Play:
                             if (item.sdp.Media == SDP28181.MediaType.audio)
-                                url = $"{manager.sipServer.Settings.RTVSAPI}api/GB/StartRealPlay?TaskID={item.TaskID}&SSRC={item.sdp.SSRC}&DataType=3";
+                                url = $"{manager.sipServer.Settings.RTVSAPI}api/GB/StartRealPlay?TaskID={item.TaskID}&InviteID={fromTag}&SSRC={item.sdp.SSRC}&DataType=3";
                             else
-                                url = $"{manager.sipServer.Settings.RTVSAPI}api/GB/StartRealPlay?TaskID={item.TaskID}&SSRC={item.sdp.SSRC}";
+                                url = $"{manager.sipServer.Settings.RTVSAPI}api/GB/StartRealPlay?TaskID={item.TaskID}&InviteID={fromTag}&SSRC={item.sdp.SSRC}";
                             break;
                         case SDP28181.PlayType.Playback:
+                            url = $"{manager.sipServer.Settings.RTVSAPI}api/GB/StartPlayback?TaskID={item.TaskID}&InviteID={fromTag}&SSRC={item.sdp.SSRC}&StartTime={item.sdp.TStart.UNIXtoDateTime()}&EndTime={item.sdp.TEnd.UNIXtoDateTime()}";
+                            break;
                         case SDP28181.PlayType.Download:
-                            url = $"{manager.sipServer.Settings.RTVSAPI}api/GB/StartPlayback?TaskID={item.TaskID}&SSRC={item.sdp.SSRC}&StartTime={item.sdp.TStart.UNIXtoDateTime()}&EndTime={item.sdp.TEnd.UNIXtoDateTime()}";
+                            url = $"{manager.sipServer.Settings.RTVSAPI}api/GB/StartPlayback?TaskID={item.TaskID}&InviteID={fromTag}&SSRC={item.sdp.SSRC}&StartTime={item.sdp.TStart.UNIXtoDateTime()}&EndTime={item.sdp.TEnd.UNIXtoDateTime()}&DownloadSpeed={item.sdp.Downloadspeed}";
                             break;
                         case SDP28181.PlayType.Talk:
-                            url = $"{manager.sipServer.Settings.RTVSAPI}api/GB/StartRealPlay?TaskID={item.TaskID}&SSRC={item.sdp.SSRC}&DataType=2";
+                            url = $"{manager.sipServer.Settings.RTVSAPI}api/GB/StartRealPlay?TaskID={item.TaskID}&InviteID={fromTag}&SSRC={item.sdp.SSRC}&DataType=2";
                             break;
                         default:
                             return false;
@@ -214,6 +218,38 @@ namespace SipServer.Cascade
                 };
             }
         }
+        protected override async Task<RTSPResponse> On_MANSRTSP(string fromTag, SIPRequest sipRequest)
+        {
+            try
+            {
+                if (ditFromTagCache.TryGetValue(fromTag, out var item))
+                {
+                    if (ditChannels.TryGetValue(item.sdp.Owner, out var channel) && manager.sipServer.TryGetClient(channel.DeviceId, out var client))
+                    {
+                        if (await client.Send_MANSRTSP(fromTag, sipRequest.Body, async p =>
+                        {
+                            var res = GetSIPResponse(sipRequest);
+                            res.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(res.Header.To.ToUserField) };
+                            res.Header.ContentType = Constant.Application_MANSRTSP;
+                            //res.Header.CSeqMethod = SIPMethodsEnum.INFO;
+                            res.Body = p.Body;
+                            await SipTransport.SendResponseAsync(res);
+                        }))
+                        {
+                            return null;
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            var mrtsp = new MrtspRequest(sipRequest.Body);
+            RTSPResponse rtspres = new RTSPResponse(RTSPResponseStatusCodesEnum.NotFound, null);
+            rtspres.Header = new RTSPHeader(mrtsp.Header.CSeq, null);
+            return rtspres;
+        }
 
         public override void Stop(bool waitStop = true)
         {
@@ -267,5 +303,6 @@ namespace SipServer.Cascade
             ditChannels.Remove(ChannelId, out var item);
             ditChild.TryRemove(ChannelId, out var citem);
         }
+
     }
 }

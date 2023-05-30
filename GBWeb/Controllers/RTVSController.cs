@@ -134,7 +134,7 @@ namespace GBWeb.Controllers
                 SQ.Base.Log.WriteLog4(this.HttpContext.Request.Path + this.HttpContext.Request.QueryString);
                 if (Program.sipServer.TryGetClient(DeviceID, out var client))
                 {
-                    await client.Send_MANSRTSP(InviteID, Base64ToStr(MANSRTSP));
+                    await client.Send_MANSRTSP(InviteID, Base64ToStr(MANSRTSP), null);
                     return "1";
                 }
                 else
