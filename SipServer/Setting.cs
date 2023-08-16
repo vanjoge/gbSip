@@ -83,6 +83,10 @@ namespace SipServer
         /// API Authorization
         /// </summary>
         public string APIAuthorization { get; set; }
+        /// <summary>
+        /// 是否显示SwaggerDoc
+        /// </summary>
+        public bool SwaggerDoc { get; set; } = true;
 
         public Setting()
         {

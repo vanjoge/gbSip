@@ -42,23 +42,25 @@ namespace GBWeb
                     //config.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
                 });
 
-            services.AddSwaggerGen(c =>
+            if (Program.sipServer.Settings.SwaggerDoc)
             {
-                c.SwaggerDoc("api", new OpenApiInfo { Title = "API", Version = "v1" });
-                c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "GBWeb.xml"), true);
-                c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "GB28181.xml"), true);
-
-                c.OperationFilter<SecurityFilter>();
-
-                c.AddSecurityDefinition("authorization", new OpenApiSecurityScheme
+                services.AddSwaggerGen(c =>
                 {
-                    Description = "授权",
-                    Name = "authorization",//默认的参数名称
-                    In = ParameterLocation.Header,//默认存放Authorization信息的位置(请求头中)
-                    Type = SecuritySchemeType.ApiKey,
-                });
-            });
+                    c.SwaggerDoc("api", new OpenApiInfo { Title = "API", Version = "v1" });
+                    c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "GBWeb.xml"), true);
+                    c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "GB28181.xml"), true);
 
+                    c.OperationFilter<SecurityFilter>();
+
+                    c.AddSecurityDefinition("authorization", new OpenApiSecurityScheme
+                    {
+                        Description = "授权",
+                        Name = "authorization",//默认的参数名称
+                        In = ParameterLocation.Header,//默认存放Authorization信息的位置(请求头中)
+                        Type = SecuritySchemeType.ApiKey,
+                    });
+                });
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
