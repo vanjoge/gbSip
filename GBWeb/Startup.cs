@@ -78,18 +78,22 @@ namespace GBWeb
             }
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            // 添加Swagger有关中间件
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
+
+            if (Program.sipServer.Settings.SwaggerDoc)
             {
-                c.SwaggerEndpoint("/swagger/api/swagger.json", "API");
-            });
-            //Swagger使用自定义UI
-            app.UseKnife4UI(c =>
-            {
-                c.RoutePrefix = "Help";
-                c.SwaggerEndpoint($"../swagger/api/swagger.json", "API");
-            });
+                // 添加Swagger有关中间件
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/api/swagger.json", "API");
+                });
+                //Swagger使用自定义UI
+                app.UseKnife4UI(c =>
+                {
+                    c.RoutePrefix = "Help";
+                    c.SwaggerEndpoint($"../swagger/api/swagger.json", "API");
+                });
+            }
 
             app.UseRouting();
 
