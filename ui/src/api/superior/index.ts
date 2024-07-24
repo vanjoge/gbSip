@@ -57,7 +57,7 @@ export function updateSuperior(data: API.TSuperior) {
   );
 }
 
-export function deleteSuperior(data: { SuperiorIds: string[] }) {
+export function deleteSuperior(data: { Ids: string[] }) {
   return request({
     url: Api.delete,
     method: 'post',

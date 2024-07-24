@@ -666,7 +666,7 @@ namespace SipServer.DB
                 }
                 str = str[1..];
 
-                return await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM TSuperiorInfos WHERE ID in ({str}';") > 0;
+                return await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM T_SuperiorInfo WHERE ID in ({str});") > 0;
             }
             finally
             {

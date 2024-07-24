@@ -121,11 +121,11 @@
         icon: <ExclamationCircleOutlined />,
         centered: true,
         onOk: async () => {
-          await deleteSuperior({ SuperiorIds: deviceId }).finally(dynamicTableInstance?.reload);
+          await deleteSuperior({ Ids: deviceId }).finally(dynamicTableInstance?.reload);
         },
       });
     } else {
-      await deleteSuperior({ SuperiorIds: [deviceId] }).finally(dynamicTableInstance?.reload);
+      await deleteSuperior({ Ids: [deviceId] }).finally(dynamicTableInstance?.reload);
     }
   };
 
