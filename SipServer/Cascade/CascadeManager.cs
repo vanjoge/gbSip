@@ -90,15 +90,43 @@ namespace SipServer.Cascade
         }
         async Task<bool> AddClient(TSuperiorInfo sinfo)
         {
-            var channels = await sipServer.DB.GetSuperiorChannels(sinfo.Id);
+            var tmp = await sipServer.DB.GetSuperiorChannels(sinfo.Id);
+            var id = sinfo.ClientId;
+            var ClientName = string.IsNullOrEmpty(sinfo.ClientName) ? sinfo.Name : sinfo.ClientName;
+            var root = new SuperiorChannel(new TCatalog
+            {
+                ChannelId = id,
+                DeviceId = id,
+                Name = ClientName,
+                Manufacturer = "RTVS",
+                Model = "gbsip",
+                Owner = "Owner",
+                CivilCode = id.Substring(0, 6),
+                Address = "Address",
+                RegisterWay = 1,
+                Secrecy = false,
+            },
+            null,
+            false
+            );
+            var channels = new List<SuperiorChannel>
+            {
+                //添加系统目录项
+                root
+            };
+            foreach (var channel in tmp)
+            {
+                channel.ParentId = id;
+                channels.Add(channel);
+            }
             CascadeClient client = new CascadeClient(this, sinfo.Id, SuperiorInfoEx.GetServerSipStr(sinfo), sinfo.ServerId, new GB28181.XML.DeviceInfo
             {
                 DeviceID = sinfo.ClientId,
-                DeviceName = string.IsNullOrEmpty(sinfo.ClientName) ? sinfo.Name : sinfo.ClientName,
+                DeviceName = ClientName,
                 Manufacturer = "RTVS",
                 Model = "gbsip",
                 Result = "OK",
-                Firmware = "v0.1"
+                Firmware = "v0.2"
 
             }, channels, authUsername: sinfo.Sipusername, password: sinfo.Sippassword, expiry: sinfo.Expiry, UserAgent: sipServer.UserAgent, EnableTraceLogs: sipServer.Settings.EnableSipLog, heartSec: sinfo.HeartSec, timeOutSec: sinfo.HeartTimeoutTimes * sinfo.HeartSec
             , localPort: sinfo.ClientPort);

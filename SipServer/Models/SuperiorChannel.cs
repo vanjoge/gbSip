@@ -12,7 +12,11 @@ namespace SipServer.Models
 {
     public class SuperiorChannel : TCatalog
     {
-        public SuperiorChannel(TCatalog item, TSuperiorChannel channel)
+        public SuperiorChannel(TCatalog item, TSuperiorChannel channel) : this(item, channel, true)
+        {
+
+        }
+        public SuperiorChannel(TCatalog item, TSuperiorChannel channel, bool isDevice)
         {
             ChannelId = item.ChannelId;
             DeviceId = item.DeviceId;
@@ -50,6 +54,7 @@ namespace SipServer.Models
                 Enable = channel.Enable;
                 CustomChannelId = channel.CustomChannelId;
             }
+            IsDevice = isDevice;
         }
         public ulong RowId { get; set; }
         /// <summary>
@@ -64,6 +69,10 @@ namespace SipServer.Models
         /// 自定义通道ID
         /// </summary>
         public string CustomChannelId { get; set; }
+        /// <summary>
+        /// 设备/目录
+        /// </summary>
+        public bool IsDevice { get; set; }
 
         public string GetChannelId()
         {

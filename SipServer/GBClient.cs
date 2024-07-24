@@ -419,7 +419,7 @@ namespace SipServer
                                         RegisterWay = item.RegisterWay.HasValue ? item.RegisterWay.Value : 1,
                                         SafetyWay = item.SafetyWay.HasValue ? item.SafetyWay.Value : 0,
                                         Secrecy = item.Secrecy == 1,
-                                        Status = item.Status,
+                                        Status = item.Status ?? "",
                                         Online = "ON".IgnoreEquals(item.Status),
                                     };
                                     if (string.IsNullOrWhiteSpace(citem.ParentId) || citem.ParentId == ServerID)

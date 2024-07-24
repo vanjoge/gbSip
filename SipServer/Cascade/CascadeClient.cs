@@ -272,24 +272,28 @@ namespace SipServer.Cascade
                 Model = item.Model,
                 Owner = item.Owner,
                 CivilCode = item.CivilCode,
-                Block = item.Block,
+                Block = Empty2Null(item.Block),
                 Address = item.Address,
-                Parental = item.Parental ? 1 : 0,
                 ParentID = item.ParentId,
-                BusinessGroupID = item.BusinessGroupId,
-                SafetyWay = item.SafetyWay,
+                BusinessGroupID = Empty2Null(item.BusinessGroupId),
                 RegisterWay = item.RegisterWay,
-                CertNum = item.CertNum,
-                Certifiable = item.Certifiable ? 1 : 0,
-                ErrCode = item.ErrCode,
-                EndTime = item.EndTime?.ToTStr(),
                 Secrecy = item.Secrecy ? 1 : 0,
-                IPAddress = item.Ipaddress,
-                Password = item.Password,
+                IPAddress = Empty2Null(item.Ipaddress),
+                Password = Empty2Null(item.Password),
                 Status = item.Status,
-                Longitude = item.Longitude,
-                Latitude = item.Latitude,
             };
+            if (item.IsDevice)
+            {
+                ci.Parental = item.Parental ? 1 : 0;
+                ci.SafetyWay = item.SafetyWay;
+            }
+            if (item.EndTime.HasValue)
+            {
+                ci.CertNum = item.CertNum;
+                ci.Certifiable = item.Certifiable ? 1 : 0;
+                ci.ErrCode = item.ErrCode;
+                ci.EndTime = item.EndTime.Value.ToTStr();
+            }
             if (item.Port > 0)
                 ci.Port = (ushort)item.Port;
             if (item.Longitude > 0)
@@ -304,5 +308,9 @@ namespace SipServer.Cascade
             ditChild.TryRemove(ChannelId, out var citem);
         }
 
+        private static string Empty2Null(string val)
+        {
+            return string.IsNullOrEmpty(val) ? null : val;
+        }
     }
 }
