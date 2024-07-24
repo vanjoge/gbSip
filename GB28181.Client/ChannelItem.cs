@@ -18,21 +18,25 @@ namespace GB28181.Client
                 //Status = Status ? "OK" : "ERROR",
                 Status = "OK",
             };
+
         }
         public Catalog.Item CatalogItem { get; }
         public DeviceStatus Status { get; }
 
         public void ChangeOnline(bool Online)
         {
-            if (Online)
+            if (CatalogItem.Parental.HasValue)
             {
-                this.Status.Online = "ONLINE";
-                this.CatalogItem.Status = "ON";
-            }
-            else
-            {
-                this.Status.Online = "OFFLINE";
-                this.CatalogItem.Status = "OFF";
+                if (Online)
+                {
+                    this.Status.Online = "ONLINE";
+                    this.CatalogItem.Status = "ON";
+                }
+                else
+                {
+                    this.Status.Online = "OFFLINE";
+                    this.CatalogItem.Status = "OFF";
+                }
             }
         }
     }

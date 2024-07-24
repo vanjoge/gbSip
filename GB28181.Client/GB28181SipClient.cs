@@ -1,4 +1,5 @@
-﻿using GB28181.Enums;
+﻿using GB28181.Client.Tasks;
+using GB28181.Enums;
 using GB28181.MANSRTSP;
 using GB28181.XML;
 using Newtonsoft.Json.Linq;
@@ -30,6 +31,10 @@ namespace GB28181.Client
         DateTime LastHeartTime = DateTime.MinValue, LastAnsOKTime;
         protected SIPEndPoint remoteEndPoint;
         double m_heartSec, m_timeOutSec;
+        /// <summary>
+        /// 发送Catalog任务
+        /// </summary>
+        SendCatalogTask<T> sendCatalogTask;
         /// <summary>
         /// 
         /// </summary>
@@ -171,6 +176,20 @@ namespace GB28181.Client
             if (sipResponse.Status == SIPResponseStatusCodesEnum.Ok)
             {
                 LastAnsOKTime = DateTime.Now;
+                if (sipResponse.Header.CSeqMethod == SIPMethodsEnum.MESSAGE)
+                {
+                    if (sendCatalogTask != null && sendCatalogTask.CSeq == sipResponse.Header.CSeq)
+                    {
+                        if (sendCatalogTask.NotEmpty())
+                        {
+                            await sendCatalogTask.DoSend();
+                        }
+                        else
+                        {
+                            sendCatalogTask = null;
+                        }
+                    }
+                }
             }
             //switch (sipResponse.Header.CSeqMethod)
             //{
@@ -402,21 +421,41 @@ namespace GB28181.Client
         protected virtual Task SendCatalog(CatalogQuery query, SIPRequest sipRequest)
         {
             //TODO:暂未支持DeviceID与设备ID不一致的场景
-            var req = GetSIPRequest();
-            req.Header.CSeq = sipRequest.Header.CSeq;
             var catalogBody = new Catalog();
             catalogBody.SumNum = deviceInfo.Channel = ditChild.Count;
             catalogBody.SN = query.SN;
             catalogBody.DeviceID = deviceInfo.DeviceID;
-            catalogBody.DeviceList = new NList<Catalog.Item>(ditChild.Count);
-            foreach (var item in ditChild)
+            if (remoteEndPoint.Protocol == SIPProtocolsEnum.tcp)
             {
-                catalogBody.DeviceList.Add(item.Value.CatalogItem);
+                var req = GetSIPRequest();
+                req.Header.CSeq = sipRequest.Header.CSeq;
+                catalogBody.DeviceList = new NList<Catalog.Item>(ditChild.Count);
+                foreach (var item in ditChild)
+                {
+                    catalogBody.DeviceList.Add(item.Value.CatalogItem);
+                }
+                req.Body = catalogBody.ToXmlStr();
+
+                return m_sipTransport.SendRequestAsync(req);
             }
-            req.Body = catalogBody.ToXmlStr();
-
+            else
+            {
+                catalogBody.DeviceList = new NList<Catalog.Item>(1);
+                List<Catalog.Item> waitSend = new List<Catalog.Item>(ditChild.Count);
+                foreach (var item in ditChild)
+                {
+                    waitSend.Add(item.Value.CatalogItem);
+                }
+                sendCatalogTask = new SendCatalogTask<T>(this, catalogBody, waitSend, sipRequest.Header.CSeq);
+                return sendCatalogTask.DoSend();
+            }
+        }
+        public Task SendCatalog(int CSeq, Catalog catalog)
+        {
+            var req = GetSIPRequest();
+            req.Header.CSeq = CSeq;
+            req.Body = catalog.ToXmlStr();
             return m_sipTransport.SendRequestAsync(req);
-
         }
 
         protected Task AnsRecordInfo(SIPRequest sipRequest, RecordInfo model)
