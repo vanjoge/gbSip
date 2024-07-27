@@ -282,7 +282,7 @@ namespace SipServer.Cascade
                 Password = Empty2Null(item.Password),
                 Status = item.Status,
             };
-            if (item.IsDevice)
+            if (item.DType < 1 || item.DType > 3)
             {
                 ci.Parental = item.Parental ? 1 : 0;
                 ci.SafetyWay = item.SafetyWay;

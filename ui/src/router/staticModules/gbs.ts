@@ -53,11 +53,22 @@ const routes: Array<RouteRecordRaw> = [
       import(/* webpackChunkName: "dashboard-welcome" */ '@/views/channel/index.vue'),
   },
   {
+    path: '/group',
+    name: `${moduleName}-group`,
+    meta: {
+      title: t('gbs.group'),
+      icon: 'icon-wenjian-zhankai',
+      // keepAlive: true,
+      // hideInTabs: true,
+    },
+    component: () => import(/* webpackChunkName: "dashboard-welcome" */ '@/views/group/index.vue'),
+  },
+  {
     path: '/superior',
     name: `${moduleName}-superior`,
     meta: {
       title: t('gbs.superior'),
-      icon: 'icon-zhuomian',
+      icon: 'icon-fuzawangluo',
       // keepAlive: true,
       // hideInTabs: true,
     },

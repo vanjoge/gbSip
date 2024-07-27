@@ -21,5 +21,18 @@ namespace GB28181
 
             return str;
         }
+        /// <summary>
+        /// 获取ID类型
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public static string GetIdType(this string str)
+        {
+            if (str.Length == 20)
+            {
+                return str[10..13];
+            }
+            return null;
+        }
     }
 }

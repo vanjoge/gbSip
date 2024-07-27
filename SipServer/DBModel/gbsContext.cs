@@ -19,7 +19,9 @@ namespace SipServer.DBModel
         public virtual DbSet<TCatalog> TCatalogs { get; set; }
         public virtual DbSet<TDeviceInfo> TDeviceInfos { get; set; }
         public virtual DbSet<TEvent> TEvents { get; set; }
-        public virtual DbSet<TSuperiorChannel> TSuperiorChannels { get; set; }
+        public virtual DbSet<TGroup> TGroups { get; set; }
+        public virtual DbSet<TGroupBind> TGroupBinds { get; set; }
+        public virtual DbSet<TSuperiorGroup> TSuperiorGroups { get; set; }
         public virtual DbSet<TSuperiorInfo> TSuperiorInfos { get; set; }
         public virtual DbSet<TUserInfo> TUserInfos { get; set; }
 
@@ -84,6 +86,11 @@ namespace SipServer.DBModel
                     .HasDefaultValueSql("''")
                     .HasComment("行政区域");
 
+                entity.Property(e => e.DType)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("DType")
+                    .HasComment("类型 0设备/1系统目录/2业务分组/3虚拟组织");
+
                 entity.Property(e => e.EndTime)
                     .HasColumnType("timestamp")
                     .HasComment("证书终止有效期");
@@ -141,7 +148,7 @@ namespace SipServer.DBModel
 
                 entity.Property(e => e.ParentId)
                     .IsRequired()
-                    .HasMaxLength(50)
+                    .HasMaxLength(255)
                     .HasColumnName("ParentID")
                     .HasComment("上级ID");
 
@@ -348,15 +355,85 @@ namespace SipServer.DBModel
                     .HasComment("事件时间");
             });
 
-            modelBuilder.Entity<TSuperiorChannel>(entity =>
+            modelBuilder.Entity<TGroup>(entity =>
             {
-                entity.HasKey(e => new { e.SuperiorId, e.CustomChannelId })
+                entity.HasKey(e => e.GroupId)
+                    .HasName("PRIMARY");
+
+                entity.ToTable("T_Group");
+
+                entity.HasComment("系统目录分组")
+                    .HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
+                entity.HasIndex(e => e.Path, "idx_path");
+
+                entity.Property(e => e.GroupId)
+                    .HasMaxLength(50)
+                    .HasColumnName("GroupID")
+                    .HasComment("分组ID(215业务分组 216虚拟组织)");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasComment("分组名称");
+
+                entity.Property(e => e.ParentId)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnName("ParentID")
+                    .HasComment("上级ID");
+
+                entity.Property(e => e.Path)
+                    .IsRequired()
+                    .HasMaxLength(1000)
+                    .HasComment("查询路径 /分割");
+            });
+
+            modelBuilder.Entity<TGroupBind>(entity =>
+            {
+                entity.HasKey(e => new { e.GroupId, e.DeviceId, e.CustomChannelId })
+                    .HasName("PRIMARY")
+                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0, 0 });
+
+                entity.ToTable("T_GroupBind");
+
+                entity.HasComment("分组绑定通道")
+                    .HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
+                entity.Property(e => e.GroupId)
+                    .HasMaxLength(50)
+                    .HasColumnName("GroupID")
+                    .HasComment("分组ID");
+
+                entity.Property(e => e.DeviceId)
+                    .HasMaxLength(50)
+                    .HasColumnName("DeviceID")
+                    .HasComment("绑定设备ID");
+
+                entity.Property(e => e.CustomChannelId)
+                    .HasMaxLength(50)
+                    .HasColumnName("CustomChannelID")
+                    .HasComment("自定义通道ID(上报用，如不自定义需与ChannelID保持一致)");
+
+                entity.Property(e => e.ChannelId)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnName("ChannelID")
+                    .HasComment("绑定通道ID(0代表所有)");
+            });
+
+            modelBuilder.Entity<TSuperiorGroup>(entity =>
+            {
+                entity.HasKey(e => new { e.SuperiorId, e.GroupId })
                     .HasName("PRIMARY")
                     .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
-                entity.ToTable("T_SuperiorChannel");
+                entity.ToTable("T_SuperiorGroup");
 
-                entity.HasCharSet("utf8")
+                entity.HasComment("上级绑定分组")
+                    .HasCharSet("utf8")
                     .UseCollation("utf8_general_ci");
 
                 entity.Property(e => e.SuperiorId)
@@ -364,26 +441,14 @@ namespace SipServer.DBModel
                     .HasColumnName("SuperiorID")
                     .HasComment("上级ID");
 
-                entity.Property(e => e.CustomChannelId)
+                entity.Property(e => e.GroupId)
                     .HasMaxLength(50)
-                    .HasColumnName("CustomChannelID")
-                    .HasComment("自定义通道ID");
+                    .HasColumnName("GroupID")
+                    .HasComment("分组ID");
 
-                entity.Property(e => e.ChannelId)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .HasColumnName("ChannelID")
-                    .HasComment("CatalogID");
-
-                entity.Property(e => e.DeviceId)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .HasColumnName("DeviceID")
-                    .HasComment("设备ID");
-
-                entity.Property(e => e.Enable)
+                entity.Property(e => e.HasChild)
                     .HasColumnType("bit(1)")
-                    .HasComment("启用");
+                    .HasComment("包含下级分组");
             });
 
             modelBuilder.Entity<TSuperiorInfo>(entity =>

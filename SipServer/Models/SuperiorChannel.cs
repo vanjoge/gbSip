@@ -12,49 +12,13 @@ namespace SipServer.Models
 {
     public class SuperiorChannel : TCatalog
     {
-        public SuperiorChannel(TCatalog item, TSuperiorChannel channel) : this(item, channel, true)
+        public SuperiorChannel(TCatalog item, string superiorId, string customChannelId, string groupId)
         {
+            CopyFrom(item);
 
-        }
-        public SuperiorChannel(TCatalog item, TSuperiorChannel channel, bool isDevice)
-        {
-            ChannelId = item.ChannelId;
-            DeviceId = item.DeviceId;
-            ParentId = item.ParentId;
-            Name = item.Name;
-            Manufacturer = item.Manufacturer;
-            Model = item.Model;
-            Owner = item.Owner;
-            CivilCode = item.CivilCode;
-            Block = item.Block;
-            Address = item.Address;
-            Parental = item.Parental;
-            BusinessGroupId = item.BusinessGroupId;
-            SafetyWay = item.SafetyWay;
-            RegisterWay = item.RegisterWay;
-            CertNum = item.CertNum;
-            Certifiable = item.Certifiable;
-            ErrCode = item.ErrCode;
-            EndTime = item.EndTime;
-            Secrecy = item.Secrecy;
-            Ipaddress = item.Ipaddress;
-            Port = item.Port;
-            Password = item.Password;
-            Status = item.Status;
-            Longitude = item.Longitude;
-            Latitude = item.Latitude;
-            RemoteEp = item.RemoteEp;
-            Online = item.Online;
-            OnlineTime = item.OnlineTime;
-            OfflineTime = item.OfflineTime;
-
-            if (channel != null)
-            {
-                SuperiorId = channel.SuperiorId;
-                Enable = channel.Enable;
-                CustomChannelId = channel.CustomChannelId;
-            }
-            IsDevice = isDevice;
+            SuperiorId = superiorId;
+            CustomChannelId = customChannelId;
+            GroupId = groupId;
         }
         public ulong RowId { get; set; }
         /// <summary>
@@ -62,17 +26,13 @@ namespace SipServer.Models
         /// </summary>
         public string SuperiorId { get; set; }
         /// <summary>
-        /// 启用
-        /// </summary>
-        public bool Enable { get; set; }
-        /// <summary>
         /// 自定义通道ID
         /// </summary>
         public string CustomChannelId { get; set; }
         /// <summary>
-        /// 设备/目录
+        /// 所属分组ID
         /// </summary>
-        public bool IsDevice { get; set; }
+        public string GroupId { get; set; }
 
         public string GetChannelId()
         {

@@ -393,6 +393,22 @@ namespace SipServer
                                 foreach (var item in catalog.DeviceList)
                                 {
                                     sipServer.SetTree(item.DeviceID, DeviceID);
+                                    int DType;
+                                    switch (item.DeviceID.GetIdType())
+                                    {
+                                        case "200":
+                                            DType = 1;
+                                            break;
+                                        case "215":
+                                            DType = 2;
+                                            break;
+                                        case "216":
+                                            DType = 3;
+                                            break;
+                                        default:
+                                            DType = 0;
+                                            break;
+                                    }
                                     Channel citem = new Channel
                                     {
                                         Address = item.Address,
@@ -421,6 +437,7 @@ namespace SipServer
                                         Secrecy = item.Secrecy == 1,
                                         Status = item.Status ?? "",
                                         Online = "ON".IgnoreEquals(item.Status),
+                                        DType = DType,
                                     };
                                     if (string.IsNullOrWhiteSpace(citem.ParentId) || citem.ParentId == ServerID)
                                     {

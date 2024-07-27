@@ -20,14 +20,14 @@
   import type { TableColumn } from '@/components/core/dynamic-table';
   // import type { LoadDataParams } from '@/components/core/dynamic-table';
   import { useTable } from '@/components/core/dynamic-table';
-  import { getChannelList, bindChannel } from '@/api/superior';
+  import { getChannelList, bindChannel } from '@/api/group';
   import { DraggableModal } from '@/components/core/draggable-modal';
 
   defineOptions({
     name: 'SelectChannel',
   });
   const props = defineProps({
-    superiorId: {
+    groupId: {
       type: String,
     },
     // visible: {
@@ -42,14 +42,14 @@
   const [DynamicTable, dynamicTableInstance] = useTable();
   let selectKeys: string[] = [];
   let dataCache = {};
-  const superiorIdModel = useVModel(props, 'superiorId');
+  const groupIdModel = useVModel(props, 'groupId');
   const rowSelection = ref({
     selectedRowKeys: [] as string[],
-    onChange: async (selectedRowKeys: string[], _selectedRows: API.TSuperiorChannel[]) => {
+    onChange: async (selectedRowKeys: string[], _selectedRows: API.TGroupChannel[]) => {
       const add = difference(selectedRowKeys, selectKeys);
       const remove = difference(selectKeys, selectedRowKeys);
-      const ADD: API.TSuperiorChannel[] = [];
-      const REMOVE: API.TSuperiorChannel[] = [];
+      const ADD: API.TGroupChannel[] = [];
+      const REMOVE: API.TGroupChannel[] = [];
       add.forEach((val) => {
         if (dataCache[val]) {
           ADD.push(dataCache[val]);
@@ -60,8 +60,8 @@
           REMOVE.push(dataCache[val]);
         }
       });
-      if (props.superiorId) {
-        await bindChannel(props.superiorId, ADD, REMOVE);
+      if (props.groupId) {
+        await bindChannel(props.groupId, ADD, REMOVE);
       }
       rowSelection.value.selectedRowKeys = selectedRowKeys;
       selectKeys = selectedRowKeys;
@@ -81,7 +81,7 @@
     Manufacturer,
     OnlyBind,
   }) => {
-    if (props.superiorId) {
+    if (props.groupId) {
       const data = await getChannelList({
         page,
         limit,
@@ -90,7 +90,7 @@
         Name,
         Parental,
         Manufacturer,
-        SuperiorId: props.superiorId,
+        GroupId: props.groupId,
         OnlyBind,
       });
       selectKeys = [];
@@ -100,7 +100,7 @@
           record.SKey = `${record.DeviceId}_${record.ChannelId}`;
           if (record.CustomChannelId == null || record.CustomChannelId == '')
             record.CustomChannelId = record.ChannelId;
-          if (record.SuperiorId && record.SuperiorId == props.superiorId) {
+          if (record.GroupId && record.GroupId == props.groupId) {
             selectKeys.push(record.SKey);
           }
           dataCache[record.SKey] = record;
@@ -110,7 +110,7 @@
       return data;
     }
   };
-  const columns: TableColumn<API.TSuperiorChannel>[] = [
+  const columns: TableColumn<API.TGroupChannel>[] = [
     {
       title: '原始通道ID',
       width: 180,
@@ -182,7 +182,7 @@
     },
   ];
 
-  watch(superiorIdModel, async (val) => {
+  watch(groupIdModel, async (val) => {
     if (val) {
       await nextTick();
       dynamicTableInstance?.reload();

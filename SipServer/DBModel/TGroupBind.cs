@@ -3,27 +3,26 @@ using System.Collections.Generic;
 
 namespace SipServer.DBModel
 {
-    public partial class TSuperiorChannel
+    /// <summary>
+    /// 分组绑定通道
+    /// </summary>
+    public partial class TGroupBind
     {
         /// <summary>
-        /// 上级ID
+        /// 分组ID
         /// </summary>
-        public string SuperiorId { get; set; }
+        public string GroupId { get; set; }
         /// <summary>
-        /// 自定义通道ID
-        /// </summary>
-        public string CustomChannelId { get; set; }
-        /// <summary>
-        /// 设备ID
+        /// 绑定设备ID
         /// </summary>
         public string DeviceId { get; set; }
         /// <summary>
-        /// CatalogID
+        /// 绑定通道ID(0代表所有)
         /// </summary>
         public string ChannelId { get; set; }
         /// <summary>
-        /// 启用
+        /// 自定义通道ID(上报用)
         /// </summary>
-        public bool Enable { get; set; }
+        public string CustomChannelId { get; set; }
     }
 }

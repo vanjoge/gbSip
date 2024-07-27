@@ -61,7 +61,7 @@ namespace GBWeb.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ApiResult<PermMenu>> Permmenu()
+        public ApiResult<PermMenu> Permmenu()
         {
             List<Menu> menus = new List<Menu>();
             List<string> perms = new List<string>();
@@ -83,6 +83,9 @@ namespace GBWeb.Controllers
             perms.Add("Superior:CreateSuperior");
             perms.Add("Superior:UpdateSuperior");
             perms.Add("Superior:DeleteSuperiors");
+            perms.Add("Group:CreateGroup");
+            perms.Add("Group:UpdateGroup");
+            perms.Add("Group:DeleteGroups");
             return RetApiResult(new PermMenu
             {
                 Menus = menus,

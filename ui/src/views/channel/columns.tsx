@@ -79,7 +79,13 @@ export const baseColumns: TableColumnItem[] = [
       },
     },
     customRender: ({ record }) => {
-      return <Tag color={record.Online ? 'success' : 'red'}>{record.Online ? '在线' : '离线'}</Tag>;
+      if (record.DType == 0) {
+        return (
+          <Tag color={record.Online ? 'success' : 'red'}>{record.Online ? '在线' : '离线'}</Tag>
+        );
+      } else {
+        return <Tag color="blue">目录</Tag>;
+      }
     },
   },
   {

@@ -82,6 +82,7 @@ declare namespace API {
     RTVSVideoServer: string;
     RTVSVideoPort: number;
     PlayerMode: number;
+    DType: number;
   };
 
   /** 获取用户列表结果 */

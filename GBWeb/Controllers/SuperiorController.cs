@@ -78,43 +78,43 @@ namespace GBWeb.Controllers
             return RetApiResult(await Program.sipServer.Cascade.Remove(model.Ids));
         }
 
-        /// <summary>
-        /// 获取通道信息
-        /// </summary>
-        /// <param name="SuperiorId"></param>
-        /// <param name="DeviceId"></param>
-        /// <param name="ParentId"></param>
-        /// <param name="ChannelId"></param>
-        /// <param name="Name"></param>
-        /// <param name="Parental"></param>
-        /// <param name="Manufacturer"></param>
-        /// <param name="OnlyBind">仅筛选已绑定的</param>
-        /// <param name="Page"></param>
-        /// <param name="Limit"></param>
-        /// <returns></returns>
-        [HttpGet]
-        public async Task<ApiResult<DPager<SuperiorChannel>>> GetChannelList(string SuperiorId, string DeviceId, string ParentId, string ChannelId, string Name, bool? Parental, string Manufacturer, bool OnlyBind, int Page = 1, int Limit = 10)
-        {
-            return await RetApiResult(Program.sipServer.DB.GetSuperiorChannels(SuperiorId, DeviceId, ChannelId, Name, Parental, Manufacturer, Page, Limit, !OnlyBind));
-        }
+        ///// <summary>
+        ///// 获取通道信息
+        ///// </summary>
+        ///// <param name="SuperiorId"></param>
+        ///// <param name="DeviceId"></param>
+        ///// <param name="ParentId"></param>
+        ///// <param name="ChannelId"></param>
+        ///// <param name="Name"></param>
+        ///// <param name="Parental"></param>
+        ///// <param name="Manufacturer"></param>
+        ///// <param name="OnlyBind">仅筛选已绑定的</param>
+        ///// <param name="Page"></param>
+        ///// <param name="Limit"></param>
+        ///// <returns></returns>
+        //[HttpGet]
+        //public async Task<ApiResult<DPager<SuperiorChannel>>> GetChannelList(string SuperiorId, string DeviceId, string ParentId, string ChannelId, string Name, bool? Parental, string Manufacturer, bool OnlyBind, int Page = 1, int Limit = 10)
+        //{
+        //    return await RetApiResult(Program.sipServer.DB.GetSuperiorChannels(SuperiorId, DeviceId, ChannelId, Name, Parental, Manufacturer, Page, Limit, !OnlyBind));
+        //}
         /// <summary>
         /// 
         /// </summary>
         public class BindChannelsModel
         {
             public string SuperiorId { get; set; }
-            public List<TSuperiorChannel> Add { get; set; }
-            public List<TSuperiorChannel> Remove { get; set; }
+            public List<TSuperiorGroup> Add { get; set; }
+            public List<TSuperiorGroup> Remove { get; set; }
         }
-        /// <summary>
-        /// 绑定通道
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        [HttpPost]
-        public async Task<ApiResult<bool>> BindChannels(BindChannelsModel model)
-        {
-            return await RetApiResult(Program.sipServer.DB.BindChannels(model.SuperiorId, model.Add, model.Remove));
-        }
+        ///// <summary>
+        ///// 绑定通道
+        ///// </summary>
+        ///// <param name="model"></param>
+        ///// <returns></returns>
+        //[HttpPost]
+        //public async Task<ApiResult<bool>> BindChannels(BindChannelsModel model)
+        //{
+        //    return await RetApiResult(Program.sipServer.DB.BindChannels(model.SuperiorId, model.Add, model.Remove));
+        //}
     }
 }

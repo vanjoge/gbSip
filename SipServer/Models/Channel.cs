@@ -14,32 +14,7 @@ namespace SipServer.Models
         }
         public Channel(TCatalog u)
         {
-            Address = u.Address;
-            Block = u.Block;
-            BusinessGroupId = u.BusinessGroupId;
-            Certifiable = u.Certifiable;
-            CertNum = u.CertNum;
-            CivilCode = u.CivilCode;
-            ChannelId = u.ChannelId;
-            EndTime = u.EndTime;
-            ErrCode = u.ErrCode;
-            DeviceId = u.DeviceId;
-            Ipaddress = u.Ipaddress;
-            Latitude = u.Latitude;
-            Longitude = u.Longitude;
-            Manufacturer = u.Manufacturer;
-            Model = u.Model;
-            Name = u.Name;
-            Owner = u.Owner;
-            Parental = u.Parental;
-            ParentId = u.ParentId;
-            Password = u.Password;
-            Port = u.Port;
-            RegisterWay = u.RegisterWay;
-            SafetyWay = u.SafetyWay;
-            Secrecy = u.Secrecy;
-            Status = u.Status;
-            Online = u.Online;
+            CopyFrom(u);
         }
 
         ///// <summary>

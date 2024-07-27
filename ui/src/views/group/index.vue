@@ -1,68 +1,50 @@
 <template>
   <div>
     <DynamicTable
-      row-key="Id"
-      header-title="上级平台"
-      show-index
-      title-tooltip="此处可对接入上级平台进行管理。"
+      row-key="GroupId"
+      header-title="分组管理"
+      title-tooltip="此处可对分组进行管理。"
       :data-request="loadTableData"
       :columns="columns"
+      :search="false"
       :scroll="{ x: 900 }"
-      :row-selection="rowSelection"
     >
-      <template v-if="isCheckRows" #title>
-        <Alert class="w-full" type="info" show-icon>
-          <template #message>
-            已选 {{ isCheckRows }} 项
-            <a-button type="link" @click="rowSelection.selectedRowKeys = []">取消选择</a-button>
-          </template>
-        </Alert>
-      </template>
       <template #toolbar>
-        <a-button
-          type="primary"
-          :disabled="!$auth('Superior.CreateSuperior')"
-          @click="
-            openSuperiorModal({
-              Enable: true,
-              ServerPort: 5060,
-              ClientPort: 0,
-              RegSec: 60,
-              Expiry: 7200,
-              HeartSec: 60,
-              HeartTimeoutTimes: 3,
-              UseTcp: true,
-              ServerRealm: '自动生成',
-            })
-          "
-        >
+        <a-button type="primary" :disabled="!$auth('Group.CreateGroup')" @click="openGroupModal()">
           <PlusOutlined /> 新增
         </a-button>
         <a-button
           type="danger"
-          :disabled="!isCheckRows || !$auth('Superior.DeleteSuperiors')"
+          :disabled="!isCheckRows || !$auth('Group.DeleteGroups')"
           @click="delRowConfirm(rowSelection.selectedRowKeys)"
         >
           <DeleteOutlined /> 删除
         </a-button>
       </template>
     </DynamicTable>
+    <SelectChannelVue v-model:visible="state.visible" :group-id="state.groupId"></SelectChannelVue>
   </div>
 </template>
 
 <script setup lang="tsx">
   import { ref, computed, reactive } from 'vue';
   import { DeleteOutlined, ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons-vue';
-  import { Modal, Alert } from 'ant-design-vue';
-  import { superiorSchemas } from './formSchemas';
+  import { Modal } from 'ant-design-vue';
+  import { groupSchemas, bindSuperiorSchemas } from './formSchemas';
   import { baseColumns, type TableListItem, type TableColumnItem } from './columns';
-  // import type { LoadDataParams } from '@/components/core/dynamic-table';
+  import SelectChannelVue from './selectChannel.vue';
   import { useTable } from '@/components/core/dynamic-table';
-  import { getSuperiorList, createSuperior, updateSuperior, deleteSuperior } from '@/api/superior';
+  import {
+    getAllGroupTreeTableData,
+    createGroup,
+    updateGroup,
+    deleteGroup,
+    bindSuperior,
+  } from '@/api/group';
   import { useFormModal } from '@/hooks/useModal/index';
 
   defineOptions({
-    name: 'Superior',
+    name: 'Group',
   });
 
   const [DynamicTable, dynamicTableInstance] = useTable();
@@ -70,7 +52,7 @@
 
   const state = reactive({
     visible: false,
-    superiorId: '',
+    groupId: '',
   });
   const rowSelection = ref({
     selectedRowKeys: [] as string[],
@@ -86,20 +68,40 @@
   /**
    * @description 打开设备弹窗
    */
-  const openSuperiorModal = async (record: Partial<TableListItem> = {}) => {
+  const openGroupModal = async (record: Partial<TableListItem> = {}) => {
+    groupSchemas[0].dynamicDisabled = record.GroupId ? true : false;
     const [formRef] = await showModal<any>({
       modalProps: {
-        title: `${record.Id ? '编辑' : '新增'}上级`,
-        width: 1000,
+        title: `${record.GroupId ? '编辑' : '新增'}上级`,
+        width: 700,
         onFinish: async (values) => {
-          values.id = record.Id;
-          await (record.Id ? updateSuperior : createSuperior)(values);
+          // values.GroupId = record.GroupId;
+          await (record.GroupId ? updateGroup : createGroup)(values);
           dynamicTableInstance?.reload();
         },
       },
       formProps: {
         labelWidth: 150,
-        schemas: superiorSchemas,
+        schemas: groupSchemas,
+      },
+    });
+
+    formRef?.setFieldsValue(record);
+  };
+  const openBindSuperiorModal = async (record: Partial<TableListItem> = {}) => {
+    const [formRef] = await showModal<any>({
+      modalProps: {
+        title: `共享分组`,
+        width: 700,
+        onFinish: async (values) => {
+          console.log(values);
+          await bindSuperior(values);
+          // dynamicTableInstance?.reload();
+        },
+      },
+      formProps: {
+        labelWidth: 150,
+        schemas: bindSuperiorSchemas,
       },
     });
 
@@ -116,11 +118,11 @@
         icon: <ExclamationCircleOutlined />,
         centered: true,
         onOk: async () => {
-          await deleteSuperior({ Ids: deviceId }).finally(dynamicTableInstance?.reload);
+          await deleteGroup({ Ids: deviceId }).finally(dynamicTableInstance?.reload);
         },
       });
     } else {
-      await deleteSuperior({ Ids: [deviceId] }).finally(dynamicTableInstance?.reload);
+      await deleteGroup({ Ids: [deviceId] }).finally(dynamicTableInstance?.reload);
     }
   };
 
@@ -128,19 +130,22 @@
    * @description 打开设备弹窗
    */
   const openChannel = async (record: Partial<TableListItem> = {}) => {
-    if (record.Id) state.superiorId = record.Id;
+    if (record.GroupId) state.groupId = record.GroupId;
     state.visible = true;
   };
 
-  const loadTableData = async ({ page, limit, Id, Name }) => {
-    const data = await getSuperiorList({
-      page,
-      limit,
-      Id,
-      Name,
-    });
-    rowSelection.value.selectedRowKeys = [];
-    return data;
+  const loadTableData = async () => {
+    const data = await getAllGroupTreeTableData();
+    const ret: API.TableListResult<API.TGroupList> = {
+      list: data,
+      pagination: {
+        page: 1,
+        size: data.length,
+        total: data.length,
+      },
+    };
+    // rowSelection.value.selectedRowKeys = [];
+    return ret;
   };
 
   const columns: TableColumnItem[] = [
@@ -153,28 +158,35 @@
       fixed: 'right',
       actions: ({ record }) => [
         {
-          label: '查看分组',
+          label: '绑定通道',
           auth: {
-            perm: 'Superior.UpdateSuperior',
+            perm: 'Group.UpdateGroup',
             effect: 'disable',
           },
-          disabled: true,
           onClick: () => openChannel(record),
+        },
+        {
+          label: '共享分组',
+          auth: {
+            perm: 'Group.UpdateGroup',
+            effect: 'disable',
+          },
+          onClick: () => openBindSuperiorModal(record),
         },
         {
           label: '编辑',
           auth: {
-            perm: 'Superior.UpdateSuperior',
+            perm: 'Group.UpdateGroup',
             effect: 'disable',
           },
-          onClick: () => openSuperiorModal(record),
+          onClick: () => openGroupModal(record),
         },
         {
           label: '删除',
-          auth: 'Superior.DeleteSuperiors',
+          auth: 'Group.DeleteGroups',
           popConfirm: {
             title: '你确定要删除吗？',
-            onConfirm: () => delRowConfirm(record.Id),
+            onConfirm: () => delRowConfirm(record.GroupId),
           },
         },
       ],

@@ -33,20 +33,39 @@ export const formatChannel = (
   devs: API.TableListResult<API.TChannelList>,
   parentKey: string,
 ): TreeDataItem[] => {
-  return devs.list.map((item) => {
+  const list: TreeDataItem[] = [];
+  devs.list.forEach((item) => {
+    if (item.DType == 1 || (item.ChannelId == item.DeviceId && item.ChannelId == parentKey)) return;
     const name =
       item.NickName && item.NickName.length
         ? `${item.NickName}(${item.ChannelId})`
         : item.ChannelId;
-    return Object.assign(item, {
-      title: name,
-      key: `${item.DeviceId}-${item.ChannelId}`,
-      isLeaf: !(item.Parental && item.ChannelId != item.DeviceId),
-      tdType: 1,
-      parentTreeKey: parentKey,
-      autoChange: false,
-    });
+    list.push(
+      Object.assign(item, {
+        title: name,
+        key: `${item.DeviceId}-${item.ChannelId}`,
+        isLeaf: !(item.Parental && item.ChannelId != item.DeviceId),
+        tdType: 1,
+        parentTreeKey: parentKey,
+        autoChange: false,
+      }),
+    );
   });
+  return list;
+  // return devs.list.map((item) => {
+  //   const name =
+  //     item.NickName && item.NickName.length
+  //       ? `${item.NickName}(${item.ChannelId})`
+  //       : item.ChannelId;
+  //   return Object.assign(item, {
+  //     title: name,
+  //     key: `${item.DeviceId}-${item.ChannelId}`,
+  //     isLeaf: !(item.Parental && item.ChannelId != item.DeviceId),
+  //     tdType: 1,
+  //     parentTreeKey: parentKey,
+  //     autoChange: false,
+  //   });
+  // });
 };
 // export interface TreeDataItem extends ATreeDataItem {
 //   children: any;

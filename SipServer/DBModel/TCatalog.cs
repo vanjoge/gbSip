@@ -121,5 +121,44 @@ namespace SipServer.DBModel
         /// 离线时间
         /// </summary>
         public DateTime? OfflineTime { get; set; }
+        /// <summary>
+        /// 类型 0设备/1系统目录/2业务分组/3虚拟组织
+        /// </summary>
+        public int DType { get; set; }
+
+
+        public void CopyFrom(TCatalog item)
+        {
+            ChannelId = item.ChannelId;
+            DeviceId = item.DeviceId;
+            ParentId = item.ParentId;
+            Name = item.Name;
+            Manufacturer = item.Manufacturer;
+            Model = item.Model;
+            Owner = item.Owner;
+            CivilCode = item.CivilCode;
+            Block = item.Block;
+            Address = item.Address;
+            Parental = item.Parental;
+            BusinessGroupId = item.BusinessGroupId;
+            SafetyWay = item.SafetyWay;
+            RegisterWay = item.RegisterWay;
+            CertNum = item.CertNum;
+            Certifiable = item.Certifiable;
+            ErrCode = item.ErrCode;
+            EndTime = item.EndTime;
+            Secrecy = item.Secrecy;
+            Ipaddress = item.Ipaddress;
+            Port = item.Port;
+            Password = item.Password;
+            Status = item.Status;
+            Longitude = item.Longitude;
+            Latitude = item.Latitude;
+            RemoteEp = item.RemoteEp;
+            Online = item.Online;
+            OnlineTime = item.OnlineTime;
+            OfflineTime = item.OfflineTime;
+            DType = item.DType;
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using SipServer.DBModel;
+﻿using GB28181;
+using SipServer.DBModel;
 using SipServer.Models;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -90,7 +91,8 @@ namespace SipServer.Cascade
         }
         async Task<bool> AddClient(TSuperiorInfo sinfo)
         {
-            var tmp = await sipServer.DB.GetSuperiorChannels(sinfo.Id);
+            var groups = await sipServer.DB.GetSuperiorGroups(sinfo.Id);
+            var tmp = await sipServer.DB.GetSuperiorChannels(sinfo.Id, groups.Select(p => p.GroupId).ToList());
             var id = sinfo.ClientId;
             var ClientName = string.IsNullOrEmpty(sinfo.ClientName) ? sinfo.Name : sinfo.ClientName;
             var root = new SuperiorChannel(new TCatalog
@@ -105,18 +107,48 @@ namespace SipServer.Cascade
                 Address = "Address",
                 RegisterWay = 1,
                 Secrecy = false,
+                DType = 1,
             },
-            null,
-            false
+            sinfo.ServerId, null, null
             );
             var channels = new List<SuperiorChannel>
             {
                 //添加系统目录项
                 root
             };
+            foreach (var item in groups)
+            {
+                var channel = new SuperiorChannel(new TCatalog
+                {
+                    ChannelId = item.GroupId,
+                    DeviceId = item.GroupId,
+                    Name = item.Name,
+                    ParentId = string.IsNullOrEmpty(item.ParentId) ? id : item.ParentId,
+                    DType = item.GroupId.GetIdType() == "215" ? 2 : 3,
+                },
+                sinfo.ServerId, null, null
+                );
+                if (channel.ChannelId.GetIdType() == "216" && channel.ParentId.GetIdType() == "215")
+                {
+                    //虚拟目录增加BusinessGroupID
+                    channel.BusinessGroupId = channel.ParentId;
+                }
+                channels.Add(channel);
+            }
             foreach (var channel in tmp)
             {
-                channel.ParentId = id;
+                //GB/T28181—2016 附 录 O
+                // <!--若上传目录中有此设备的父设备则应填写父设备ID,若无父设备则应填写系统ID;若设备属于某虚拟组织下,则应同时填写虚拟组织ID; 各个ID之间用“/”分隔。
+                if (tmp.FindIndex(p => p.ChannelId == channel.ParentId) < 0)
+                {
+                    //找不到父设备时，将ParentId设为系统ID
+                    channel.ParentId = id;
+                }
+                if (!string.IsNullOrEmpty(channel.GroupId))
+                {
+                    //有虚拟分组时，增加虚拟分组ID
+                    channel.ParentId += "/" + channel.GroupId;
+                }
                 channels.Add(channel);
             }
             CascadeClient client = new CascadeClient(this, sinfo.Id, SuperiorInfoEx.GetServerSipStr(sinfo), sinfo.ServerId, new GB28181.XML.DeviceInfo

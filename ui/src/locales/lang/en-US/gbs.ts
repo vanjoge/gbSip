@@ -1,6 +1,7 @@
 export default {
   realtime: 'RealTime',
   devManager: 'DevicesManager',
+  group: 'GroupManager',
   superior: 'SuperiorManager',
   channelManager: 'ChannelsManager',
   devices: 'Devices',
