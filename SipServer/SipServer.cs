@@ -1,5 +1,6 @@
 ﻿using SipServer.Cascade;
 using SipServer.DB;
+using SipServer.JT2GB;
 using SIPSorcery.SIP;
 using SIPSorcery.SIP.App;
 using SQ.Base;
@@ -36,6 +37,10 @@ namespace SipServer
         /// 级联平台管理
         /// </summary>
         public CascadeManager Cascade { get; protected set; }
+        /// <summary>
+        /// 1078转28181管理
+        /// </summary>
+        public JT2GBManager JT2GB { get; protected set; }
         /// <summary>
         /// SIP监听(包含TCP、UDPV4、UDPV6)
         /// </summary>
@@ -107,6 +112,7 @@ namespace SipServer
                 Log.WriteLog4Ex("SipServer", ex);
             }
             Cascade = new CascadeManager(this);
+            JT2GB = new JT2GBManager(this);
         }
 
 
@@ -177,6 +183,7 @@ namespace SipServer
                     }
                 }
             });
+            JT2GB.Check();
 
             //var tags = ditFromTag.Values.ToList();
             //foreach (var item in tags)
@@ -286,6 +293,9 @@ namespace SipServer
                 client.Dispose(updateDB);
             }
         }
+        #region JT2GB
+        public bool TryGetJTClient(string DeviceID, out JT2GBClient value) => JT2GB.TryGetClient(DeviceID, out value);
+        #endregion
         #endregion
 
         #region 接收处理

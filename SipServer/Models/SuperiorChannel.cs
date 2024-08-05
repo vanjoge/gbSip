@@ -22,7 +22,7 @@ namespace SipServer.Models
         }
         public ulong RowId { get; set; }
         /// <summary>
-        /// 上级ID
+        /// 级联KEY GUID
         /// </summary>
         public string SuperiorId { get; set; }
         /// <summary>

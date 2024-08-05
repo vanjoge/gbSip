@@ -49,6 +49,7 @@ namespace GBWeb
                     c.SwaggerDoc("api", new OpenApiInfo { Title = "API", Version = "v1" });
                     c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "GBWeb.xml"), true);
                     c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "GB28181.xml"), true);
+                    c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "SipServer.xml"), true);
 
                     c.OperationFilter<SecurityFilter>();
 

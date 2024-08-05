@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using GB28181.MANSRTSP;
 using GB28181.XML;
 using GBWeb.Attribute;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using SQ.Base;
-using Swashbuckle.AspNetCore.Annotations;
 
 namespace GBWeb.Controllers
 {
@@ -44,6 +37,16 @@ namespace GBWeb.Controllers
                 if (Program.sipServer.TryGetClient(DeviceID, out var client))
                 {
                     return await client.Send_INVITE(Channel, InviteID, Base64ToStr(SDP), TalkCov);
+                }
+                else if (Program.sipServer.TryGetJTClient(DeviceID, out var jtclient))
+                {
+                    var ret = await jtclient.Send_INVITE(Channel, InviteID, Base64ToStr(SDP), TalkCov);
+                    if (ret == "1")
+                    {
+                        //此处不等待，因为ACK后会发流，如果等待可能出现流媒体还没收到应答不接收流。
+                        _ = jtclient.On_ACK(InviteID);
+                    }
+                    return ret;
                 }
                 else
                 {
@@ -104,6 +107,11 @@ namespace GBWeb.Controllers
                 if (Program.sipServer.TryGetClient(DeviceID, out var client))
                 {
                     await client.Send_Bye(InviteID);
+                    return "1";
+                }
+                else if (Program.sipServer.TryGetJTClient(DeviceID, out var jtclient))
+                {
+                    var ret = await jtclient.On_BYE(InviteID);
                     return "1";
                 }
                 else

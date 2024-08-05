@@ -21,7 +21,7 @@ namespace SipServer.DBModel
         /// </summary>
         public string ChannelId { get; set; }
         /// <summary>
-        /// 自定义通道ID(上报用)
+        /// 自定义通道ID(上报用，如不自定义需与ChannelID保持一致)
         /// </summary>
         public string CustomChannelId { get; set; }
     }

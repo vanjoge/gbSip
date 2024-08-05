@@ -14,6 +14,10 @@ namespace SipServer.Cascade
         /// 客户端
         /// </summary>
         protected ConcurrentDictionary<string, CascadeClient> ditClient = new ConcurrentDictionary<string, CascadeClient>();
+        /// <summary>
+        /// GroupId对应客户端列表
+        /// </summary>
+        protected ConcurrentDictionary<string, List<CascadeClient>> ditGroupClients = new ConcurrentDictionary<string, List<CascadeClient>>();
         protected internal SipServer sipServer;
 
         /// <summary>
@@ -92,7 +96,8 @@ namespace SipServer.Cascade
         async Task<bool> AddClient(TSuperiorInfo sinfo)
         {
             var groups = await sipServer.DB.GetSuperiorGroups(sinfo.Id);
-            var tmp = await sipServer.DB.GetSuperiorChannels(sinfo.Id, groups.Select(p => p.GroupId).ToList());
+            var groupIds = groups.Select(p => p.GroupId).ToList();
+            var tmp = await sipServer.DB.GetSuperiorChannels(sinfo.Id, groupIds);
             var id = sinfo.ClientId;
             var ClientName = string.IsNullOrEmpty(sinfo.ClientName) ? sinfo.Name : sinfo.ClientName;
             var root = new SuperiorChannel(new TCatalog
@@ -109,7 +114,7 @@ namespace SipServer.Cascade
                 Secrecy = false,
                 DType = 1,
             },
-            sinfo.ServerId, null, null
+            sinfo.Id, null, null
             );
             var channels = new List<SuperiorChannel>
             {
@@ -126,7 +131,7 @@ namespace SipServer.Cascade
                     ParentId = string.IsNullOrEmpty(item.ParentId) ? id : item.ParentId,
                     DType = item.GroupId.GetIdType() == "215" ? 2 : 3,
                 },
-                sinfo.ServerId, null, null
+                sinfo.Id, null, null
                 );
                 if (channel.ChannelId.GetIdType() == "216" && channel.ParentId.GetIdType() == "215")
                 {
@@ -162,8 +167,17 @@ namespace SipServer.Cascade
 
             }, channels, authUsername: sinfo.Sipusername, password: sinfo.Sippassword, expiry: sinfo.Expiry, UserAgent: sipServer.UserAgent, EnableTraceLogs: sipServer.Settings.EnableSipLog, heartSec: sinfo.HeartSec, timeOutSec: sinfo.HeartTimeoutTimes * sinfo.HeartSec
             , localPort: sinfo.ClientPort);
+            client.GroupIds = groupIds;
             client.Start();
             ditClient[client.Key] = client;
+            foreach (var groupId in groupIds)
+            {
+                var lst = ditGroupClients.GetOrAdd(groupId, key =>
+                {
+                    return new List<CascadeClient>();
+                });
+                lst.Add(client);
+            }
             return true;
         }
         bool RemoveClient(string key)
@@ -171,6 +185,14 @@ namespace SipServer.Cascade
             if (ditClient.TryRemove(key, out var client))
             {
                 client.Stop();
+                foreach (var groupId in client.GroupIds)
+                {
+                    if (ditGroupClients.TryGetValue(groupId, out var lst))
+                    {
+                        lst.Remove(client);
+                    }
+                }
+                client.GroupIds.Clear();
                 return true;
             }
             return false;
@@ -180,6 +202,11 @@ namespace SipServer.Cascade
         {
             ditClient.TryGetValue(key, out var client);
             return client;
+        }
+        public List<CascadeClient> GetClientByGroupId(string groupId)
+        {
+            ditGroupClients.TryGetValue(groupId, out var lst);
+            return lst;
         }
     }
 }

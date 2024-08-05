@@ -123,9 +123,18 @@ namespace SipServer.DBModel
         public DateTime? OfflineTime { get; set; }
         /// <summary>
         /// 类型 0设备/1系统目录/2业务分组/3虚拟组织
+        /// /1001 JT2GB
         /// </summary>
         public int DType { get; set; }
 
+        public bool IsDevice()
+        {
+            return DType < 1 || DType > 3;
+        }
+        public bool IsJT2GB()
+        {
+            return DType == 1001;
+        }
 
         public void CopyFrom(TCatalog item)
         {

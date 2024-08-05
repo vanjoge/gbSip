@@ -3,6 +3,7 @@ using GB28181.Client;
 using GB28181.MANSRTSP;
 using GB28181.XML;
 using JTServer.Model.RTVS;
+using SipServer.JT2GB;
 using SipServer.Models;
 using SIPSorcery.Net;
 using SIPSorcery.SIP;
@@ -34,7 +35,11 @@ namespace SipServer.Cascade
             protected override void OnChannelItemAdd(CascadeChannelItem item)
             {
                 bool Online = false;
-                if (client.manager.sipServer.TryGetClient(item.DeviceId, out var gbClient) && gbClient.TryGetChannel(item.ChannelId, out var gbChannel))
+                if (item.J2GChannel != null)
+                {
+                    Online = item.J2GChannel.IsOnline();
+                }
+                else if (client.manager.sipServer.TryGetClient(item.DeviceId, out var gbClient) && gbClient.TryGetChannel(item.ChannelId, out var gbChannel))
                 {
                     Online = gbChannel.Data.Online;
                     item.GBChannel = gbChannel;
@@ -73,19 +78,16 @@ namespace SipServer.Cascade
                 }
             }
         }
-        protected class fromTagCache
-        {
-            public string TaskID;
-
-            public SDP28181 sdp;
-        }
         private CascadeManager manager;
         public string Key { get; protected set; }
-        /// <summary>
-        /// 通道信息
-        /// </summary>
-        protected ConcurrentDictionary<string, SuperiorChannel> ditChannels = new ConcurrentDictionary<string, SuperiorChannel>();
-        protected ConcurrentDictionary<string, fromTagCache> ditFromTagCache = new ConcurrentDictionary<string, fromTagCache>();
+        public string DeviceID { get { return deviceInfo.DeviceID; } }
+        public List<string> GroupIds { get; internal protected set; }
+        ///// <summary>
+        ///// 通道信息
+        ///// </summary>
+        //protected ConcurrentDictionary<string, SuperiorChannel> ditChannels = new ConcurrentDictionary<string, SuperiorChannel>();
+        //TODO:需超时回收
+        protected ConcurrentDictionary<string, FromTagCache> ditFromTagCache = new ConcurrentDictionary<string, FromTagCache>();
         public CascadeClient(CascadeManager manager, string Key, string server, string server_id, DeviceInfo deviceInfo, List<SuperiorChannel> channels, string authUsername = null, string password = "123456", int expiry = 7200, string UserAgent = "rtvs v1", bool EnableTraceLogs = false, double heartSec = 60, double timeOutSec = 300, int localPort = 0)
             : base(server, server_id, deviceInfo, authUsername, password, expiry, UserAgent, EnableTraceLogs, heartSec, timeOutSec)
         {
@@ -105,7 +107,7 @@ namespace SipServer.Cascade
             this.ditChild = new CascadeChannelDictionary(this);
             foreach (var item in channels)
             {
-                AddChannel(item);
+                AddChannel(item, null);
             }
         }
 
@@ -171,14 +173,21 @@ namespace SipServer.Cascade
             try
             {
                 var did = sipRequest.Header.To.ToURI.User;
-                if (ditChannels.TryGetValue(did, out var channel))
+                if (ditChild.TryGetValue(did, out var channel))
                 {
-                    var str = await HttpHelperByHttpClient.HttpRequestHtml(manager.sipServer.Settings.RTVSAPI + $"api/GB/CreateSendRTPTask?Protocol=2&Sim={channel.DeviceId}&Channel={did}&RTPServer={sdp.RtpIp}&RTPPort={sdp.RtpPort}&UseUdp={(sdp.NetType == SDP28181.RTPNetType.TCP ? "false" : "true")}", false, CancellationToken.None);
-
-                    var res = str.ParseJSON<SendRTPTask>();
+                    SendRTPTask res;
+                    if (channel.J2GChannel != null)
+                    {
+                        res = await channel.J2GChannel.INVITE_API(sdp);
+                    }
+                    else
+                    {
+                        var str = await HttpHelperByHttpClient.HttpRequestHtml(manager.sipServer.Settings.RTVSAPI + $"api/GB/CreateSendRTPTask?Protocol=2&Sim={channel.DeviceId}&Channel={did}&RTPServer={sdp.RtpIp}&RTPPort={sdp.RtpPort}&UseUdp={(sdp.NetType == SDP28181.RTPNetType.TCP ? "false" : "true")}", false, CancellationToken.None);
+                        res = str.ParseJSON<SendRTPTask>();
+                    }
                     if (res.Code == StateCode.Success)
                     {
-                        ditFromTagCache[fromTag] = new fromTagCache
+                        ditFromTagCache[fromTag] = new FromTagCache
                         {
                             TaskID = res.TaskID,
                             sdp = sdp
@@ -197,26 +206,30 @@ namespace SipServer.Cascade
 
         protected override async Task<RecordInfo> On_RECORDINFO(RecordInfoQuery res, SIPRequest sipRequest)
         {
-            if (ditChannels.TryGetValue(res.DeviceID, out var channel) && manager.sipServer.TryGetClient(channel.DeviceId, out var client))
+            if (ditChild.TryGetValue(res.DeviceID, out var channel))
             {
-                var oldsn = res.SN;
-                await client.Send_GetRecordInfo(res, p =>
+                if (channel.J2GChannel != null)
                 {
-                    p.SN = oldsn;
-                    return AnsRecordInfo(sipRequest, p);
-                });
-                return null;
+                    //channel.J2GChannel.
+                }
+                else if (manager.sipServer.TryGetClient(channel.DeviceId, out var client))
+                {
+                    var oldsn = res.SN;
+                    await client.Send_GetRecordInfo(res, p =>
+                    {
+                        p.SN = oldsn;
+                        return AnsRecordInfo(sipRequest, p);
+                    });
+                    return null;
+                }
             }
-            else
+            return new RecordInfo
             {
-                return new RecordInfo
-                {
-                    DeviceID = res.DeviceID,
-                    Name = channel?.Name ?? "Unknown",
-                    SN = res.SN,
-                    SumNum = 0,
-                };
-            }
+                DeviceID = res.DeviceID,
+                Name = channel?.CatalogItem?.Name ?? "Unknown",
+                SN = res.SN,
+                SumNum = 0,
+            };
         }
         protected override async Task<RTSPResponse> On_MANSRTSP(string fromTag, SIPRequest sipRequest)
         {
@@ -224,7 +237,7 @@ namespace SipServer.Cascade
             {
                 if (ditFromTagCache.TryGetValue(fromTag, out var item))
                 {
-                    if (ditChannels.TryGetValue(item.sdp.Owner, out var channel) && manager.sipServer.TryGetClient(channel.DeviceId, out var client))
+                    if (ditChild.TryGetValue(item.sdp.Owner, out var channel) && manager.sipServer.TryGetClient(channel.DeviceId, out var client))
                     {
                         if (await client.Send_MANSRTSP(fromTag, sipRequest.Body, async p =>
                         {
@@ -260,10 +273,10 @@ namespace SipServer.Cascade
             }
         }
 
-        protected internal void AddChannel(SuperiorChannel item)
+        protected internal void AddChannel(SuperiorChannel item, JT2GBChannel j2gChannel)
         {
             var channel_id = item.GetChannelId();
-            ditChannels[channel_id] = item;
+            //ditChannels[channel_id] = item;
             var ci = new Catalog.Item
             {
                 DeviceID = channel_id,
@@ -282,7 +295,7 @@ namespace SipServer.Cascade
                 Password = Empty2Null(item.Password),
                 Status = item.Status,
             };
-            if (item.DType < 1 || item.DType > 3)
+            if (item.IsDevice())
             {
                 ci.Parental = item.Parental ? 1 : 0;
                 ci.SafetyWay = item.SafetyWay;
@@ -300,11 +313,11 @@ namespace SipServer.Cascade
                 ci.Longitude = item.Longitude;
             if (item.Latitude > 0)
                 ci.Latitude = item.Latitude;
-            ditChild.AddOrUpdate(new CascadeChannelItem(item.SuperiorId, item.DeviceId, item.ChannelId, ci));
+            ditChild.AddOrUpdate(new CascadeChannelItem(item.SuperiorId, item.DeviceId, item.ChannelId, ci, j2gChannel));
         }
         protected internal void RemoveChannel(string ChannelId)
         {
-            ditChannels.Remove(ChannelId, out var item);
+            //ditChannels.Remove(ChannelId, out var item);
             ditChild.TryRemove(ChannelId, out var citem);
         }
 

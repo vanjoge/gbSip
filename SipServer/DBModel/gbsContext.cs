@@ -21,6 +21,7 @@ namespace SipServer.DBModel
         public virtual DbSet<TEvent> TEvents { get; set; }
         public virtual DbSet<TGroup> TGroups { get; set; }
         public virtual DbSet<TGroupBind> TGroupBinds { get; set; }
+        public virtual DbSet<TJTinfo> TJTinfos { get; set; }
         public virtual DbSet<TSuperiorGroup> TSuperiorGroups { get; set; }
         public virtual DbSet<TSuperiorInfo> TSuperiorInfos { get; set; }
         public virtual DbSet<TUserInfo> TUserInfos { get; set; }
@@ -392,9 +393,9 @@ namespace SipServer.DBModel
 
             modelBuilder.Entity<TGroupBind>(entity =>
             {
-                entity.HasKey(e => new { e.GroupId, e.DeviceId, e.CustomChannelId })
+                entity.HasKey(e => new { e.GroupId, e.CustomChannelId })
                     .HasName("PRIMARY")
-                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0, 0 });
+                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
                 entity.ToTable("T_GroupBind");
 
@@ -407,11 +408,6 @@ namespace SipServer.DBModel
                     .HasColumnName("GroupID")
                     .HasComment("分组ID");
 
-                entity.Property(e => e.DeviceId)
-                    .HasMaxLength(50)
-                    .HasColumnName("DeviceID")
-                    .HasComment("绑定设备ID");
-
                 entity.Property(e => e.CustomChannelId)
                     .HasMaxLength(50)
                     .HasColumnName("CustomChannelID")
@@ -422,6 +418,49 @@ namespace SipServer.DBModel
                     .HasMaxLength(50)
                     .HasColumnName("ChannelID")
                     .HasComment("绑定通道ID(0代表所有)");
+
+                entity.Property(e => e.DeviceId)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnName("DeviceID")
+                    .HasComment("绑定设备ID");
+            });
+
+            modelBuilder.Entity<TJTinfo>(entity =>
+            {
+                entity.HasKey(e => new { e.ChannelId, e.DeviceId })
+                    .HasName("PRIMARY")
+                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+
+                entity.ToTable("T_JTInfo");
+
+                entity.HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
+                entity.Property(e => e.ChannelId)
+                    .HasMaxLength(50)
+                    .HasColumnName("ChannelID")
+                    .HasComment("CatalogID");
+
+                entity.Property(e => e.DeviceId)
+                    .HasMaxLength(50)
+                    .HasColumnName("DeviceID")
+                    .HasComment("设备ID");
+
+                entity.Property(e => e.Is2019)
+                    .HasColumnType("bit(1)")
+                    .HasComment("是否2019版本");
+
+                entity.Property(e => e.JTchannel)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("JTChannel")
+                    .HasComment("1078通道号");
+
+                entity.Property(e => e.JTsim)
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnName("JTSim")
+                    .HasComment("1078SIM卡号");
             });
 
             modelBuilder.Entity<TSuperiorGroup>(entity =>
