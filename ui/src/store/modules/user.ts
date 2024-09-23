@@ -50,12 +50,14 @@ export const useUserStore = defineStore({
       this.menus = [];
       this.userInfo = {};
       Storage.clear();
+      Storage.removeCookie('authorization');
     },
     /** 登录成功保存token */
     setToken(token: string) {
       this.token = token ?? '';
       const ex = 7 * 24 * 60 * 60 * 1000;
       Storage.set(ACCESS_TOKEN_KEY, this.token, ex);
+      Storage.setCookie('authorization', this.token, ex);
     },
     /** 登录 */
     async login(params: API.LoginParams) {

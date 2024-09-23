@@ -30,11 +30,11 @@ namespace GBWeb.Filter
             }
             else
             {
-                if (await Check(context)) return;
+                if (await Check(context.HttpContext)) return;
                 context.Result = new JsonResult(new ApiResult(11001));
             }
         }
-        private async Task<bool> Check(AuthorizationFilterContext context)
+        public static async Task<bool> Check(HttpContext context)
         {
             if (GetHeadAuthorization(context, out var auth) && await Program.sipServer.DB.CheckToken(auth))
             {
@@ -53,13 +53,13 @@ namespace GBWeb.Filter
                 return true;
             }
 
-            return GetHeadAuthorization(context, out var auth)
+            return GetHeadAuthorization(context.HttpContext, out var auth)
                 && auth == Program.sipServer.Settings.APIAuthorization;
 
         }
-        private bool GetHeadAuthorization(AuthorizationFilterContext context, out StringValues auth)
+        private static bool GetHeadAuthorization(HttpContext context, out StringValues auth)
         {
-            foreach (var p in context.HttpContext.Request.Headers)
+            foreach (var p in context.Request.Headers)
             {
                 if ("authorization".IgnoreEquals(p.Key))
                 {
@@ -67,6 +67,11 @@ namespace GBWeb.Filter
 
                     return true;
                 }
+            }
+            if (context.Request.Cookies.TryGetValue("authorization", out var tmp))
+            {
+                auth = tmp;
+                return true;
             }
             return false;
         }

@@ -2,16 +2,12 @@ using GBWeb.Filter;
 using IGeekFan.AspNetCore.Knife4jUI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -82,6 +78,7 @@ namespace GBWeb
 
             if (Program.sipServer.Settings.SwaggerDoc)
             {
+                app.UseMiddleware<SwaggerAuthMiddleware>();
                 // 添加Swagger有关中间件
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
@@ -123,6 +120,32 @@ namespace GBWeb
             public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
             {
                 writer.WriteStringValue(value.ToString("yyyy-MM-dd HH:mm:ss"));
+            }
+        }
+
+        public class SwaggerAuthMiddleware
+        {
+            private readonly RequestDelegate _next;
+
+            public SwaggerAuthMiddleware(RequestDelegate next)
+            {
+                _next = next;
+            }
+
+            public async Task Invoke(HttpContext context)
+            {
+                if (
+                    (context.Request.Path.StartsWithSegments("/swagger") || context.Request.Path.StartsWithSegments("/Help"))
+                    && !await AuthenFilter.Check(context))
+                {
+                    //context.Response.Redirect("/Login/SignIn");
+                    // 如果没有登录，重定向到登录页面或返回未授权状态
+                    context.Response.StatusCode = 401;
+                    await context.Response.WriteAsync("Unauthorized - Please login to access Swagger.");
+                    return;
+                }
+
+                await _next(context);
             }
         }
     }

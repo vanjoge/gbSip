@@ -7,7 +7,7 @@
     </div>
     <a-form layout="horizontal" :model="state.formInline" @submit.prevent="handleSubmit">
       <a-form-item>
-        <a-input v-model:value="state.formInline.UserName" size="large" placeholder="gbsip">
+        <a-input v-model:value="state.formInline.UserName" size="large" placeholder="请输入用户名">
           <template #prefix><user-outlined type="user" /></template>
         </a-input>
       </a-form-item>
@@ -16,7 +16,7 @@
           v-model:value="state.formInline.Password"
           size="large"
           type="password"
-          placeholder="admin"
+          placeholder="请输入密码"
           autocomplete="new-password"
         >
           <template #prefix><lock-outlined type="user" /></template>
