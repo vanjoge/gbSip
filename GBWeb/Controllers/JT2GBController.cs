@@ -54,5 +54,24 @@ namespace GBWeb.Controllers
                 return new ApiResult(500) { message = "err" };
             }
         }
+        /// <summary>
+        /// 获取当前有效JT1078车机
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public ApiResult<List<JTItem>> GetAll()
+        {
+            try
+            {
+                return new ApiResult<List<JTItem>>()
+                {
+                    data = Program.sipServer.JT2GB.GetAll()
+                };
+            }
+            catch
+            {
+                return new ApiResult<List<JTItem>>(500) { message = "err" };
+            }
+        }
     }
 }

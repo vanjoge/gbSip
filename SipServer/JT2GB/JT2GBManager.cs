@@ -13,6 +13,7 @@ namespace SipServer.JT2GB
         /// 客户端
         /// </summary>
         protected ConcurrentDictionary<string, JT2GBClient> ditClient = new ConcurrentDictionary<string, JT2GBClient>();
+        protected internal ConcurrentDictionary<string, HashSet<JT2GBChannel>> ditGroupChannels = new ConcurrentDictionary<string, HashSet<JT2GBChannel>>();
         protected internal SipServer sipServer;
         public JT2GBManager(SipServer sipServer)
         {
@@ -39,33 +40,17 @@ namespace SipServer.JT2GB
                  });
                 var channel = client.GetOrAddChannel(item.GBChannelId, key =>
                 {
-                    return new JT2GBChannel(client, item.GBChannelId, item.JTSim, item.JTChannel, item.JTVer == 1);
+                    return new JT2GBChannel(client, item);
                 });
                 if (item.GBGroupID != null)
                 {
                     var lstCascadeClient = sipServer.Cascade.GetClientByGroupId(item.GBGroupID);
-                    channel.Online(item.ExpiresIn, lstCascadeClient);
+                    channel.Online(item, lstCascadeClient);
                     if (lstCascadeClient != null && lstCascadeClient.Count > 0)
                     {
                         foreach (var cascadeClient in lstCascadeClient)
                         {
-                            cascadeClient.AddChannel(new Models.SuperiorChannel(new TCatalog
-                            {
-                                ChannelId = item.GBChannelId,
-                                DeviceId = item.GBDeviceId,
-                                Name = item.GBChannelName,
-                                Manufacturer = "RTVS",
-                                Model = "gbsip",
-                                Owner = "Owner",
-                                CivilCode = item.GBChannelId.Substring(0, 6),
-                                Address = "Address",
-                                RegisterWay = 1,
-                                Secrecy = false,
-                                DType = 1001,
-                                Online = true,
-                                ParentId = cascadeClient.DeviceID + "/" + item.GBGroupID,
-                                Status = "ON",
-                            }, cascadeClient.Key, item.GBChannelId, item.GBGroupID), channel);
+                            cascadeClient.AddChannel(channel);
                         }
                     }
                 }
@@ -101,6 +86,20 @@ namespace SipServer.JT2GB
             catch
             {
             }
+        }
+
+        public List<JTItem> GetAll()
+        {
+            List<JTItem> lst = new List<JTItem>();
+            var arr = ditGroupChannels.Values.ToList();
+            foreach (var hs in arr)
+            {
+                foreach (var channel in hs)
+                {
+                    lst.Add(channel.JTItem);
+                }
+            }
+            return lst;
         }
     }
 }

@@ -6,6 +6,7 @@ using JTServer.Model.RTVS;
 using System.Collections.Generic;
 using SipServer.Cascade;
 using System;
+using SipServer.Models.JT;
 
 namespace SipServer.JT2GB
 {
@@ -16,17 +17,9 @@ namespace SipServer.JT2GB
         /// </summary>
         public string Key { get; protected set; }
         /// <summary>
-        /// Sim卡号(JT1078)
+        /// 
         /// </summary>
-        string sim;
-        /// <summary>
-        /// 通道号(JT1078)
-        /// </summary>
-        int channel;
-        /// <summary>
-        /// 2019版本
-        /// </summary>
-        bool is2019;
+        public JTItem JTItem { get; set; }
 
         JT2GBClient client;
         /// <summary>
@@ -34,30 +27,40 @@ namespace SipServer.JT2GB
         /// </summary>
         private bool online;
         /// <summary>
-        /// 过期时间(秒) 小于等于0表示不过期
-        /// </summary>
-        private long expiresIn;
-        /// <summary>
-        /// 绑定的级联客户端列表
+        /// 绑定的级联客户端列表(引用传递 此类不要做添加删除操作)
         /// </summary>
         private List<CascadeClient> cascadeClients;
 
         private DateTime heartbeatTime;
 
-        public JT2GBChannel(JT2GBClient client, string gbChannelId, string sim, int channel, bool is2019)
+        //public JT2GBChannel(JT2GBClient client, string gbChannelId, string sim, int channel, bool is2019)
+        //{
+        //    this.client = client;
+        //    this.sim = sim;
+        //    this.channel = channel;
+        //    this.is2019 = is2019;
+        //    this.online = true;
+        //    this.Key = gbChannelId;
+        //}
+        public JT2GBChannel(JT2GBClient client, JTItem item)
         {
             this.client = client;
-            this.sim = sim;
-            this.channel = channel;
-            this.is2019 = is2019;
+            this.JTItem = item;
+            //this.sim = item.JTSim;
+            //this.channel = item.JTChannel;
+            //this.is2019 = item.JTVer == 1;
             this.online = true;
-            this.Key = gbChannelId;
+            this.Key = item.GBChannelId;
+        }
+        private bool Is2019()
+        {
+            return JTItem.JTVer == 1;
         }
 
 
         public async Task<SendRTPTask> INVITE_API(SDP28181 sdp)
         {
-            var str = await HttpHelperByHttpClient.HttpRequestHtml(client.manager.sipServer.Settings.RTVSAPI + $"api/GB/CreateSendRTPTask?Protocol={(is2019 ? "1" : "0")}&Sim={sim}&Channel={channel}&RTPServer={sdp.RtpIp}&RTPPort={sdp.RtpPort}&UseUdp={(sdp.NetType == SDP28181.RTPNetType.TCP ? "false" : "true")}", false, CancellationToken.None);
+            var str = await HttpHelperByHttpClient.HttpRequestHtml(client.manager.sipServer.Settings.RTVSAPI + $"api/GB/CreateSendRTPTask?Protocol={(Is2019() ? "1" : "0")}&Sim={JTItem.JTSim}&Channel={JTItem.JTChannel}&RTPServer={sdp.RtpIp}&RTPPort={sdp.RtpPort}&UseUdp={(sdp.NetType == SDP28181.RTPNetType.TCP ? "false" : "true")}", false, CancellationToken.None);
             return str.ParseJSON<SendRTPTask>();
         }
 
@@ -70,15 +73,43 @@ namespace SipServer.JT2GB
                 {
                     item.RemoveChannel(Key);
                 }
-                cascadeClients = null;
+            }
+            cascadeClients = null;
+            if (client.manager.ditGroupChannels.TryGetValue(JTItem.GBGroupID, out var lst))
+            {
+                lock (lst)
+                {
+                    lst.Remove(this);
+                }
             }
         }
 
-        protected internal void Online(long expiresIn, List<CascadeClient> lstCascadeClient)
+        protected internal void Online(JTItem item, List<CascadeClient> lstCascadeClient)
         {
             this.heartbeatTime = DateTime.Now;
-            this.expiresIn = expiresIn;
             cascadeClients = lstCascadeClient;
+
+            if (item.GBGroupID != JTItem.GBGroupID)
+            {
+                //移除之前分组记录
+                if (client.manager.ditGroupChannels.TryGetValue(item.GBGroupID, out var lst))
+                {
+                    lock (lst)
+                    {
+                        lst.Remove(this);
+                    }
+                }
+            }
+            JTItem = item;
+            //添加当前分组记录
+            var lstChannel = client.manager.ditGroupChannels.GetOrAdd(item.GBGroupID, key =>
+            {
+                return new HashSet<JT2GBChannel>();
+            });
+            lock (lstChannel)
+            {
+                lstChannel.Add(this);
+            }
         }
         public bool IsOnline()
         {
@@ -90,7 +121,7 @@ namespace SipServer.JT2GB
         /// <returns></returns>
         public bool IsTimeOut()
         {
-            if (expiresIn > 0 && heartbeatTime.DiffNowSec() > expiresIn)
+            if (JTItem.ExpiresIn > 0 && heartbeatTime.DiffNowSec() > JTItem.ExpiresIn)
             {
                 Offline();
                 return true;

@@ -3,6 +3,7 @@ using GB28181.Client;
 using GB28181.MANSRTSP;
 using GB28181.XML;
 using JTServer.Model.RTVS;
+using SipServer.DBModel;
 using SipServer.JT2GB;
 using SipServer.Models;
 using SIPSorcery.Net;
@@ -273,7 +274,28 @@ namespace SipServer.Cascade
             }
         }
 
-        protected internal void AddChannel(SuperiorChannel item, JT2GBChannel j2gChannel)
+        protected internal void AddChannel(JT2GBChannel j2gChannel)
+        {
+            AddChannel(new Models.SuperiorChannel(new TCatalog
+            {
+                ChannelId = j2gChannel.JTItem.GBChannelId,
+                DeviceId = j2gChannel.JTItem.GBDeviceId,
+                Name = j2gChannel.JTItem.GBChannelName,
+                Manufacturer = "RTVS",
+                Model = "gbsip",
+                Owner = "Owner",
+                CivilCode = j2gChannel.JTItem.GBChannelId.Substring(0, 6),
+                Address = "Address",
+                RegisterWay = 1,
+                Secrecy = false,
+                DType = 1001,
+                Online = true,
+                ParentId = DeviceID + "/" + j2gChannel.JTItem.GBGroupID,
+                Status = "ON",
+            }, Key, j2gChannel.JTItem.GBChannelId, j2gChannel.JTItem.GBGroupID), j2gChannel);
+        }
+
+        protected void AddChannel(SuperiorChannel item, JT2GBChannel j2gChannel)
         {
             var channel_id = item.GetChannelId();
             //ditChannels[channel_id] = item;

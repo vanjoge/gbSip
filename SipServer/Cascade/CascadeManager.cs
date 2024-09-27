@@ -177,6 +177,17 @@ namespace SipServer.Cascade
                     return new List<CascadeClient>();
                 });
                 lst.Add(client);
+
+                if (sipServer.JT2GB.ditGroupChannels.TryGetValue(groupId, out var hs)) {
+                    lock (hs)
+                    {
+                        foreach (var channel in hs)
+                        {
+                            client.AddChannel(channel);
+                        }
+                    }
+                }
+               
             }
             return true;
         }
@@ -205,8 +216,10 @@ namespace SipServer.Cascade
         }
         public List<CascadeClient> GetClientByGroupId(string groupId)
         {
-            ditGroupClients.TryGetValue(groupId, out var lst);
-            return lst;
+            return ditGroupClients.GetOrAdd(groupId, key =>
+            {
+                return new List<CascadeClient>();
+            });
         }
     }
 }

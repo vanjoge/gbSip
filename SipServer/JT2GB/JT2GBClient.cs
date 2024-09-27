@@ -10,6 +10,7 @@ using GB28181.XML;
 using SIPSorcery.SIP;
 using Newtonsoft.Json.Linq;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace SipServer.JT2GB
 {
@@ -136,10 +137,13 @@ namespace SipServer.JT2GB
             return false;
         }
 
-
+        /// <summary>
+        /// 超时检查
+        /// </summary>
+        /// <returns></returns>
         public bool Check()
         {
-            var clients = ditChannels.Values.ToList();
+            var clients = GetAllChannels();
             foreach (var item in clients)
             {
                 if (item.IsTimeOut())
@@ -148,6 +152,15 @@ namespace SipServer.JT2GB
                 }
             }
             return ditChannels.Count > 0;
+        }
+        /// <summary>
+        /// 获取所有通道
+        /// </summary>
+        /// <returns></returns>
+        public List<JT2GBChannel> GetAllChannels()
+        {
+            var channels = ditChannels.Values.ToList();
+            return channels;
         }
     }
 }
