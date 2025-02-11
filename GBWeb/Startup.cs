@@ -134,15 +134,19 @@ namespace GBWeb
 
             public async Task Invoke(HttpContext context)
             {
-                if (
-                    (context.Request.Path.StartsWithSegments("/swagger") || context.Request.Path.StartsWithSegments("/Help"))
-                    && !await AuthenFilter.Check(context))
+                if (context.Request.Path.HasValue)
                 {
-                    //context.Response.Redirect("/Login/SignIn");
-                    // 如果没有登录，重定向到登录页面或返回未授权状态
-                    context.Response.StatusCode = 401;
-                    await context.Response.WriteAsync("Unauthorized - Please login to access Swagger.");
-                    return;
+                    var path = context.Request.Path.Value.ToLower();
+                    if (
+                        (context.Request.Path.StartsWithSegments("/swagger") || context.Request.Path.StartsWithSegments("/help") || path.EndsWith("/swagger-resources"))
+                        && !await AuthenFilter.Check(context))
+                    {
+                        //context.Response.Redirect("/Login/SignIn");
+                        // 如果没有登录，重定向到登录页面或返回未授权状态
+                        context.Response.StatusCode = 401;
+                        await context.Response.WriteAsync("Unauthorized - Please login to access Swagger.");
+                        return;
+                    }
                 }
 
                 await _next(context);
