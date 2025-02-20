@@ -87,6 +87,24 @@ namespace GB28181
             /// </summary>
             inactive = 3
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        public enum Setup
+        {
+            /// <summary>
+            /// 发起方主动尝试建立连接，会发起 TCP 连接。
+            /// </summary>
+            active = 0,
+            /// <summary>
+            /// 接收方等待对方发起连接，处于被动等待状态，直到收到对方的连接请求才会建立连接。
+            /// </summary>
+            passive = 1,
+            /// <summary>
+            /// 既可以主动发起连接，也可以被动等待连接，是一种较为灵活的模式。
+            /// </summary>
+            actpass = 2,
+        }
 
         public class RTPMap
         {
@@ -145,6 +163,10 @@ namespace GB28181
         /// <summary>
         /// 
         /// </summary>
+        public Setup setup = Setup.passive;
+        /// <summary>
+        /// 
+        /// </summary>
         public Dictionary<int, RTPMap> RtpMaps = new Dictionary<int, RTPMap>();
         /// <summary>
         /// f=
@@ -181,7 +203,7 @@ namespace GB28181
             }
             if (NetType == RTPNetType.TCP)
             {
-                a += "\r\na=setup:passive\r\na=connection:new";
+                a += $"\r\na=setup:{setup}\r\na=connection:new";
             }
             if (SType == PlayType.Download && Downloadspeed > 0)
             {
@@ -352,6 +374,13 @@ y={SSRC.StrFixLen(10)}{GetF()}
                                 var idx = tstr.IndexOf("downloadspeed:");
                                 if (idx >= 0 && int.TryParse(tstr.Substring(idx + 14), out Downloadspeed))
                                 {
+                                    continue;
+                                }
+                                idx = tstr.IndexOf("setup:");
+                                if (idx >= 0 && Enum.TryParse<Setup>(tstr.Substring(idx + 6), true, out var sp))
+                                {
+                                    setup = sp;
+                                    continue;
                                 }
                             }
                         }

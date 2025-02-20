@@ -349,9 +349,11 @@ namespace GB28181.Client
 
         private async Task INVITE(SIPRequest sipRequest)
         {
-            SDP28181 ansSdp = await On_INVITE(sipRequest.Header.From.FromTag, SDP28181.NewByStr(sipRequest.Body), sipRequest);
+            var sdp = SDP28181.NewByStr(sipRequest.Body);
+            SDP28181 ansSdp = await On_INVITE(sipRequest.Header.From.FromTag, sdp, sipRequest);
             if (ansSdp != null)
             {
+                ansSdp.setup = sdp.setup == SDP28181.Setup.active ? SDP28181.Setup.passive : ansSdp.setup = SDP28181.Setup.active;
                 var res = GetSIPResponse(sipRequest);
                 res.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(res.Header.To.ToUserField) };
                 res.Header.ContentType = Constant.Application_SDP;
