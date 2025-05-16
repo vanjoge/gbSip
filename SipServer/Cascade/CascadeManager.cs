@@ -108,7 +108,7 @@ namespace SipServer.Cascade
                 Manufacturer = "RTVS",
                 Model = "gbsip",
                 Owner = "Owner",
-                CivilCode = id.Substring(0, 6),
+                CivilCode = id[..6],
                 Address = "Address",
                 RegisterWay = 1,
                 Secrecy = false,

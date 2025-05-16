@@ -90,7 +90,7 @@ namespace SipServer.JT2GB
 
         public List<JTItem> GetAll()
         {
-            List<JTItem> lst = new List<JTItem>();
+            HashSet<JTItem> lst = new HashSet<JTItem>();
             var arr = ditGroupChannels.Values.ToList();
             foreach (var hs in arr)
             {
@@ -99,7 +99,7 @@ namespace SipServer.JT2GB
                     lst.Add(channel.JTItem);
                 }
             }
-            return lst;
+            return lst.ToList();
         }
     }
 }
