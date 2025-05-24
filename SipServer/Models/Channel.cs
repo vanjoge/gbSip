@@ -48,7 +48,7 @@ namespace SipServer.Models
 
         public void SetChannelConf(ChannelConf conf, Setting setting)
         {
-            this.RemoteEp = conf.RemoteEp;
+            this.RemoteEp = conf.RemoteEp??"";
             this.NickName = conf.NickName;
             this.NetType = conf.NetType;
             this.TalkType = conf.TalkType;

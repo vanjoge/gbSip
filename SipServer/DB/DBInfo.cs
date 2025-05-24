@@ -253,9 +253,9 @@ namespace SipServer.DB
         /// <param name="DeviceID"></param>
         /// <param name="ChannelIds"></param>
         /// <returns></returns>
-        public async Task<bool> DeleteChannel(string DeviceID, string[] ChannelIds)
+        public async Task<bool> DeleteChannel(string DeviceID, IEnumerable<string> ChannelIds)
         {
-            if (ChannelIds == null || ChannelIds.Length == 0)
+            if (ChannelIds == null || ChannelIds.Count() == 0)
             {
                 return true;
             }
@@ -282,6 +282,17 @@ namespace SipServer.DB
         Task<int> DeleteChannelsByDid(gbsContext dbContext, string DeviceID)
         {
             return dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM T_Catalog WHERE DeviceID = '{DeviceID}';");
+        }
+
+        internal async Task<bool> UpdateChannels(List<Channel> channels)
+        {
+            using (var manager = GetNewCtxManager())
+            {
+                var dbContext = manager.Get();
+                dbContext.TCatalogs.UpdateRange(channels);
+                await dbContext.SaveChangesAsync();
+                return true;
+            }
         }
         /// <summary>
         /// 保存通道

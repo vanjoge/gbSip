@@ -186,6 +186,7 @@ namespace SipServer
 
             await Send_GetDevCommand(CommandType.DeviceStatus);
 
+            await Send_SubscribeCommand();
         }
         /// <summary>
         /// 下线处理
@@ -194,6 +195,9 @@ namespace SipServer
         async Task Offline(bool updateDB = true)
         {
             Interlocked.CompareExchange(ref m_Online, 0, 1);
+
+            //TODO:移除未使用Tag
+            //sipServer.RemoveTag(fromSIPFromHeader.FromTag);
 
             deviceInfo.Online = false;
             deviceInfo.OfflineTime = DateTime.Now;
@@ -341,6 +345,125 @@ namespace SipServer
                         break;
                     case SIPMethodsEnum.BYE:
                         await ByeProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
+                        break;
+                    case SIPMethodsEnum.NOTIFY:
+                        //await MessageProcess(localSIPEndPoint, remoteEndPoint, sipRequest);
+                        var catalog = SerializableHelper.DeserializeByStr<NotifyCatalog>(sipRequest.Body);
+                        if (catalog.SumNum != 0 && catalog.DeviceList != null)
+                        {
+                            var confs = await sipServer.DB.GetChannelConfs(DeviceID, catalog.DeviceList.Select(p => p.DeviceID));
+                            bool flag = false;
+                            List<Channel> lstUpdate = new List<Channel>();
+                            List<string> lstDelete = new List<string>();
+                            foreach (var item in catalog.DeviceList)
+                            {
+                                switch (item.Event)
+                                {
+                                    case EventType.ON:
+                                        if (TryGetChannel(item.DeviceID, out var chl1))
+                                        {
+                                            chl1.Data.OnlineTime = DateTime.Now;
+                                            chl1.Data.Online = true;
+                                            chl1.Data.RemoteEp ??= "";
+                                            lstUpdate.Add(chl1.Data);
+                                        }
+                                        break;
+                                    case EventType.OFF:
+                                        if (TryGetChannel(item.DeviceID, out var chl))
+                                        {
+                                            chl.Data.OfflineTime = DateTime.Now;
+                                            chl.Data.Online = false;
+                                            chl.Data.RemoteEp ??= "";
+                                            lstUpdate.Add(chl.Data);
+                                        }
+                                        break;
+                                    case EventType.VLOST:
+                                        break;
+                                    case EventType.DEFECT:
+                                        break;
+                                    case EventType.ADD:
+                                        sipServer.SetTree(item.DeviceID, DeviceID);
+                                        int DType;
+                                        switch (item.DeviceID.GetIdType())
+                                        {
+                                            case "200":
+                                                DType = 1;
+                                                break;
+                                            case "215":
+                                                DType = 2;
+                                                break;
+                                            case "216":
+                                                DType = 3;
+                                                break;
+                                            default:
+                                                DType = 0;
+                                                break;
+                                        }
+                                        Channel citem = new Channel
+                                        {
+                                            Address = item.Address,
+                                            Block = item.Block,
+                                            BusinessGroupId = item.BusinessGroupID,
+                                            Certifiable = item.Certifiable == 1,
+                                            CertNum = item.CertNum,
+                                            CivilCode = item.CivilCode,
+                                            ChannelId = item.DeviceID,
+                                            EndTime = Str2DT(item.EndTime),
+                                            ErrCode = item.ErrCode.HasValue ? item.ErrCode.Value : 0,
+                                            DeviceId = DeviceID,
+                                            Ipaddress = item.IPAddress,
+                                            Latitude = item.Latitude.HasValue ? item.Latitude.Value : 0,
+                                            Longitude = item.Longitude.HasValue ? item.Longitude.Value : 0,
+                                            Manufacturer = item.Manufacturer,
+                                            Model = item.Model,
+                                            Name = item.Name,
+                                            Owner = item.Owner,
+                                            Parental = item.Parental == 1,
+                                            ParentId = item.ParentID,
+                                            Password = item.Password,
+                                            Port = item.Port.HasValue ? item.Port.Value : 0,
+                                            RegisterWay = item.RegisterWay.HasValue ? item.RegisterWay.Value : 1,
+                                            SafetyWay = item.SafetyWay.HasValue ? item.SafetyWay.Value : 0,
+                                            Secrecy = item.Secrecy == 1,
+                                            Status = item.Status ?? "",
+                                            Online = "ON".IgnoreEquals(item.Status),
+                                            DType = DType,
+                                        };
+                                        if (string.IsNullOrWhiteSpace(citem.ParentId) || citem.ParentId == ServerID)
+                                        {
+                                            citem.ParentId = DeviceID;
+                                        }
+                                        citem.SetChannelConf(confs[item.DeviceID], sipServer.Settings);
+                                        channels.AddOrUpdate(citem);
+                                        flag = true;
+                                        break;
+                                    case EventType.DEL:
+                                        RemoveChannel(item.DeviceID);
+                                        lstDelete.Add(item.DeviceID);
+                                        break;
+                                    case EventType.UPDATE:
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                            if (flag)
+                            {
+                                //表示收全
+                                await sipServer.DB.SaveChannels(deviceInfo, channels.ToList());
+                            }
+                            else
+                            {
+                                if (lstUpdate.Count > 0)
+                                {
+                                    await sipServer.DB.UpdateChannels(lstUpdate);
+                                }
+                                if (lstDelete.Count > 0)
+                                {
+                                    await sipServer.DB.DeleteChannel(DeviceID,lstDelete);
+                                }
+                            }
+                        }
                         break;
                     default:
                         break;
@@ -531,6 +654,22 @@ namespace SipServer
         async Task<SocketError> SendRequestAsync(SIPRequest sipRequest, bool waitForDns = false)
         {
             return await sipServer.SipTransport.SendRequestAsync(sipRequest, waitForDns);
+        }
+        async Task Send_SubscribeCommand()
+        {
+            var body = new CatalogQuery()
+            {
+                CmdType = CommandType.Catalog,
+                DeviceID = DeviceID,
+                SN = GetSN(),
+            };
+            var req = GetSIPRequest(ContentType: Constant.Application_XML, methodsEnum: SIPMethodsEnum.SUBSCRIBE);
+            req.Header.Event = "Catalog;id=" + body.SN;
+            req.Header.Expires = 600;
+            req.Body = body.ToXmlStr();
+
+            //sipServer.SetTag(req.Header.From.FromTag, new FromTagItem { Client = this, From = req.Header.From, To = req.Header.To });
+            await SendRequestAsync(req);
         }
         /// <summary>
         /// 发送获取设备信息请求
@@ -896,7 +1035,7 @@ namespace SipServer
         }
         public bool RemoveChannel(string ChannelID)
         {
-            if (channels.TryRemove(ChannelID, out var catalog))
+            if (channels.TryRemove(ChannelID, out _))
             {
                 deviceInfo.CatalogChannel--;
                 return true;

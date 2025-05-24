@@ -327,6 +327,14 @@ namespace SipServer
                     req.Header.UserAgent = UserAgent;
                     await SipTransport.SendRequestAsync(req);
                 }
+                else
+                {
+                    string DeviceID = sipResponse.Header.To.ToURI.User;
+                    if (ditClient.TryGetValue(DeviceID, out var client))
+                    {
+                        await client.OnResponse(localSIPEndPoint, remoteEndPoint, sipResponse);
+                    }
+                }
             }
         }
         /// <summary>
