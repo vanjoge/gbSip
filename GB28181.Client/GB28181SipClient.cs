@@ -1,16 +1,12 @@
 ﻿using GB28181.Client.Tasks;
 using GB28181.Enums;
-using GB28181.MANSRTSP;
 using GB28181.XML;
-using Newtonsoft.Json.Linq;
 using SIPSorcery.Net;
 using SIPSorcery.SIP;
 using SQ.Base;
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -171,7 +167,7 @@ namespace GB28181.Client
         /// <param name="remoteEndPoint"></param>
         /// <param name="sipResponse"></param>
         /// <returns></returns>
-        private async Task SipTransport_SIPTransportResponseReceived(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPResponse sipResponse)
+        protected virtual async Task SipTransport_SIPTransportResponseReceived(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPResponse sipResponse)
         {
             if (sipResponse.Status == SIPResponseStatusCodesEnum.Ok)
             {
@@ -284,6 +280,7 @@ namespace GB28181.Client
                     case SIPMethodsEnum.NOTIFY:
                         break;
                     case SIPMethodsEnum.SUBSCRIBE:
+                        await SUBSCRIBE(sipRequest);
                         break;
                     case SIPMethodsEnum.PUBLISH:
                         break;
@@ -366,6 +363,27 @@ namespace GB28181.Client
                 await SendMessage(sipRequest, SIPResponseStatusCodesEnum.BusyHere);
             }
         }
+        private async Task SUBSCRIBE(SIPRequest sipRequest)
+        {
+            var catalogQuery = SQ.Base.SerializableHelper.DeserializeByStr<CatalogQuery>(sipRequest.Body);
+            var subres = await On_SUBSCRIBE(catalogQuery, sipRequest);
+            if (subres != null)
+            {
+                var res = GetSIPResponse(sipRequest);
+                res.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(res.Header.To.ToUserField) };
+                res.Header.Expires = sipRequest.Header.Expires;
+                res.Header.ContentType = Constant.Application_XML;
+                res.Header.Event = sipRequest.Header.Event;
+                res.Body = subres.ToXmlStr();
+                await m_sipTransport.SendResponseAsync(res);
+                await SendNotifyCatalog();
+            }
+        }
+
+        protected virtual async Task SendNotifyCatalog()
+        {
+            return;
+        }
 
 
 
@@ -388,7 +406,7 @@ namespace GB28181.Client
 
             req.Body = deviceInfo.ToXmlStr();
 
-            return m_sipTransport.SendRequestAsync(req);
+            return SendRequestAsync(req);
 
         }
         protected virtual Task SendDeviceStatus(int sn, string DeviceID)
@@ -417,7 +435,7 @@ namespace GB28181.Client
 
             req.Body = deviceStatusBody.ToXmlStr();
 
-            return m_sipTransport.SendRequestAsync(req);
+            return SendRequestAsync(req);
 
         }
         protected virtual Task SendCatalog(CatalogQuery query, SIPRequest sipRequest)
@@ -438,7 +456,7 @@ namespace GB28181.Client
                 }
                 req.Body = catalogBody.ToXmlStr();
 
-                return m_sipTransport.SendRequestAsync(req);
+                return SendRequestAsync(req);
             }
             else
             {
@@ -457,7 +475,7 @@ namespace GB28181.Client
             var req = GetSIPRequest();
             req.Header.CSeq = CSeq;
             req.Body = catalog.ToXmlStr();
-            return m_sipTransport.SendRequestAsync(req);
+            return SendRequestAsync(req);
         }
 
         protected Task AnsRecordInfo(SIPRequest sipRequest, RecordInfo model)
@@ -466,9 +484,13 @@ namespace GB28181.Client
             req.Header.CSeq = sipRequest.Header.CSeq;
             req.Body = model.ToXmlStr();
 
-            return m_sipTransport.SendRequestAsync(req);
+            return SendRequestAsync(req);
         }
 
+        public Task<SocketError> SendRequestAsync(SIPRequest sipRequest)
+        {
+            return m_sipTransport.SendRequestAsync(sipRequest);
+        }
         //public void ChangeCatalog(IEnumerable<ChannelItem> deviceList)
         //{
         //    ditDevice.ChangeAll(deviceList);
@@ -482,7 +504,7 @@ namespace GB28181.Client
             res.Header.Allow = null;
             res.Header.UserAgent = UserAgent;
             //res.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(this.UserDisplayName, m_contactURI) };
-            //res.Header.CSeq = ++m_cseq;
+            //res.Header.CSeq = AddCseq();
             //res.Header.CallId = m_callID;
             //res.Header.CallId = sipRequest.Header.CallId;
             //res.Header.CSeq = sipRequest.Header.CSeq;
@@ -497,7 +519,7 @@ namespace GB28181.Client
 
 
             req.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(this.UserDisplayName, m_contactURI) };
-            req.Header.CSeq = ++m_cseq;
+            req.Header.CSeq = AddCseq();
             req.Header.CSeqMethod = methodsEnum;
             req.Header.CallId = m_callID;
             req.Header.UserAgent = UserAgent;
@@ -540,7 +562,7 @@ namespace GB28181.Client
                     keepaliveBody.SN = GetSN();
                     keepaliveBody.DeviceID = deviceInfo.DeviceID;
                     req.Body = keepaliveBody.ToXmlStr();
-                    var err = m_sipTransport.SendRequestAsync(req).GetAwaiter().GetResult();
+                    var err = SendRequestAsync(req).GetAwaiter().GetResult();
                     if (err != System.Net.Sockets.SocketError.Success)
                     {
                         ReStartReg();
@@ -563,5 +585,17 @@ namespace GB28181.Client
         protected abstract Task<RecordInfo> On_RECORDINFO(RecordInfoQuery res, SIPRequest sipRequest);
 
         protected abstract Task<RTSPResponse> On_MANSRTSP(string fromTag, SIPRequest sipRequest);
+        protected virtual Task<SubscribeCatalog> On_SUBSCRIBE(CatalogQuery catalogQuery, SIPRequest sipRequest)
+        {
+            return Task.FromResult<SubscribeCatalog>(null);
+        }
+
+        protected int AddCseq()
+        {
+            lock (this)
+            {
+                return ++m_cseq;
+            }
+        }
     }
 }

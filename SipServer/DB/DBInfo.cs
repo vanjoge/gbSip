@@ -927,7 +927,7 @@ namespace SipServer.DB
         /// <summary>
         /// 绑定通道
         /// </summary>
-        /// <param name="SuperiorId"></param>
+        /// <param name="GroupId"></param>
         /// <param name="Add"></param>
         /// <param name="Remove"></param>
         /// <returns></returns>
@@ -972,19 +972,21 @@ namespace SipServer.DB
                 if (flag)
                 {
                     await dbContext.SaveChangesAsync();
-                    //var cl = sipServer.Cascade.GetClient(GroupId);
-                    //if (cl != null)
-                    //{
-                    //    foreach (var item in Remove)
-                    //        cl.RemoveChannel(item.CustomChannelId);
-                    //    foreach (var item in Add)
-                    //    {
-                    //        var catalog = await GetCatalog(dbContext, item.DeviceId, item.ChannelId);
-                    //        if (catalog != null)
-                    //            cl.AddChannel(new SuperiorChannel(catalog, item));
-                    //    }
-
-                    //}
+                    var lst = sipServer.Cascade.GetClientByGroupId(GroupId);
+                    foreach (var cl in lst)
+                    {
+                        if (cl != null)
+                        {
+                            foreach (var item in Remove)
+                                cl.RemoveChannel(item.CustomChannelId);
+                            foreach (var item in Add)
+                            {
+                                var catalog = await GetCatalog(dbContext, item.DeviceId, item.ChannelId);
+                                if (catalog != null)
+                                    cl.AddChannel(new SuperiorChannel(catalog, cl.Key, item.CustomChannelId, item.GroupId), null);
+                            }
+                        }
+                    }
                     return true;
                 }
             }

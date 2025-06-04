@@ -1,5 +1,6 @@
 ﻿using GB28181;
 using GB28181.Client;
+using GB28181.Enums;
 using GB28181.MANSRTSP;
 using GB28181.XML;
 using JTServer.Model.RTVS;
@@ -50,6 +51,10 @@ namespace SipServer.Cascade
                     client.manager.ditWaitBindChannel.Add(item);
                 }
                 item.ChangeOnline(Online);
+                if (client.subscribeEnd > DateTime.Now)
+                {
+                    client.NotifyItem(item.CatalogItem, EventType.ADD);
+                }
             }
 
             protected override void OnChannelItemRemove(CascadeChannelItem item)
@@ -62,6 +67,10 @@ namespace SipServer.Cascade
                 {
                     item.GBChannel.ditCascadeChannel.TryRemove(item.SuperiorId, out var val);
                     item.GBChannel = null;
+                }
+                if (client.subscribeEnd > DateTime.Now)
+                {
+                    client.NotifyItem(item.CatalogItem, EventType.DEL);
                 }
             }
 
@@ -77,12 +86,18 @@ namespace SipServer.Cascade
                     old.GBChannel = null;
                     item.GBChannel.ditCascadeChannel[item.SuperiorId] = item;
                 }
+                if (client.subscribeEnd > DateTime.Now)
+                {
+                    client.NotifyItem(item.CatalogItem, EventType.UPDATE);
+                }
             }
         }
         private CascadeManager manager;
         public string Key { get; protected set; }
         public string DeviceID { get { return deviceInfo.DeviceID; } }
         public List<string> GroupIds { get; internal protected set; }
+        private DateTime subscribeEnd = DateTime.MinValue;
+        private string subscribeEvent = "";
         ///// <summary>
         ///// 通道信息
         ///// </summary>
@@ -265,6 +280,21 @@ namespace SipServer.Cascade
             return rtspres;
         }
 
+        protected override async Task<SubscribeCatalog> On_SUBSCRIBE(CatalogQuery catalogQuery, SIPRequest sipRequest)
+        {
+            if (catalogQuery.DeviceID == DeviceID)
+            {
+                subscribeEnd = DateTime.Now.AddSeconds(sipRequest.Header.Expires);
+                subscribeEvent = sipRequest.Header.Event;
+                return new SubscribeCatalog
+                {
+                    SN = catalogQuery.SN,
+                    DeviceID = catalogQuery.DeviceID,
+                    Result = "OK"
+                };
+            }
+            return null;
+        }
         public override void Stop(bool waitStop = true)
         {
             if (IsRun)
@@ -295,7 +325,7 @@ namespace SipServer.Cascade
             }, Key, j2gChannel.JTItem.GBChannelId, j2gChannel.JTItem.GBGroupID), j2gChannel);
         }
 
-        protected void AddChannel(SuperiorChannel item, JT2GBChannel j2gChannel)
+        protected internal void AddChannel(SuperiorChannel item, JT2GBChannel j2gChannel)
         {
             var channel_id = item.GetChannelId();
             //ditChannels[channel_id] = item;
@@ -346,6 +376,118 @@ namespace SipServer.Cascade
         private static string Empty2Null(string val)
         {
             return string.IsNullOrEmpty(val) ? null : val;
+        }
+
+        private Task NotifyItem(Catalog.Item item, EventType events)
+        {
+            var catalogBody = new NotifyCatalog();
+            catalogBody.SumNum = 1;
+            catalogBody.SN = AddCseq();
+            catalogBody.DeviceID = deviceInfo.DeviceID;
+            var req = GetSIPRequest(SIPMethodsEnum.NOTIFY);
+            req.Header.Event = subscribeEvent;
+            req.Header.SubscriptionState = "active";
+            catalogBody.DeviceList = new NList<NotifyCatalog.Item>(1);
+            catalogBody.DeviceList.Add(NotifyCatalog.Item.Copy(item, events));
+            req.Body = catalogBody.ToXmlStr();
+            return SendRequestAsync(req);
+        }
+        protected override Task SendNotifyCatalog()
+        {
+            if (subscribeEnd <= DateTime.Now)
+            {
+                return Task.CompletedTask;
+            }
+            //TODO:暂未支持DeviceID与设备ID不一致的场景
+            var catalogBody = new NotifyCatalog();
+            catalogBody.SumNum = deviceInfo.Channel = ditChild.Count;
+            catalogBody.SN = AddCseq();
+            catalogBody.DeviceID = deviceInfo.DeviceID;
+            if (remoteEndPoint.Protocol == SIPProtocolsEnum.tcp)
+            {
+                var req = GetSIPRequest(SIPMethodsEnum.NOTIFY);
+                req.Header.Event = subscribeEvent;
+                req.Header.SubscriptionState = "active";
+                catalogBody.DeviceList = new NList<NotifyCatalog.Item>(ditChild.Count);
+                foreach (var item in ditChild)
+                {
+                    catalogBody.DeviceList.Add(NotifyCatalog.Item.Copy(item.Value.CatalogItem, GB28181.Enums.EventType.ADD));
+                }
+                req.Body = catalogBody.ToXmlStr();
+
+                return SendRequestAsync(req);
+            }
+            else
+            {
+                catalogBody.DeviceList = new NList<NotifyCatalog.Item>(1);
+                List<NotifyCatalog.Item> waitSend = new List<NotifyCatalog.Item>(ditChild.Count);
+                foreach (var item in ditChild)
+                {
+                    waitSend.Add(NotifyCatalog.Item.Copy(item.Value.CatalogItem, GB28181.Enums.EventType.ADD));
+                }
+                sendNotifyTask = new SendNotifyCatalogTask(this, catalogBody, waitSend, subscribeEvent);
+                return sendNotifyTask.DoSend();
+            }
+        }
+        SendNotifyCatalogTask sendNotifyTask;
+        private class SendNotifyCatalogTask
+        {
+            private NotifyCatalog catalog;
+            private List<NotifyCatalog.Item> waitSend;
+            public string Event;
+            private CascadeClient client;
+
+            public SendNotifyCatalogTask(CascadeClient client, NotifyCatalog catalog, List<NotifyCatalog.Item> waitSend, string subscribeEvent)
+            {
+                this.client = client;
+                this.catalog = catalog;
+                this.waitSend = waitSend;
+                Event = subscribeEvent;
+            }
+
+            public Task DoSend()
+            {
+                var item = waitSend[0];
+                waitSend.RemoveAt(0);
+                catalog.DeviceList.Clear();
+                catalog.DeviceList.Add(item);
+
+
+                var req = client.GetSIPRequest(SIPMethodsEnum.NOTIFY);
+                req.Header.Event = Event;
+                req.Header.SubscriptionState = "active";
+                req.Body = catalog.ToXmlStr();
+                return client.SendRequestAsync(req);
+            }
+            public bool NotEmpty()
+            {
+                return waitSend.Count > 0;
+            }
+        }
+        protected override async Task SipTransport_SIPTransportResponseReceived(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPResponse sipResponse)
+        {
+            await base.SipTransport_SIPTransportResponseReceived(localSIPEndPoint, remoteEndPoint, sipResponse);
+
+
+            if (sipResponse.Status == SIPResponseStatusCodesEnum.Ok)
+            {
+                if (sipResponse.Header.CSeqMethod == SIPMethodsEnum.NOTIFY)
+                {
+                    if (sendNotifyTask != null
+                        //&& sendNotifyTask.Event == sipResponse.Header.Event
+                        )
+                    {
+                        if (sendNotifyTask.NotEmpty())
+                        {
+                            await sendNotifyTask.DoSend();
+                        }
+                        else
+                        {
+                            sendNotifyTask = null;
+                        }
+                    }
+                }
+            }
         }
     }
 }

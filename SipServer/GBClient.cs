@@ -186,7 +186,8 @@ namespace SipServer
 
             await Send_GetDevCommand(CommandType.DeviceStatus);
 
-            await Send_SubscribeCommand();
+            //临时屏蔽主动订阅
+            //await Send_SubscribeCommand();
         }
         /// <summary>
         /// 下线处理

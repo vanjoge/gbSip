@@ -561,6 +561,12 @@ namespace GB28181.XML
                 }
             }
         }
+
+        /// <summary>
+        /// 查询结果标志(订阅时必选)
+        /// </summary>
+        [XmlElement("Result")]
+        public string Result { get; set; }
     }
 
     /// <summary>
@@ -869,159 +875,215 @@ namespace GB28181.XML
             /// 信息项
             /// </summary>
             [XmlElement("Info")]
-            public Info InfList { get; set; }
+            public Catalog.Info InfList { get; set; }
 
             /// <summary>
             /// 远程设备终结点
             /// </summary>
             public string RemoteEP { get; set; }
+
+            public static Item Copy(Catalog.Item catalogItem, EventType events)
+            {
+                var item = new Item
+                {
+                    Address = catalogItem.Address,
+                    Block = catalogItem.Block,
+                    BusinessGroupID = catalogItem.BusinessGroupID,
+                    Certifiable = catalogItem.Certifiable,
+                    CertNum = catalogItem.CertNum,
+                    CivilCode = catalogItem.CivilCode,
+                    CertifiableValue = catalogItem.CertifiableValue,
+                    DeviceID = catalogItem.DeviceID,
+                    EndTime = catalogItem.EndTime,
+                    ErrCode = catalogItem.ErrCode,
+                    IPAddress = catalogItem.IPAddress,
+                    Latitude = catalogItem.Latitude,
+                    Longitude = catalogItem.Longitude,
+                    Manufacturer = catalogItem.Manufacturer,
+                    Model = catalogItem.Model,
+                    Name = catalogItem.Name,
+                    Owner = catalogItem.Owner,
+                    Parental = catalogItem.Parental,
+                    ParentID = catalogItem.ParentID,
+                    Password = catalogItem.Password,
+                    Port = catalogItem.Port,
+                    RegisterWay = catalogItem.RegisterWay,
+                    SafetyWay = catalogItem.SafetyWay,
+                    Secrecy = catalogItem.Secrecy,
+                    Status = catalogItem.Status,
+                    InfList = catalogItem.InfList,
+                    Event = events,
+                    //InfList=Info.Copy(catalogItem.InfList),
+                    //RemoteEP = catalogItem.RemoteEP,
+                    //Event = catalogItem.Event,
+                };
+                return item;
+            }
         }
 
-        /// <summary>
-        /// 扩展信息
-        /// </summary>
-        public class Info
-        {
-            /// <summary>
-            /// 摄像机类型扩展，标识摄像机类型 1，球机 2，半球 3，固定枪机 4，遥控枪机 当目录项为摄像机时可选
-            /// </summary>
-            [XmlIgnore]
-            public int? PTZType { get; set; }
+        ///// <summary>
+        ///// 扩展信息
+        ///// </summary>
+        //public class Info
+        //{
+        //    /// <summary>
+        //    /// 摄像机类型扩展，标识摄像机类型 1，球机 2，半球 3，固定枪机 4，遥控枪机 当目录项为摄像机时可选
+        //    /// </summary>
+        //    [XmlIgnore]
+        //    public int? PTZType { get; set; }
 
-            [XmlElement("PTZType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
-            public string PTZTypeValue
-            {
-                get
-                {
-                    return PTZType.HasValue ? PTZType.Value.ToString() : null;
-                }
-                set
-                {
-                    PTZType = int.TryParse(value, out int result) ? result : (int?)null;
-                }
-            }
+        //    [XmlElement("PTZType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        //    public string PTZTypeValue
+        //    {
+        //        get
+        //        {
+        //            return PTZType.HasValue ? PTZType.Value.ToString() : null;
+        //        }
+        //        set
+        //        {
+        //            PTZType = int.TryParse(value, out int result) ? result : (int?)null;
+        //        }
+        //    }
 
-            /// <summary>
-            /// 摄像机位置类型扩展 1，省际检查站 2，党政机关 3，车站码头 4，中心广场 5，体育场馆 6，商业中心 7，宗教场所 8，校园周边 9，治安复杂区域 10，交通干线 当目录项为摄像机时可选
-            /// </summary>
-            [XmlIgnore]
-            public int? PositionType { get; set; }
+        //    /// <summary>
+        //    /// 摄像机位置类型扩展 1，省际检查站 2，党政机关 3，车站码头 4，中心广场 5，体育场馆 6，商业中心 7，宗教场所 8，校园周边 9，治安复杂区域 10，交通干线 当目录项为摄像机时可选
+        //    /// </summary>
+        //    [XmlIgnore]
+        //    public int? PositionType { get; set; }
 
-            [XmlElement("PositionType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
-            public string PositionTypeValue
-            {
-                get => PositionType.HasValue ? PositionType.Value.ToString() : null;
-                set => PositionType = int.TryParse(value, out int result) ? result : (int?)null;
-            }
+        //    [XmlElement("PositionType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        //    public string PositionTypeValue
+        //    {
+        //        get => PositionType.HasValue ? PositionType.Value.ToString() : null;
+        //        set => PositionType = int.TryParse(value, out int result) ? result : (int?)null;
+        //    }
 
-            /// <summary>
-            /// 摄像机按照位置室外、室内属性 1，室外 2，室内 当目录项为摄像机时可选，缺省为1
-            /// </summary>
-            [XmlIgnore]
-            public int? RoomType { get; set; }
+        //    /// <summary>
+        //    /// 摄像机按照位置室外、室内属性 1，室外 2，室内 当目录项为摄像机时可选，缺省为1
+        //    /// </summary>
+        //    [XmlIgnore]
+        //    public int? RoomType { get; set; }
 
-            [XmlElement("RoomType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
-            public string RoomTypeValue
-            {
-                get
-                {
-                    return RoomType.HasValue ? RoomType.Value.ToString() : null;
-                }
-                set
-                {
-                    RoomType = int.TryParse(value, out int result) ? result : (int?)null;
-                }
-            }
+        //    [XmlElement("RoomType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        //    public string RoomTypeValue
+        //    {
+        //        get
+        //        {
+        //            return RoomType.HasValue ? RoomType.Value.ToString() : null;
+        //        }
+        //        set
+        //        {
+        //            RoomType = int.TryParse(value, out int result) ? result : (int?)null;
+        //        }
+        //    }
 
-            /// <summary>
-            /// 摄像机用途属性 1，治安 2，交通 3，重点 当目录项为摄像机时可选
-            /// </summary>
-            [XmlIgnore]
-            public int? UseType { get; set; }
+        //    /// <summary>
+        //    /// 摄像机用途属性 1，治安 2，交通 3，重点 当目录项为摄像机时可选
+        //    /// </summary>
+        //    [XmlIgnore]
+        //    public int? UseType { get; set; }
 
-            [XmlElement("UseType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
-            public string UseTypeValue
-            {
-                get
-                {
-                    return UseType.HasValue ? UseType.Value.ToString() : null;
-                }
-                set
-                {
-                    UseType = int.TryParse(value, out int result) ? result : (int?)null;
-                }
-            }
+        //    [XmlElement("UseType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        //    public string UseTypeValue
+        //    {
+        //        get
+        //        {
+        //            return UseType.HasValue ? UseType.Value.ToString() : null;
+        //        }
+        //        set
+        //        {
+        //            UseType = int.TryParse(value, out int result) ? result : (int?)null;
+        //        }
+        //    }
 
-            /// <summary>
-            /// 摄像机补光属性 1，无补光 2，红外补光 3，白光补光 当目录项为摄像机时可选，缺省为1
-            /// </summary>
-            [XmlIgnore]
-            public int? SupplyLightType { get; set; }
+        //    /// <summary>
+        //    /// 摄像机补光属性 1，无补光 2，红外补光 3，白光补光 当目录项为摄像机时可选，缺省为1
+        //    /// </summary>
+        //    [XmlIgnore]
+        //    public int? SupplyLightType { get; set; }
 
-            [XmlElement("SupplyLightType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
-            public string SupplyLightTypeValue
-            {
-                get => SupplyLightType.HasValue ? SupplyLightType.Value.ToString() : null;
-                set => SupplyLightType = int.TryParse(value, out int result) ? result : (int?)null;
-            }
+        //    [XmlElement("SupplyLightType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        //    public string SupplyLightTypeValue
+        //    {
+        //        get => SupplyLightType.HasValue ? SupplyLightType.Value.ToString() : null;
+        //        set => SupplyLightType = int.TryParse(value, out int result) ? result : (int?)null;
+        //    }
 
-            /// <summary>
-            /// 摄像机监视方位属性 1，东 2，西 3，南 4，北 5，东南 6，东北 7，西南 8，西北 当目录项为摄像机时且为固定摄像机或设置看守位摄像机时可选
-            /// </summary>
-            [XmlIgnore]
-            public int? DirectionType { get; set; }
+        //    /// <summary>
+        //    /// 摄像机监视方位属性 1，东 2，西 3，南 4，北 5，东南 6，东北 7，西南 8，西北 当目录项为摄像机时且为固定摄像机或设置看守位摄像机时可选
+        //    /// </summary>
+        //    [XmlIgnore]
+        //    public int? DirectionType { get; set; }
 
-            [XmlElement("DirectionType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
-            public string DirectionTypeValue
-            {
-                get => DirectionType.HasValue ? DirectionType.Value.ToString() : null;
-                set => DirectionType = int.TryParse(value, out int result) ? result : (int?)null;
-            }
+        //    [XmlElement("DirectionType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        //    public string DirectionTypeValue
+        //    {
+        //        get => DirectionType.HasValue ? DirectionType.Value.ToString() : null;
+        //        set => DirectionType = int.TryParse(value, out int result) ? result : (int?)null;
+        //    }
 
-            /// <summary>
-            /// 摄像机支持的分辨率，可有多个分辨率值，各个取值间以"/"分隔。 分辨率取值参见附录F中SDP f字段规定。 当目录项为摄像机时可选
-            /// </summary>
-            [XmlElement("Resolution")]
-            public string Resolution { get; set; }
+        //    /// <summary>
+        //    /// 摄像机支持的分辨率，可有多个分辨率值，各个取值间以"/"分隔。 分辨率取值参见附录F中SDP f字段规定。 当目录项为摄像机时可选
+        //    /// </summary>
+        //    [XmlElement("Resolution")]
+        //    public string Resolution { get; set; }
 
-            /// <summary>
-            /// 虚拟组织所属的业务分组ID， 业务分组根据特定的业务需求制定， 一个业务分组包含一组特定的虚拟组织。
-            /// </summary>
-            [XmlElement("BusinessGroupID")]
-            public string BusinessGroupID { get; set; }
+        //    /// <summary>
+        //    /// 虚拟组织所属的业务分组ID， 业务分组根据特定的业务需求制定， 一个业务分组包含一组特定的虚拟组织。
+        //    /// </summary>
+        //    [XmlElement("BusinessGroupID")]
+        //    public string BusinessGroupID { get; set; }
 
-            /// <summary>
-            /// 下载倍速范围(可选)，各可选参数以"/"分隔 如设备支持1,2,4倍下载则应写为"1/2/4"
-            /// </summary>
-            [XmlElement("DownloadSpeed")]
-            public string DownloadSpeed { get; set; }
+        //    /// <summary>
+        //    /// 下载倍速范围(可选)，各可选参数以"/"分隔 如设备支持1,2,4倍下载则应写为"1/2/4"
+        //    /// </summary>
+        //    [XmlElement("DownloadSpeed")]
+        //    public string DownloadSpeed { get; set; }
 
-            /// <summary>
-            /// 空域编码能力 0，不支持 1，1级增强 2，2级增强 3，3级增强 (可选)
-            /// </summary>
-            [XmlIgnore]
-            public int? SVCSpaceSupportMode { get; set; }
+        //    /// <summary>
+        //    /// 空域编码能力 0，不支持 1，1级增强 2，2级增强 3，3级增强 (可选)
+        //    /// </summary>
+        //    [XmlIgnore]
+        //    public int? SVCSpaceSupportMode { get; set; }
 
-            [XmlElement("SVCSpaceSupportMode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
-            public string SVCSpaceSupportModeValue
-            {
-                get => SVCSpaceSupportMode.HasValue ? SVCSpaceSupportMode.Value.ToString() : null;
-                set => SVCSpaceSupportMode = int.TryParse(value, out int result) ? result : (int?)null;
-            }
+        //    [XmlElement("SVCSpaceSupportMode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        //    public string SVCSpaceSupportModeValue
+        //    {
+        //        get => SVCSpaceSupportMode.HasValue ? SVCSpaceSupportMode.Value.ToString() : null;
+        //        set => SVCSpaceSupportMode = int.TryParse(value, out int result) ? result : (int?)null;
+        //    }
 
-            /// <summary>
-            /// 时域编码能力 0，不支持 1，1级增强 2，2级增强 3，3级增强
-            /// </summary>
-            [XmlIgnore]
-            public int? SVCTimeSupportMode { get; set; }
+        //    /// <summary>
+        //    /// 时域编码能力 0，不支持 1，1级增强 2，2级增强 3，3级增强
+        //    /// </summary>
+        //    [XmlIgnore]
+        //    public int? SVCTimeSupportMode { get; set; }
 
-            [XmlElement("SVCTimeSupportMode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
-            public string SVCTimeSupportModeValue
-            {
-                get => SVCTimeSupportMode.HasValue ? SVCTimeSupportMode.Value.ToString() : null;
-                set => SVCTimeSupportMode = int.TryParse(value, out int result) ? result : (int?)null;
-            }
-        }
+        //    [XmlElement("SVCTimeSupportMode"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        //    public string SVCTimeSupportModeValue
+        //    {
+        //        get => SVCTimeSupportMode.HasValue ? SVCTimeSupportMode.Value.ToString() : null;
+        //        set => SVCTimeSupportMode = int.TryParse(value, out int result) ? result : (int?)null;
+        //    }
+
+        //    public static Info Copy(Catalog.Info infList)
+        //    {
+        //        return new Info
+        //        {
+        //            BusinessGroupID= infList.BusinessGroupID,
+        //            DirectionType= infList.DirectionType,
+        //            DownloadSpeed = infList.DownloadSpeed,
+        //            PositionType= infList.PositionType,
+        //            PTZType= infList.PTZType,
+        //            Resolution= infList.Resolution,
+        //            RoomType= infList.RoomType,
+        //            SupplyLightType= infList.SupplyLightType,
+        //            SVCSpaceSupportMode= infList.SVCSpaceSupportMode,
+        //            SVCTimeSupportMode= infList.SVCTimeSupportMode,
+        //            UseType= infList.UseType,
+        //        };
+        //    }
+        //}
     }
 
     /// <summary>
@@ -1059,5 +1121,37 @@ namespace GB28181.XML
         /// </summary>
         [XmlElement("EndTime")]
         public string EndTime { get; set; }
+    }
+
+
+    /// <summary>
+    /// 订阅目录应答
+    /// </summary>
+    [XmlRoot("Response")]
+    public class SubscribeCatalog : XmlBase
+    {
+        /// <summary>
+        /// 命令类型
+        /// </summary>
+        [XmlElement("CmdType"), System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+        public CommandType CmdType { get; set; } = CommandType.Catalog;
+
+        /// <summary>
+        /// 命令序列号(必选)
+        /// </summary>
+        [XmlElement("SN")]
+        public int SN { get; set; }
+
+        /// <summary>
+        /// 目标设备/区域/系统的编码,取值与目录查询请求相同(必选)
+        /// </summary>
+        [XmlElement("DeviceID")]
+        public string DeviceID { get; set; }
+
+        /// <summary>
+        /// 查询结果标志(必选)
+        /// </summary>
+        [XmlElement("Result")]
+        public string Result { get; set; }
     }
 }

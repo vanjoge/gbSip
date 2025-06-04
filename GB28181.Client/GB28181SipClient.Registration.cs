@@ -662,7 +662,7 @@ namespace GB28181.Client
                 fromSIPFromHeader);
 
             registerRequest.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(this.UserDisplayName, m_contactURI) };
-            registerRequest.Header.CSeq = ++m_cseq;
+            registerRequest.Header.CSeq = AddCseq();
             registerRequest.Header.CallId = m_callID;
             registerRequest.Header.UserAgent = UserAgent;
             registerRequest.Header.Expires = m_expiry;
