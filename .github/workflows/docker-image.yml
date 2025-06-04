@@ -68,6 +68,7 @@ jobs:
     - name: CNB Login
       uses: docker/login-action@v1.6.0
       with:
+        registry: docker.cnb.cool
         username: cnb
         password: ${{ secrets.CNB_TOKEN }}
 
