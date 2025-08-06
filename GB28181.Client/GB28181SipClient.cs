@@ -503,6 +503,10 @@ namespace GB28181.Client
             SIPResponse res = SIPResponse.GetResponse(sipRequest, messaageResponse, null);
             res.Header.Allow = null;
             res.Header.UserAgent = UserAgent;
+            if (res.Header.To.ToTag == null)
+            {
+                res.Header.To.ToTag = CallProperties.CreateNewTag();
+            }
             //res.Header.Contact = new List<SIPContactHeader> { new SIPContactHeader(this.UserDisplayName, m_contactURI) };
             //res.Header.CSeq = AddCseq();
             //res.Header.CallId = m_callID;
