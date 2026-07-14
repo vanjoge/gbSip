@@ -1,6 +1,7 @@
-﻿using SipServer.Cascade;
+using SipServer.Cascade;
 using SipServer.DB;
 using SipServer.JT2GB;
+using SipServer.Services;
 using SIPSorcery.SIP;
 using SIPSorcery.SIP.App;
 using SQ.Base;
@@ -75,6 +76,11 @@ namespace SipServer
         object lckSSRC = new object();
 
         public DBInfo DB;
+
+        /// <summary>
+        /// 缓存服务
+        /// </summary>
+        public CacheService Cache { get; protected set; }
         #endregion
 
 
@@ -129,6 +135,7 @@ namespace SipServer
 
             SIPConstants.DEFAULT_ENCODING = Encoding.GetEncoding("GBK");
             DB = new DBInfo(this);
+            Cache = new CacheService(this);
             thCheck = new SQ.Base.ThreadWhile<object>();
             thCheck.SleepMs = 1000;
             thCheck.Start(Check, null, "SipCheck");

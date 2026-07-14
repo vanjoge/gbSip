@@ -23,6 +23,26 @@
         </a-input>
       </a-form-item>
       <a-form-item>
+        <div class="captcha-wrapper">
+          <a-input
+            v-model:value="state.formInline.captcha"
+            size="large"
+            placeholder="请输入验证码（不区分大小写）"
+            style="flex: 1"
+          >
+            <template #prefix><lock-outlined /></template>
+          </a-input>
+          <img
+            v-if="state.captcha"
+            :src="state.captcha"
+            alt="验证码"
+            class="captcha-img"
+            @click="setCaptcha"
+            title="点击刷新验证码"
+          />
+        </div>
+      </a-form-item>
+      <a-form-item>
         <a-button type="primary" html-type="submit" size="large" :loading="state.loading" block>
           登录
         </a-button>
@@ -32,20 +52,23 @@
 </template>
 
 <script setup lang="ts">
-  import { reactive } from 'vue';
+  import { reactive, onMounted } from 'vue';
   import { UserOutlined, LockOutlined } from '@ant-design/icons-vue';
   import { useRoute, useRouter } from 'vue-router';
+  import md5 from 'js-md5';
   import { message, Modal } from 'ant-design-vue';
   import { useUserStore } from '@/store/modules/user';
-  // import { getImageCaptcha } from '@/api/login';
+  import { getImageCaptcha } from '@/api/login';
   import { to } from '@/utils/awaitTo';
 
   const state = reactive({
     loading: false,
     captcha: '',
+    captchaId: '',
     formInline: {
       UserName: '',
       Password: '',
+      captcha: '',
     },
   });
 
@@ -54,30 +77,50 @@
 
   const userStore = useUserStore();
 
-  // const setCaptcha = async () => {
-  //   const { id, img } = await getImageCaptcha({ width: 100, height: 50 });
-  //   state.captcha = img;
-  //   state.formInline.captchaId = id;
-  // };
-  // setCaptcha();
+  // 获取验证码
+  const setCaptcha = async () => {
+    try {
+      const { Id, Img } = await getImageCaptcha({ width: 120, height: 40 });
+      state.captcha = Img;
+      state.captchaId = Id;
+      state.formInline.captcha = '';
+    } catch (error) {
+      console.error('获取验证码失败:', error);
+    }
+  };
+
+  // 页面加载时获取验证码
+  onMounted(() => {
+    setCaptcha();
+  });
 
   const handleSubmit = async () => {
-    const { UserName: username, Password: password } = state.formInline;
+    const { UserName: username, Password: password, captcha } = state.formInline;
     if (username.trim() == '' || password.trim() == '') {
       return message.warning('用户名或密码不能为空！');
     }
+    if (!captcha || captcha.trim() == '') {
+      return message.warning('请输入验证码！');
+    }
+
     message.loading('登录中...', 0);
     state.loading = true;
-    console.log(state.formInline);
-    // params.password = md5(password)
 
-    const [err] = await to(userStore.login(state.formInline));
+    // 密码加密
+    const loginParams = {
+      UserName: username,
+      Password: md5(password),
+      captchaId: state.captchaId,
+      captcha,
+    };
+
+    const [err] = await to(userStore.login(loginParams));
     if (err) {
       Modal.error({
         title: () => '提示',
         content: () => err.message,
       });
-      // setCaptcha();
+      setCaptcha(); // 登录失败刷新验证码
     } else {
       message.success('登录成功！');
       setTimeout(() => router.replace((route.query.redirect as string) ?? '/'));
@@ -117,6 +160,24 @@
 
       .ant-form-item-label {
         padding-right: 6px;
+      }
+    }
+  }
+
+  .captcha-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+
+    .captcha-img {
+      height: 40px;
+      cursor: pointer;
+      border: 1px solid #d9d9d9;
+      border-radius: 2px;
+      transition: all 0.3s;
+
+      &:hover {
+        border-color: #40a9ff;
       }
     }
   }
