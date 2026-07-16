@@ -65,8 +65,34 @@ namespace GBWeb.Controllers
             // 使用ImageSharp生成验证码图片（跨平台支持）
             using (var image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(width, height))
             {
-                // 加载字体
-                var font = SixLabors.Fonts.SystemFonts.CreateFont("Arial", 18, SixLabors.Fonts.FontStyle.Bold);
+                // 加载嵌入的Roboto字体
+                SixLabors.Fonts.Font font;
+                var assembly = typeof(AdminController).Assembly;
+                var fontResourceName = assembly.GetManifestResourceNames().FirstOrDefault(n => n.Contains("Roboto-Regular.ttf"));
+                
+                if (fontResourceName != null)
+                {
+                    using (var stream = assembly.GetManifestResourceStream(fontResourceName))
+                    {
+                        if (stream != null)
+                        {
+                            var fontBytes = new byte[stream.Length];
+                            stream.Read(fontBytes, 0, fontBytes.Length);
+                            var fontCollection = new SixLabors.Fonts.FontCollection();
+                            font = fontCollection.Add(new MemoryStream(fontBytes)).CreateFont(18, SixLabors.Fonts.FontStyle.Regular);
+                        }
+                        else
+                        {
+                            // 备用方案：使用系统字体
+                            font = SixLabors.Fonts.SystemFonts.CreateFont("Arial", 18, SixLabors.Fonts.FontStyle.Bold);
+                        }
+                    }
+                }
+                else
+                {
+                    // 备用方案：使用系统字体
+                    font = SixLabors.Fonts.SystemFonts.CreateFont("Arial", 18, SixLabors.Fonts.FontStyle.Bold);
+                }
 
                 image.Mutate(ctx =>
                 {
